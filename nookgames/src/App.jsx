@@ -6,6 +6,7 @@ import { CollectionScreen } from './screens/CollectionScreen.jsx'
 import { EditorPickScreen } from './screens/EditorPickScreen.jsx'
 import { FifteenPuzzleScreen } from './screens/FifteenPuzzleScreen.jsx'
 import { SudokuScreen } from './screens/SudokuScreen.jsx'
+import { WordLadderScreen } from './screens/WordLadderScreen.jsx'
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -52,6 +53,10 @@ function parseRoute() {
 
   if (parts[0] === 'play' && parts[1] === 'sudoku') {
     return { name: 'play-sudoku' }
+  }
+
+  if (parts[0] === 'play' && parts[1] === 'word-ladder') {
+    return { name: 'play-word-ladder' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -118,6 +123,10 @@ function App() {
 
   if (route.name === 'play-sudoku') {
     return <SudokuScreen />
+  }
+
+  if (route.name === 'play-word-ladder') {
+    return <WordLadderScreen />
   }
 
   return (

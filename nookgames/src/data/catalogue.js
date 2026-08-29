@@ -239,7 +239,7 @@ export const collections = [
         howToPlay: 'Each step must be a valid word. Change exactly one letter per step.',
         difficulty: 'Easy',
         timeEstimate: '2–10 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'crossword',

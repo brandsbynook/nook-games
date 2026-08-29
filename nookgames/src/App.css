@@ -234,12 +234,14 @@
 }
 
 .cs-header {
-  display: grid;
-  grid-template-columns: 2.5rem 1fr 2.5rem;
+  display: flex;
   align-items: center;
-  height: 3.25rem;
-  padding: 0 1.25rem;
-  border-bottom: 1px solid #1f1f1f;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
   background: #000000;
   position: sticky;
@@ -251,12 +253,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 36px;
+  height: 36px;
   color: #ffffff;
   background: none;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
   padding: 0;
   transition: opacity 0.15s;
@@ -267,12 +269,18 @@
 .cs-header-title {
   text-align: center;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
+  margin: 0;
+  letter-spacing: 0.01em;
 }
 
-.cs-header-spacer { width: 2.25rem; }
+.cs-header-spacer {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
 
 .cs-body {
   flex: 1;
@@ -900,6 +908,396 @@
 }
 
 .sdk-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WORD LADDER SCREEN (Playable Engine & Aesthetic)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wl-page {
+  width: 100%;
+  max-width: 412px;
+  height: 100vh;
+  height: 100dvh;
+  height: 100svh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #000000;
+  margin: 0 auto;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 16px 16px 20px 16px;
+}
+
+.wl-top-section {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.wl-header {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 0.5rem;
+  border-bottom: 1px solid #1f1f1f;
+  flex-shrink: 0;
+  background: #000000;
+}
+
+.wl-back-btn,
+.wl-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: #ffffff;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+  font-family: inherit;
+}
+.wl-back-btn:hover, .wl-action-btn:hover { opacity: 0.6; }
+
+.wl-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.wl-header-title {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.wl-presets-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 260px;
+  scrollbar-width: none;
+}
+.wl-presets-bar::-webkit-scrollbar { display: none; }
+
+.wl-preset-btn {
+  font-family: monospace, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #141414;
+  border: 1px solid #222222;
+  color: #737373;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.wl-preset-btn--active {
+  background: #242424;
+  color: #ffffff;
+  border-color: #383838;
+}
+
+.wl-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ── Target Word Card ── */
+.wl-target-card {
+  margin: 10px 0 4px;
+  padding: 10px 16px;
+  background: #141414;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* ── Middle Section (Scrollable History & Next Input) ── */
+.wl-middle-section {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 0 4px;
+}
+.wl-middle-section::-webkit-scrollbar { display: none; }
+
+/* ── Bottom Section (Fixed Keypad & Undo) ── */
+.wl-bottom-section {
+  flex-shrink: 0;
+  width: 100%;
+  padding-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wl-target-label {
+  font-family: monospace, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #737373;
+}
+
+.wl-target-word {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #ffffff;
+}
+
+.wl-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.wl-ladder-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 14px;
+  background: #121212;
+  border: 1px solid #1c1c1c;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.wl-ladder-step:hover {
+  background: #181818;
+  border-color: #282828;
+}
+
+.wl-ladder-step--start {
+  background: #141414;
+  border-color: #242424;
+}
+
+.wl-ladder-step--target {
+  background: #1c1c1c;
+  border-color: #ffffff;
+}
+
+.wl-ladder-step--active {
+  background: #161616;
+  border-color: #333333;
+  cursor: default;
+}
+.wl-ladder-step--active:hover {
+  background: #161616;
+  border-color: #333333;
+}
+
+.wl-ladder-step--shake {
+  animation: wl-shake 0.4s ease;
+}
+
+@keyframes wl-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.wl-step-num {
+  font-family: monospace, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #666666;
+  letter-spacing: 0.08em;
+  width: 48px;
+}
+
+.wl-word-letters {
+  display: flex;
+  gap: 6px;
+}
+
+.wl-letter-box {
+  width: 34px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161616;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: #d6d6d6;
+  transition: all 0.15s ease;
+}
+
+.wl-letter-box--changed {
+  background: #242424;
+  border-color: #444444;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.12);
+}
+
+.wl-letter-box--target {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.wl-letter-box--input {
+  background: #121212;
+  border-color: #222222;
+  color: #ffffff;
+}
+
+.wl-letter-box--filled {
+  border-color: #383838;
+  color: #ffffff;
+}
+
+.wl-letter-box--cursor {
+  border-color: #737373;
+  animation: wl-cursor 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes wl-cursor {
+  from { border-color: #444444; }
+  to   { border-color: #ffffff; }
+}
+
+/* ── Error & Undo Bar ── */
+.wl-error-banner {
+  text-align: center;
+  color: #a8a8a8;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+}
+
+.wl-undo-bar {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 6px;
+}
+
+.wl-undo-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: #737373;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+.wl-undo-btn:hover { color: #ffffff; }
+
+/* ── On-Screen Keyboard ── */
+.wl-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 6px 16px;
+  width: 100%;
+  max-width: 412px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: #000000;
+  border-top: 1px solid #1a1a1a;
+  flex-shrink: 0;
+}
+
+.wl-kb-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.wl-kb-key {
+  flex: 1;
+  max-width: 34px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161616;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.1s ease, transform 0.1s ease;
+  padding: 0;
+}
+.wl-kb-key:hover { background: #242424; transform: translateY(-1px); }
+.wl-kb-key:active { background: #383838; transform: translateY(0); }
+
+.wl-kb-key--special {
+  max-width: 58px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: #1f1f1f;
+  color: #d6d6d6;
+}
+.wl-kb-key--special:hover { background: #2c2c2c; color: #ffffff; }
+
+/* ── Completion Toast ── */
+.wl-toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 2rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(1rem);
+  background: #ffffff;
+  color: #0a0a0a;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.wl-toast--visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
