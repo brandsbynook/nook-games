@@ -9,6 +9,8 @@ import { SudokuScreen } from './screens/SudokuScreen.jsx'
 import { WordLadderScreen } from './screens/WordLadderScreen.jsx'
 import { ReversiScreen } from './screens/ReversiScreen.jsx'
 import { LightsOutScreen } from './screens/LightsOutScreen.jsx'
+import { TowerOfHanoiScreen } from './screens/TowerOfHanoiScreen.jsx'
+import { Game2048Screen } from './screens/Game2048Screen.jsx'
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -49,24 +51,20 @@ function parseRoute() {
   }
 
   // Playable game routes
-  if (parts[0] === 'play' && parts[1] === '15-puzzle') {
-    return { name: 'play-15-puzzle' }
+  if (parts[0] === 'play') {
+    const gameId = String(parts[1] || '')
+    if (gameId === '15-puzzle') return { name: 'play-15-puzzle' }
+    if (gameId === 'sudoku') return { name: 'play-sudoku' }
+    if (gameId === 'word-ladder') return { name: 'play-word-ladder' }
+    if (gameId === 'reversi') return { name: 'play-reversi' }
+    if (gameId === 'lights-out' || gameId === 'shikaku') return { name: 'play-lights-out' }
+    if (gameId === 'tower-of-hanoi') return { name: 'play-tower-of-hanoi' }
+    if (gameId === '2048') return { name: 'play-2048' }
   }
 
-  if (parts[0] === 'play' && parts[1] === 'sudoku') {
-    return { name: 'play-sudoku' }
-  }
-
-  if (parts[0] === 'play' && parts[1] === 'word-ladder') {
-    return { name: 'play-word-ladder' }
-  }
-
-  if (parts[0] === 'play' && parts[1] === 'reversi') {
-    return { name: 'play-reversi' }
-  }
-
-  if (parts[0] === 'play' && (parts[1] === 'lights-out' || parts[1] === 'shikaku')) {
-    return { name: 'play-lights-out' }
+  // Direct game route alias or fallback
+  if (parts[0] === '2048' || (parts[0] === 'game' && String(parts[1]) === '2048')) {
+    return { name: 'play-2048' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -145,6 +143,14 @@ function App() {
 
   if (route.name === 'play-lights-out') {
     return <LightsOutScreen />
+  }
+
+  if (route.name === 'play-tower-of-hanoi') {
+    return <TowerOfHanoiScreen />
+  }
+
+  if (route.name === 'play-2048') {
+    return <Game2048Screen />
   }
 
   return (
