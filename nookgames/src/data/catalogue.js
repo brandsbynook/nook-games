@@ -204,7 +204,7 @@ export const collections = [
         howToPlay: 'Place a disc so it flanks opponent discs in a line. All flanked discs flip to your colour.',
         difficulty: 'Moderate',
         timeEstimate: '10–30 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'checkers',
