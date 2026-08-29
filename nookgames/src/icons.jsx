@@ -128,6 +128,16 @@ const icons = {
       <rect x="14" y="14" width="7" height="7" rx="0.5" />
     </>
   ),
+  'lights-out': (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="1.5" />
+      <rect x="5.5" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="10.25" y="10.25" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="5.5" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+    </>
+  ),
   '15-puzzle': (
     <>
       <rect x="3" y="3" width="18" height="18" rx="1.5" />

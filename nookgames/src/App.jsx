@@ -8,6 +8,7 @@ import { FifteenPuzzleScreen } from './screens/FifteenPuzzleScreen.jsx'
 import { SudokuScreen } from './screens/SudokuScreen.jsx'
 import { WordLadderScreen } from './screens/WordLadderScreen.jsx'
 import { ReversiScreen } from './screens/ReversiScreen.jsx'
+import { LightsOutScreen } from './screens/LightsOutScreen.jsx'
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -62,6 +63,10 @@ function parseRoute() {
 
   if (parts[0] === 'play' && parts[1] === 'reversi') {
     return { name: 'play-reversi' }
+  }
+
+  if (parts[0] === 'play' && (parts[1] === 'lights-out' || parts[1] === 'shikaku')) {
+    return { name: 'play-lights-out' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -136,6 +141,10 @@ function App() {
 
   if (route.name === 'play-reversi') {
     return <ReversiScreen />
+  }
+
+  if (route.name === 'play-lights-out') {
+    return <LightsOutScreen />
   }
 
   return (
