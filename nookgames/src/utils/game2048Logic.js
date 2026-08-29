@@ -1,227 +1,170 @@
 /**
- * game2048Logic.js — Core engine for 2048 with coordinate-based tile tracking
- * Supports fluid sliding transitions, merge tracking, and solvability checks.
+ * game2048Logic.js — Clean 4x4 grid engine for 2048
+ * Handles sliding, merging, random spawning, and game-over / win checks.
  */
 
 export const GRID_SIZE = 4
-let _nextTileId = 1
-
-export function getNextTileId() {
-  return _nextTileId++
-}
-
-export function resetTileIdCounter(start = 1) {
-  _nextTileId = start
-}
 
 /**
- * Returns a 4x4 representation of current non-merged tiles.
+ * Creates an empty 4x4 grid.
  */
-export function tilesToGrid(tiles) {
-  const grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0))
-  for (const tile of tiles) {
-    if (!tile.mergedInto) {
-      grid[tile.row][tile.col] = tile.value
-    }
-  }
-  return grid
-}
-
-/**
- * Finds all empty coordinate pairs (r, c) on the board.
- */
-export function getEmptyCoordinates(tiles) {
-  const occupied = new Set()
-  for (const tile of tiles) {
-    if (!tile.mergedInto) {
-      occupied.add(`${tile.row},${tile.col}`)
-    }
-  }
-
-  const empty = []
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      if (!occupied.has(`${r},${c}`)) {
-        empty.push({ row: r, col: c })
-      }
-    }
-  }
-  return empty
+export function createEmptyGrid() {
+  return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0))
 }
 
 /**
  * Spawns a random tile (2 with 90% chance, 4 with 10% chance) in an empty cell.
+ * Returns { grid, spawnedCell: { r, c, val } | null }
  */
-export function spawnTile(tiles) {
-  const emptyCoords = getEmptyCoordinates(tiles)
-  if (emptyCoords.length === 0) return { tiles, spawnedTile: null }
-
-  const randomCoord = emptyCoords[Math.floor(Math.random() * emptyCoords.length)]
-  const value = Math.random() < 0.9 ? 2 : 4
-  const spawnedTile = {
-    id: getNextTileId(),
-    value,
-    row: randomCoord.row,
-    col: randomCoord.col,
-    isNew: true,
-  }
-
-  return {
-    tiles: [...tiles, spawnedTile],
-    spawnedTile,
-  }
-}
-
-/**
- * Creates 2 initial tiles on a clean board.
- */
-export function initTiles() {
-  resetTileIdCounter(1)
-  const first = spawnTile([])
-  const second = spawnTile(first.tiles)
-  return second.tiles
-}
-
-/**
- * Moves tiles in the chosen direction ('left', 'right', 'up', 'down').
- * Maintains source tile IDs for sliding animation, creates new merged tiles,
- * and marks merged source tiles with `mergedInto`.
- */
-export function moveTiles(currentTiles, direction) {
-  // Only process active tiles (not already merged)
-  const activeTiles = currentTiles.filter((t) => !t.mergedInto).map((t) => ({
-    ...t,
-    isNew: false,
-    isMerged: false,
-    prevRow: t.row,
-    prevCol: t.col,
-  }))
-
-  const nextTiles = []
-  let scoreGained = 0
-  let changed = false
-
-  const isHorizontal = direction === 'left' || direction === 'right'
-  const isForward = direction === 'right' || direction === 'down'
-
-  // Process 4 rows (horizontal) or 4 columns (vertical)
-  for (let lineIdx = 0; lineIdx < GRID_SIZE; lineIdx++) {
-    // Collect tiles in this line
-    const lineTiles = activeTiles.filter((t) =>
-      isHorizontal ? t.row === lineIdx : t.col === lineIdx
-    )
-
-    // Sort in order of movement leading edge
-    lineTiles.sort((a, b) => {
-      const posA = isHorizontal ? a.col : a.row
-      const posB = isHorizontal ? b.col : b.row
-      return isForward ? posB - posA : posA - posB
-    })
-
-    let targetIdx = isForward ? GRID_SIZE - 1 : 0
-    const step = isForward ? -1 : 1
-
-    let i = 0
-    while (i < lineTiles.length) {
-      const curr = lineTiles[i]
-      const next = lineTiles[i + 1]
-
-      if (next && curr.value === next.value) {
-        // Merge curr and next into a new tile at targetIdx
-        const targetRow = isHorizontal ? lineIdx : targetIdx
-        const targetCol = isHorizontal ? targetIdx : lineIdx
-
-        // Check if any tile actually changed position
-        if (curr.row !== targetRow || curr.col !== targetCol) changed = true
-        if (next.row !== targetRow || next.col !== targetCol) changed = true
-        changed = true // Merge is always a change
-
-        const mergedValue = curr.value * 2
-        scoreGained += mergedValue
-        const mergedId = getNextTileId()
-
-        // Move source tiles to target and mark them merged
-        curr.row = targetRow
-        curr.col = targetCol
-        curr.mergedInto = mergedId
-
-        next.row = targetRow
-        next.col = targetCol
-        next.mergedInto = mergedId
-
-        // Create new merged tile
-        const mergedTile = {
-          id: mergedId,
-          value: mergedValue,
-          row: targetRow,
-          col: targetCol,
-          isMerged: true,
-        }
-
-        nextTiles.push(curr, next, mergedTile)
-        targetIdx += step
-        i += 2
-      } else {
-        // Move curr to targetIdx
-        const targetRow = isHorizontal ? lineIdx : targetIdx
-        const targetCol = isHorizontal ? targetIdx : lineIdx
-
-        if (curr.row !== targetRow || curr.col !== targetCol) {
-          changed = true
-        }
-
-        curr.row = targetRow
-        curr.col = targetCol
-        nextTiles.push(curr)
-
-        targetIdx += step
-        i += 1
+export function spawnRandomTile(grid) {
+  const emptyCells = []
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (grid[r][c] === 0) {
+        emptyCells.push({ r, c })
       }
     }
   }
 
+  if (emptyCells.length === 0) {
+    return { grid, spawnedCell: null }
+  }
+
+  const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+  const val = Math.random() < 0.9 ? 2 : 4
+
+  const nextGrid = grid.map((row) => [...row])
+  nextGrid[randomCell.r][randomCell.c] = val
+
   return {
-    tiles: nextTiles,
-    scoreGained,
-    changed,
+    grid: nextGrid,
+    spawnedCell: { r: randomCell.r, c: randomCell.c, val },
   }
 }
 
 /**
- * Removes tiles that merged away and clears animation flags.
+ * Initializes a new 2048 game grid with 2 random tiles.
  */
-export function cleanMergedTiles(tiles) {
-  return tiles
-    .filter((t) => !t.mergedInto)
-    .map((t) => ({
-      id: t.id,
-      value: t.value,
-      row: t.row,
-      col: t.col,
-    }))
+export function initGameGrid() {
+  const empty = createEmptyGrid()
+  const res1 = spawnRandomTile(empty)
+  const res2 = spawnRandomTile(res1.grid)
+  return {
+    grid: res2.grid,
+    spawnedCells: [res1.spawnedCell, res2.spawnedCell].filter(Boolean),
+  }
 }
 
 /**
- * Checks if any valid moves remain on the board.
+ * Compresses and merges a single 4-element line.
  */
-export function hasValidMoves(tiles) {
-  const grid = tilesToGrid(tiles)
+function mergeLine(line) {
+  const nonZero = line.filter((v) => v !== 0)
+  const newLine = []
+  const mergedIndices = []
+  let scoreGained = 0
+  let i = 0
 
-  // 1. Any empty cell?
+  while (i < nonZero.length) {
+    if (i + 1 < nonZero.length && nonZero[i] === nonZero[i + 1]) {
+      const mergedVal = nonZero[i] * 2
+      newLine.push(mergedVal)
+      scoreGained += mergedVal
+      mergedIndices.push(newLine.length - 1)
+      i += 2
+    } else {
+      newLine.push(nonZero[i])
+      i++
+    }
+  }
+
+  while (newLine.length < GRID_SIZE) {
+    newLine.push(0)
+  }
+
+  const changed = line.some((v, idx) => v !== newLine[idx])
+  return { newLine, scoreGained, changed, mergedIndices }
+}
+
+/**
+ * Moves grid in direction: 'left', 'right', 'up', 'down'.
+ * Returns { grid, scoreGained, changed, mergedCells }
+ */
+export function moveGrid(grid, direction) {
+  const nextGrid = createEmptyGrid()
+  let totalScoreGained = 0
+  let hasChanged = false
+  const mergedCells = [] // Array of { r, c } where a merge occurred
+
+  if (direction === 'left') {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const line = grid[r]
+      const { newLine, scoreGained, changed, mergedIndices } = mergeLine(line)
+      nextGrid[r] = newLine
+      totalScoreGained += scoreGained
+      if (changed) hasChanged = true
+      mergedIndices.forEach((c) => mergedCells.push({ r, c }))
+    }
+  } else if (direction === 'right') {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const line = [...grid[r]].reverse()
+      const { newLine, scoreGained, changed, mergedIndices } = mergeLine(line)
+      nextGrid[r] = [...newLine].reverse()
+      totalScoreGained += scoreGained
+      if (changed) hasChanged = true
+      mergedIndices.forEach((c) => mergedCells.push({ r, c: GRID_SIZE - 1 - c }))
+    }
+  } else if (direction === 'up') {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const line = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]]
+      const { newLine, scoreGained, changed, mergedIndices } = mergeLine(line)
+      for (let r = 0; r < GRID_SIZE; r++) {
+        nextGrid[r][c] = newLine[r]
+      }
+      totalScoreGained += scoreGained
+      if (changed) hasChanged = true
+      mergedIndices.forEach((r) => mergedCells.push({ r, c }))
+    }
+  } else if (direction === 'down') {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const line = [grid[3][c], grid[2][c], grid[1][c], grid[0][c]]
+      const { newLine, scoreGained, changed, mergedIndices } = mergeLine(line)
+      for (let r = 0; r < GRID_SIZE; r++) {
+        nextGrid[GRID_SIZE - 1 - r][c] = newLine[r]
+      }
+      totalScoreGained += scoreGained
+      if (changed) hasChanged = true
+      mergedIndices.forEach((r) => mergedCells.push({ r: GRID_SIZE - 1 - r, c }))
+    }
+  }
+
+  return {
+    grid: nextGrid,
+    scoreGained: totalScoreGained,
+    changed: hasChanged,
+    mergedCells,
+  }
+}
+
+/**
+ * Checks if any valid moves remain on the grid.
+ */
+export function hasValidMoves(grid) {
+  // Check for any empty cell
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (grid[r][c] === 0) return true
     }
   }
 
-  // 2. Horizontal equal neighbor?
+  // Check horizontal neighbors
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE - 1; c++) {
       if (grid[r][c] === grid[r][c + 1]) return true
     }
   }
 
-  // 3. Vertical equal neighbor?
+  // Check vertical neighbors
   for (let r = 0; r < GRID_SIZE - 1; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (grid[r][c] === grid[r + 1][c]) return true
@@ -232,8 +175,13 @@ export function hasValidMoves(tiles) {
 }
 
 /**
- * Checks if any tile on the board has reached 2048.
+ * Checks if the board contains a tile with value >= 2048.
  */
-export function hasReached2048(tiles) {
-  return tiles.some((t) => !t.mergedInto && t.value >= 2048)
+export function hasReached2048(grid) {
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (grid[r][c] >= 2048) return true
+    }
+  }
+  return false
 }

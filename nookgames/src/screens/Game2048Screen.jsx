@@ -1,18 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
 import {
-  initTiles,
-  moveTiles,
-  spawnTile,
-  cleanMergedTiles,
+  initGameGrid,
+  moveGrid,
+  spawnRandomTile,
   hasValidMoves,
   hasReached2048,
-  resetTileIdCounter,
 } from '../utils/game2048Logic.js'
 import { playTap, playChime } from '../utils/audio.js'
 
 export function Game2048Screen() {
-  const [tiles, setTiles] = useState(() => initTiles())
+  const [gridState, setGridState] = useState(() => initGameGrid())
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(() => {
     try {
@@ -25,11 +23,13 @@ export function Game2048Screen() {
   const [hasWon, setHasWon] = useState(false)
   const [isGameOver, setIsGameOver] = useState(false)
   const [toastMessage, setToastMessage] = useState(null)
+  const [mergedCells, setMergedCells] = useState([])
+  const [spawnedCell, setSpawnedCell] = useState(null)
 
   const boardRef = useRef(null)
   const touchStartRef = useRef(null)
-  const isAnimatingRef = useRef(false)
-  const cleanupTimerRef = useRef(null)
+
+  const grid = gridState.grid
 
   // Show a gentle toast notification
   const showToast = useCallback((msg, duration = 3000) => {
@@ -44,47 +44,47 @@ export function Game2048Screen() {
   // Start new game
   const handleRestart = useCallback(() => {
     playTap()
-    if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current)
-    const newTiles = initTiles()
-    setTiles(newTiles)
+    const newInit = initGameGrid()
+    setGridState(newInit)
     setScore(0)
     setHistory([])
     setHasWon(false)
     setIsGameOver(false)
     setToastMessage(null)
-    isAnimatingRef.current = false
+    setMergedCells([])
+    setSpawnedCell(null)
   }, [])
 
   // Undo last move
   const handleUndo = useCallback(() => {
-    if (history.length === 0 || isAnimatingRef.current) return
+    if (history.length === 0) return
     playTap()
-    if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current)
     const lastState = history[history.length - 1]
     setHistory((prev) => prev.slice(0, -1))
-    setTiles(cleanMergedTiles(lastState.tiles))
+    setGridState({ grid: lastState.grid, spawnedCells: [] })
     setScore(lastState.score)
     setIsGameOver(false)
     setToastMessage(null)
-    isAnimatingRef.current = false
+    setMergedCells([])
+    setSpawnedCell(null)
   }, [history])
 
   // Move handler
   const handleMove = useCallback(
     (direction) => {
-      if (isGameOver || isAnimatingRef.current) return
+      if (isGameOver) return
 
-      // Clean any pending merged tiles from previous move
-      const currentCleanTiles = cleanMergedTiles(tiles)
-      const { tiles: movedTiles, scoreGained, changed } = moveTiles(currentCleanTiles, direction)
+      const { grid: movedGrid, scoreGained, changed, mergedCells: newMergedCells } = moveGrid(
+        grid,
+        direction
+      )
 
       if (!changed) return // Invalid move in this direction
 
       playTap()
-      isAnimatingRef.current = true
 
       // Save previous state for Undo
-      setHistory((prev) => [...prev.slice(-30), { tiles: currentCleanTiles, score }])
+      setHistory((prev) => [...prev.slice(-30), { grid, score }])
 
       // Update score and best
       const nextScore = score + scoreGained
@@ -98,31 +98,30 @@ export function Game2048Screen() {
         }
       }
 
-      // Spawn new tile immediately so it arrives with the move
-      const { tiles: withSpawned } = spawnTile(movedTiles)
-      setTiles(withSpawned)
+      // Spawn new tile on random empty cell
+      const { grid: finalGrid, spawnedCell: newSpawnedCell } = spawnRandomTile(movedGrid)
+      setGridState({ grid: finalGrid, spawnedCells: newSpawnedCell ? [newSpawnedCell] : [] })
+      setMergedCells(newMergedCells)
+      setSpawnedCell(newSpawnedCell)
 
-      // Clean up merged-away source tiles after 120ms transition
-      if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current)
-      cleanupTimerRef.current = setTimeout(() => {
-        setTiles((prev) => cleanMergedTiles(prev))
-        isAnimatingRef.current = false
-
-        // Check 2048 achievement
-        if (!hasWon && hasReached2048(withSpawned)) {
-          setHasWon(true)
+      // Check 2048 achievement
+      if (!hasWon && hasReached2048(finalGrid)) {
+        setHasWon(true)
+        setTimeout(() => {
           playChime()
           showToast('Form achieved: 2048', 4000)
-        }
+        }, 200)
+      }
 
-        // Check Game Over
-        if (!hasValidMoves(withSpawned)) {
-          setIsGameOver(true)
+      // Check Game Over
+      if (!hasValidMoves(finalGrid)) {
+        setIsGameOver(true)
+        setTimeout(() => {
           showToast('Space filled in quiet stillness.', 0)
-        }
-      }, 130)
+        }, 300)
+      }
     },
-    [tiles, score, bestScore, isGameOver, hasWon, showToast]
+    [grid, score, bestScore, isGameOver, hasWon, showToast]
   )
 
   // Keyboard navigation
@@ -164,7 +163,7 @@ export function Game2048Screen() {
     }
 
     const onTouchMove = (e) => {
-      // Prevent screen scrolling & bounce during swipe gesture
+      // Prevent screen scrolling & bounce during swipe gesture inside board
       if (touchStartRef.current && e.cancelable) {
         e.preventDefault()
       }
@@ -282,36 +281,32 @@ export function Game2048Screen() {
           role="grid"
           aria-label="2048 4x4 Board"
         >
-          {/* Background Empty Cells */}
-          <div className="g2048-grid-bg" aria-hidden="true">
-            {Array.from({ length: 16 }).map((_, idx) => (
-              <div key={`bg-${idx}`} className="g2048-cell g2048-cell--empty" />
-            ))}
-          </div>
+          {grid.map((row, r) =>
+            row.map((val, c) => {
+              const isMerged = mergedCells.some((cell) => cell.r === r && cell.c === c)
+              const isNew = spawnedCell && spawnedCell.r === r && spawnedCell.c === c
 
-          {/* Coordinate-based Sliding Tile Layer */}
-          <div className="g2048-tile-container" aria-live="polite">
-            {tiles.map((tile) => (
-              <div
-                key={tile.id}
-                className={`g2048-tile-item${tile.mergedInto ? ' g2048-tile-item--merged-into' : ''}`}
-                style={{
-                  '--row': tile.row,
-                  '--col': tile.col,
-                }}
-              >
+              let tileClass = 'g2048-slot'
+              if (val > 0) {
+                tileClass += ` g2048-tile g2048-tile--${val <= 2048 ? val : 'super'}`
+                if (isMerged) tileClass += ' g2048-tile--merged'
+                if (isNew) tileClass += ' g2048-tile--new'
+              } else {
+                tileClass += ' g2048-slot--empty'
+              }
+
+              return (
                 <div
-                  className={`g2048-tile g2048-tile--${tile.value <= 2048 ? tile.value : 'super'}${
-                    tile.isNew ? ' g2048-tile--new' : ''
-                  }${tile.isMerged ? ' g2048-tile--merged' : ''}`}
+                  key={`cell-${r}-${c}`}
+                  className={tileClass}
                   role="gridcell"
-                  aria-label={`Tile ${tile.value}`}
+                  aria-label={val > 0 ? `Tile ${val}` : 'Empty'}
                 >
-                  <span className="g2048-tile-text">{tile.value}</span>
+                  {val > 0 && <span className="g2048-tile-text">{val}</span>}
                 </div>
-              </div>
-            ))}
-          </div>
+              )
+            })
+          )}
         </div>
       </div>
 

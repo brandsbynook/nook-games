@@ -2849,7 +2849,7 @@
   line-height: 1.4;
 }
 
-/* ── Board Wrap & Grid ── */
+/* ── Board Wrap & Strict Grid ── */
 .g2048-board-wrap {
   flex: 1;
   display: flex;
@@ -2859,78 +2859,48 @@
 }
 
 .g2048-board {
-  position: relative;
   width: 100%;
   max-width: 330px;
   aspect-ratio: 1 / 1;
-  background: #141414;
+  background: #0f0f0f;
   border: 1px solid #222222;
   border-radius: 16px;
-  padding: 10px;
-  box-sizing: border-box;
-  touch-action: none;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.g2048-grid-bg {
-  width: 100%;
-  height: 100%;
+  padding: 12px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
+  box-sizing: border-box;
+  touch-action: none;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-.g2048-cell--empty {
-  background: #181818;
-  border: 1px solid #1f1f1f;
-  border-radius: 10px;
-}
-
-/* ── Coordinate-based Sliding Tile Container ── */
-.g2048-tile-container {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  pointer-events: none;
-}
-
-.g2048-tile-item {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: calc((100% - 24px) / 4);
-  height: calc((100% - 24px) / 4);
-  transform: translate3d(
-    calc(var(--col) * ((100% - 24px) / 4 + 8px)),
-    calc(var(--row) * ((100% - 24px) / 4 + 8px)),
-    0
-  );
-  transition: transform 120ms ease-in-out;
-  will-change: transform;
-  z-index: 10;
-}
-
-.g2048-tile-item--merged-into {
-  z-index: 5;
-  opacity: 0.9;
-}
-
-.g2048-tile {
+/* ── Slots & Minimalist Sanctuary Tiles ── */
+.g2048-slot {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.g2048-slot--empty {
+  background: #141414;
+  border: 1px solid #202020;
+}
+
+.g2048-tile {
   font-family: var(--font-ui);
   font-weight: 700;
   font-size: 1.4rem;
-  box-sizing: border-box;
-  position: relative;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 100ms ease, background 100ms ease;
 }
 
 /* ── Tile Values ── */
@@ -2941,62 +2911,61 @@
 }
 
 .g2048-tile--4 {
-  background: #2a2a2a;
-  color: #f2f2f2;
-  border: 1px solid #383838;
+  background: #282828;
+  color: #f0f0f0;
+  border: 1px solid #363636;
 }
 
 .g2048-tile--8 {
-  background: #363636;
+  background: #343434;
   color: #ffffff;
-  border: 1px solid #484848;
+  border: 1px solid #444444;
 }
 
 .g2048-tile--16 {
-  background: #424242;
+  background: #404040;
   color: #ffffff;
-  border: 1px solid #565656;
+  border: 1px solid #525252;
 }
 
 .g2048-tile--32 {
-  background: #505050;
+  background: #4c4c4c;
   color: #ffffff;
-  border: 1px solid #666666;
+  border: 1px solid #606060;
 }
 
 .g2048-tile--64 {
-  background: #626262;
+  background: #5a5a5a;
   color: #ffffff;
-  border: 1px solid #787878;
+  border: 1px solid #707070;
 }
 
 .g2048-tile--128 {
-  background: #787878;
+  background: #6a6a6a;
   color: #ffffff;
-  border: 1px solid #8e8e8e;
+  border: 1px solid #828282;
   font-size: 1.25rem;
 }
 
 .g2048-tile--256 {
-  background: #949494;
-  color: #0a0a0a;
-  border: 1px solid #aaaaaa;
+  background: #808080;
+  color: #ffffff;
+  border: 1px solid #999999;
   font-size: 1.25rem;
-  font-weight: 800;
 }
 
 .g2048-tile--512 {
-  background: #b4b4b4;
+  background: #9c9c9c;
   color: #0a0a0a;
-  border: 1px solid #cccccc;
+  border: 1px solid #b4b4b4;
   font-size: 1.25rem;
   font-weight: 800;
 }
 
 .g2048-tile--1024 {
-  background: #d4d4d4;
+  background: #bebebe;
   color: #0a0a0a;
-  border: 1px solid #e2e2e2;
+  border: 1px solid #d4d4d4;
   font-size: 1.05rem;
   font-weight: 800;
 }
@@ -3021,12 +2990,12 @@
 
 /* ── Tile Animations ── */
 .g2048-tile--new {
-  animation: tileSpawn 150ms ease-out forwards;
+  animation: tileSpawn 100ms ease-out forwards;
 }
 @keyframes tileSpawn {
   0% {
-    transform: scale(0);
-    opacity: 0;
+    transform: scale(0.7);
+    opacity: 0.5;
   }
   100% {
     transform: scale(1);
@@ -3035,14 +3004,14 @@
 }
 
 .g2048-tile--merged {
-  animation: mergePop 180ms ease-in-out forwards;
+  animation: mergePop 100ms ease-in-out forwards;
 }
 @keyframes mergePop {
   0% {
-    transform: scale(0.9);
+    transform: scale(0.92);
   }
   50% {
-    transform: scale(1.08);
+    transform: scale(1.06);
   }
   100% {
     transform: scale(1);
