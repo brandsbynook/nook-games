@@ -5,6 +5,7 @@ import { BriefingScreen } from './screens/BriefingScreen.jsx'
 import { CollectionScreen } from './screens/CollectionScreen.jsx'
 import { EditorPickScreen } from './screens/EditorPickScreen.jsx'
 import { FifteenPuzzleScreen } from './screens/FifteenPuzzleScreen.jsx'
+import { SudokuScreen } from './screens/SudokuScreen.jsx'
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -47,6 +48,10 @@ function parseRoute() {
   // Playable game routes
   if (parts[0] === 'play' && parts[1] === '15-puzzle') {
     return { name: 'play-15-puzzle' }
+  }
+
+  if (parts[0] === 'play' && parts[1] === 'sudoku') {
+    return { name: 'play-sudoku' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -109,6 +114,10 @@ function App() {
 
   if (route.name === 'play-15-puzzle') {
     return <FifteenPuzzleScreen />
+  }
+
+  if (route.name === 'play-sudoku') {
+    return <SudokuScreen />
   }
 
   return (

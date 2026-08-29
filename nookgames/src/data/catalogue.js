@@ -17,7 +17,7 @@ export const collections = [
         howToPlay: 'Each row, column and 3×3 box must contain the digits 1–9 without repetition.',
         difficulty: 'Moderate',
         timeEstimate: '10–25 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'nonogram',
