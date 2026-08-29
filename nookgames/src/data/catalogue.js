@@ -3,49 +3,44 @@ export const collections = [
     id: 'logic',
     title: 'Logic',
     description: 'Grid puzzles solved by quiet deduction.',
+    tagline: 'Test your reasoning and deduction.',
     icon: 'logic',
     games: [
       {
         id: 'sudoku',
         title: 'Sudoku',
         category: 'logic',
-        quote: 'Order emerges from constraint.',
-        about:
-          'Sudoku is a number-placement puzzle played on a 9×9 grid divided into nine 3×3 boxes. Each row, column, and box must contain every digit from 1 to 9 exactly once. No arithmetic is involved — only pure logical deduction.',
-        origin:
-          'Popularised worldwide by Japanese publisher Nikoli in 1984 under the name 数独 (sūdoku, "single number"), the puzzle format traces its roots to 18th-century Latin Squares studied by mathematician Leonhard Euler.',
-        howToPlay:
-          'Fill every empty cell with a digit 1–9. Each row, each column, and each 3×3 box must contain all nine digits with no repetition. Start with cells that have only one legal candidate and expand outward.',
+        quote: 'Every answer exists.',
+        about: 'Fill the 9×9 grid so that every row, column, and 3×3 box contains the numbers 1 to 9 exactly once.',
+        bestFor: 'Logic, focus, and problem solving.',
+        origin: 'Switzerland, 18th century. Popularised as Number Place in the 1970s and as Sudoku in Japan in the 1980s.',
+        howToPlay: 'Each row, column and 3×3 box must contain the digits 1–9 without repetition.',
         difficulty: 'Moderate',
         timeEstimate: '10–25 min',
-        isPlayable: true,
+        isPlayable: false,
       },
       {
         id: 'nonogram',
         title: 'Nonogram',
         category: 'logic',
-        quote: 'A picture hidden in numbers.',
-        about:
-          'Nonograms are picture logic puzzles where you paint cells in a grid to reveal a hidden pixel image. Clue numbers on the edges of each row and column describe the lengths of consecutive filled blocks, in order.',
-        origin:
-          'Independently invented by Non Ishida and Tetsuya Nishio in Japan in 1987. Non Ishida won a competition with a design inspired by skyscraper windows, giving the puzzle its Japanese name "お絵かきロジック" (logic art).',
-        howToPlay:
-          'For each row and column, the number clues tell you how many consecutive filled cells appear, in sequence. Use logic to determine which cells must be filled and which must be empty. When every row and column matches its clues, the image is revealed.',
+        quote: 'The picture is in the numbers.',
+        about: 'Fill or leave cells blank to reveal a hidden picture, guided only by number clues.',
+        bestFor: 'Deductive reasoning.',
+        origin: 'Japan, 1980s. Also known as Picross or Griddlers.',
+        howToPlay: 'Each row and column clue lists the lengths of consecutive filled blocks in order.',
         difficulty: 'Moderate',
-        timeEstimate: '15–40 min',
+        timeEstimate: '5–15 min',
         isPlayable: false,
       },
       {
         id: 'kakuro',
         title: 'Kakuro',
         category: 'logic',
-        quote: 'Sums that demand precision.',
-        about:
-          'Kakuro is a crossword-style number puzzle. White cells must be filled with digits 1–9 so that consecutive groups sum to the value shown in their clue cell, and no digit repeats within a single sum.',
-        origin:
-          'First published in 1966 in the US as "Cross Sums" by Dell Magazines, Kakuro was reintroduced to Japan by Nikoli in 1980 where it became widely popular under its current name, derived from 加算クロス (kasan kurosu, "addition cross").',
-        howToPlay:
-          'Place digits 1–9 in white cells so each horizontal and vertical run sums to its clue number. No digit may repeat in a single run. Clue numbers appear in grey cells — above the diagonal for the vertical run, below for the horizontal run.',
+        quote: 'Sums that fit.',
+        about: 'Fill white cells with digits 1–9 so that each run of cells sums to its clue and no digit repeats.',
+        bestFor: 'Arithmetic reasoning and patience.',
+        origin: 'First published in the US in 1966 as Cross Sums, then reintroduced to Japan by Nikoli in 1980.',
+        howToPlay: 'Each horizontal and vertical run must sum to its clue number using unique digits 1–9.',
         difficulty: 'Hard',
         timeEstimate: '20–45 min',
         isPlayable: false,
@@ -54,13 +49,11 @@ export const collections = [
         id: 'slitherlink',
         title: 'Slitherlink',
         category: 'logic',
-        quote: 'Draw the loop that completes itself.',
-        about:
-          'Slitherlink asks you to draw a single unbroken loop through a grid of dots. Numbers inside cells indicate exactly how many of that cell\'s four sides the loop must pass through — and the loop must never cross or branch.',
-        origin:
-          'Created by Nikoli and first published in 1989. The puzzle is also known as Fences, Loop the Loop, and Loopy. Its elegant constraint — a single closed loop — gives it a meditative quality that has made it a classic logic genre.',
-        howToPlay:
-          'Connect adjacent dots with horizontal or vertical line segments to form a single closed loop. Each numbered cell must have exactly that many of its sides on the loop. Empty cells may have any number of sides on the loop.',
+        quote: 'One loop, perfectly closed.',
+        about: 'Draw a single closed loop through the grid so every numbered cell has that many sides on the loop.',
+        bestFor: 'Topological logic.',
+        origin: 'Japan, published by Nikoli in 1989.',
+        howToPlay: 'Connect dots to form a single non-crossing loop respecting all cell clues.',
         difficulty: 'Hard',
         timeEstimate: '20–50 min',
         isPlayable: false,
@@ -70,12 +63,10 @@ export const collections = [
         title: 'Shikaku',
         category: 'logic',
         quote: 'Partition the space without remainder.',
-        about:
-          'Shikaku is a spatial division puzzle. A rectangular grid contains numbered cells; you must partition the entire grid into non-overlapping rectangles such that each rectangle contains exactly one number, and that number equals the rectangle\'s area.',
-        origin:
-          'Published by Nikoli in 2005, Shikaku (四角に切れ, meaning "divide into squares") is one of Nikoli\'s more recent classic puzzles. Its clean rules and satisfying geometry have earned it a dedicated following.',
-        howToPlay:
-          'Divide the grid into rectangles. Every rectangle must contain exactly one number clue, and its area (width × height in cells) must equal that number. All cells must belong to exactly one rectangle.',
+        about: 'Divide the grid into non-overlapping rectangles so each rectangle contains exactly one number equal to its area.',
+        bestFor: 'Spatial division and geometry.',
+        origin: 'Published by Nikoli in 2005. The name means "divide into squares."',
+        howToPlay: 'Every rectangle must contain exactly one clue number equalling its cell count.',
         difficulty: 'Easy',
         timeEstimate: '5–15 min',
         isPlayable: false,
@@ -86,19 +77,18 @@ export const collections = [
     id: 'spatial',
     title: 'Spatial',
     description: 'Path, arrangement and motion puzzles.',
+    tagline: 'Train your spatial awareness.',
     icon: 'spatial',
     games: [
       {
         id: '15-puzzle',
         title: '15 Puzzle',
         category: 'spatial',
-        quote: 'One space. Infinite paths. One solution.',
-        about:
-          'The 15 Puzzle is a classic sliding tile puzzle consisting of fifteen numbered tiles arranged in a 4×4 grid with one blank space. By sliding tiles into the blank, you must reach a target ordered arrangement.',
-        origin:
-          'Invented in the 1870s, possibly by Sam Loyd or Noyes Palmer Chapman. It became a craze in 1880, captivating the public across North America and Europe. Mathematicians proved that exactly half of all scrambled states are solvable.',
-        howToPlay:
-          'Slide tiles horizontally or vertically into the empty space. Rearrange all 15 numbered tiles into numerical order (1–15 left-to-right, top-to-bottom) with the blank in the bottom-right corner.',
+        quote: 'One space. Infinite paths.',
+        about: 'Slide fifteen numbered tiles in a 4×4 grid using the single blank space to restore numerical order.',
+        bestFor: 'Spatial thinking and sequential planning.',
+        origin: 'A craze in 1880s North America, invented around 1874. Mathematicians proved half of all positions are unsolvable.',
+        howToPlay: 'Slide tiles into the blank space. Arrange 1–15 left-to-right, top-to-bottom, blank in the bottom-right.',
         difficulty: 'Moderate',
         timeEstimate: '2–10 min',
         isPlayable: true,
@@ -108,12 +98,10 @@ export const collections = [
         title: 'Untangle',
         category: 'spatial',
         quote: 'Every knot has a geometry of release.',
-        about:
-          'Untangle presents a planar graph with nodes and edges drawn in a tangled configuration. Your task is to drag nodes to new positions until no two edges cross, revealing the graph\'s true planar embedding.',
-        origin:
-          'Untangle (also known as Planarity) was created by John Tantalo in 2005 as a web game, inspired by the mathematical concept of planar graphs studied since Euler\'s Seven Bridges of Königsberg problem in 1736.',
-        howToPlay:
-          'Drag the coloured nodes around the canvas. The goal is to position every node so that no two edges cross each other. A crossing edge turns red; a clean edge is white. The puzzle is solved when all edges are uncrossed.',
+        about: 'Drag nodes of a planar graph until no two edges cross.',
+        bestFor: 'Spatial reasoning and graph intuition.',
+        origin: 'Created by John Tantalo in 2005, inspired by Euler\'s 1736 planar graph theory.',
+        howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
         difficulty: 'Moderate',
         timeEstimate: '5–20 min',
         isPlayable: false,
@@ -123,12 +111,10 @@ export const collections = [
         title: 'Arrow Puzzle',
         category: 'spatial',
         quote: 'Every arrow knows where it wants to point.',
-        about:
-          'Arrow Puzzle presents a grid of cells, each containing an arrow pointing in one of eight directions. Rotate the arrows by clicking or tapping to create a valid flow — every arrow must point toward the next step in a chain that covers the whole board.',
-        origin:
-          'Arrow puzzles exist across many traditions under names like "Lights Out" variants and directional flow puzzles, popularised in the mobile gaming era of the early 2010s for their intuitive yet deeply challenging mechanic.',
-        howToPlay:
-          'Tap each cell to rotate its arrow. Arrange all arrows so that following the direction of each arrow eventually connects every cell in a single coherent path or network as specified by the puzzle rules.',
+        about: 'Rotate arrows in a grid to create a valid directional flow that covers the whole board.',
+        bestFor: 'Pattern recognition and logical flow.',
+        origin: 'Popularised in the mobile gaming era of the early 2010s as directional flow puzzles.',
+        howToPlay: 'Tap each cell to rotate its arrow so all arrows form a valid connected path.',
         difficulty: 'Easy',
         timeEstimate: '5–15 min',
         isPlayable: false,
@@ -138,12 +124,10 @@ export const collections = [
         title: 'One Line',
         category: 'spatial',
         quote: 'The stroke that cannot revisit.',
-        about:
-          'One Line (also known as Eulerian Path puzzles) challenges you to draw a single unbroken line that passes through every edge of a given figure exactly once, without lifting your finger or revisiting an edge.',
-        origin:
-          'Rooted in Leonhard Euler\'s 1736 solution to the Seven Bridges of Königsberg problem — the founding moment of graph theory. Euler proved that such a path exists only when a graph has exactly zero or two nodes of odd degree.',
-        howToPlay:
-          'Trace a path starting from any node. Your line must travel along each edge exactly once. You may revisit nodes but never an edge. The puzzle is complete when every edge has been drawn.',
+        about: 'Trace a single unbroken line that passes through every edge of the figure exactly once.',
+        bestFor: 'Graph traversal intuition.',
+        origin: 'Rooted in Euler\'s 1736 Seven Bridges of Königsberg — the founding moment of graph theory.',
+        howToPlay: 'Trace a path using each edge exactly once without lifting your finger.',
         difficulty: 'Easy',
         timeEstimate: '1–5 min',
         isPlayable: false,
@@ -153,12 +137,10 @@ export const collections = [
         title: '2048',
         category: 'spatial',
         quote: 'Merge. Again. Always merge.',
-        about:
-          '2048 is a single-player sliding tile game on a 4×4 grid. Tiles bearing powers of two slide and merge when they collide with equal-value tiles. The goal is to create a tile bearing the number 2048.',
-        origin:
-          'Created by 19-year-old Italian developer Gabriele Cirulli in March 2014 in a single weekend, as an experiment in JavaScript. It went viral within days and became one of the most-cloned browser games in history.',
-        howToPlay:
-          'Swipe (or use arrow keys) to slide all tiles in one direction. Tiles with the same value merge into their sum. A new tile (2 or 4) appears after each move. Reach the 2048 tile to win — or keep going for a higher score.',
+        about: 'Slide tiles on a 4×4 grid to merge equal-value tiles and reach the 2048 tile.',
+        bestFor: 'Strategic planning and quick decisions.',
+        origin: 'Created by 19-year-old Gabriele Cirulli in March 2014 over a single weekend. It went viral immediately.',
+        howToPlay: 'Swipe to slide all tiles. Matching tiles merge into their sum. Reach 2048 to win.',
         difficulty: 'Easy',
         timeEstimate: '5–30 min',
         isPlayable: false,
@@ -169,19 +151,18 @@ export const collections = [
     id: 'strategy',
     title: 'Strategy',
     description: 'Turn-based games of position and patience.',
+    tagline: 'Plan ahead. Think deep.',
     icon: 'strategy',
     games: [
       {
         id: 'knights-tour',
         title: "Knight's Tour",
         category: 'strategy',
-        quote: 'Every square, visited once, never twice.',
-        about:
-          "The Knight's Tour is a chess puzzle in which a knight must visit every square of the board exactly once. It is a special case of the Hamiltonian path problem in mathematics, with deep connections to graph theory.",
-        origin:
-          "Recorded as early as the 9th century in Arabic manuscripts. The problem fascinated mathematicians from Euler (who found a closed tour in 1759) to Warnsdorff, whose 1823 heuristic still bears his name and guides most efficient solutions today.",
-        howToPlay:
-          "Place a knight on any square and move it according to chess rules (L-shapes: two squares in one direction, one perpendicular). Visit every square on the board exactly once. A closed tour returns to the starting square; an open tour ends anywhere.",
+        quote: 'Every square, visited once.',
+        about: "Move a chess knight to visit every square on the board exactly once — a Hamiltonian path problem.",
+        bestFor: 'Algorithmic thinking and spatial memory.',
+        origin: 'Recorded as early as the 9th century in Arabic manuscripts. Euler found a closed tour in 1759.',
+        howToPlay: 'Place a knight and move it in L-shapes. Visit every square exactly once.',
         difficulty: 'Hard',
         timeEstimate: '15–40 min',
         isPlayable: false,
@@ -191,12 +172,10 @@ export const collections = [
         title: 'Chess',
         category: 'strategy',
         quote: 'The board remembers every intention.',
-        about:
-          'Chess is a two-player abstract strategy game played on an 8×8 grid. Each player commands sixteen pieces of different types with unique movement rules. The objective is to checkmate the opponent\'s king — to threaten it with inevitable capture.',
-        origin:
-          'Originating in India around the 6th century CE as Chaturanga, chess spread through Persia as Shatranj before taking its modern form in 15th-century Europe. It remains the most studied strategy game in the world.',
-        howToPlay:
-          'Players alternate turns moving one piece at a time. Each piece type has unique movement: pawns advance and capture diagonally, rooks move in straight lines, bishops diagonally, knights in L-shapes, queens any direction, kings one square. Capture the opponent\'s king to win.',
+        about: 'A two-player abstract game where you command sixteen pieces to checkmate the opponent\'s king.',
+        bestFor: 'Deep strategic thinking and foresight.',
+        origin: 'Originated in India around the 6th century CE as Chaturanga, reaching modern form in 15th-century Europe.',
+        howToPlay: 'Move pieces according to their unique rules. Threaten the opponent\'s king with inevitable capture.',
         difficulty: 'Hard',
         timeEstimate: '15–90 min',
         isPlayable: false,
@@ -206,12 +185,10 @@ export const collections = [
         title: 'Go',
         category: 'strategy',
         quote: 'The oldest game still searching for its end.',
-        about:
-          'Go is a two-player abstract strategy board game originating in China over 2,500 years ago. Players alternately place black and white stones on the intersections of a 19×19 grid, aiming to surround and capture more territory than the opponent.',
-        origin:
-          'The oldest board game still widely played, Go (围棋, Wéiqí) dates to at least 500 BCE in China. It spread to Korea and Japan, where it became deeply embedded in culture. AlphaGo\'s 2016 victory over human champions shocked the world.',
-        howToPlay:
-          'Place stones on intersections of the grid on your turn. A group of stones with no liberties (empty adjacent intersections) is captured and removed. The player who surrounds the most territory wins. Simple rules, boundless depth.',
+        about: 'Place black and white stones on a 19×19 grid to surround more territory than your opponent.',
+        bestFor: 'Whole-board vision and patience.',
+        origin: 'Over 2,500 years old and originating in China. AlphaGo\'s 2016 victory shocked the world.',
+        howToPlay: 'Place stones on intersections. A group with no adjacent empty points is captured and removed.',
         difficulty: 'Very Hard',
         timeEstimate: '30–120 min',
         isPlayable: false,
@@ -221,12 +198,10 @@ export const collections = [
         title: 'Reversi',
         category: 'strategy',
         quote: 'To place is to transform.',
-        about:
-          'Reversi (marketed as Othello) is a two-player strategy game on an 8×8 board. Placing a disc flanks one or more of the opponent\'s discs in a straight line, flipping them to your colour. The player with the most discs at the end wins.',
-        origin:
-          'Invented in England in 1883, simultaneously by Lewis Waterman and John W. Mollett. It was repackaged and popularised as Othello by Goro Hasegawa in Japan in 1971, and remains one of the most widely-played abstract strategy games.',
-        howToPlay:
-          'Place a disc of your colour so that it flanks at least one row, column, or diagonal of opponent discs between it and another of your discs. All flanked discs flip to your colour. You must always play a valid move if one exists.',
+        about: 'Place discs to flip all opponent discs flanked between yours. The player with most discs wins.',
+        bestFor: 'Tactical thinking and positional awareness.',
+        origin: 'Invented in England in 1883; repackaged as Othello in Japan in 1971.',
+        howToPlay: 'Place a disc so it flanks opponent discs in a line. All flanked discs flip to your colour.',
         difficulty: 'Moderate',
         timeEstimate: '10–30 min',
         isPlayable: false,
@@ -236,12 +211,10 @@ export const collections = [
         title: 'Checkers',
         category: 'strategy',
         quote: 'The diagonal world has its own laws.',
-        about:
-          'Checkers (Draughts) is a two-player board game on an 8×8 grid. Pieces move diagonally and capture by jumping over opponent pieces. A piece reaching the far side becomes a King, gaining the ability to move backwards.',
-        origin:
-          'Descended from an ancient game called Alquerque played in Egypt as early as 1400 BCE. The modern diagonal form on a chessboard appears in 12th-century France. Checkers was solved computationally in 2007 by Jonathan Schaeffer.',
-        howToPlay:
-          'Move your pieces diagonally forward. Capture opponent pieces by jumping over them to an empty square. Multiple jumps in one turn are mandatory if available. King pieces can move and jump diagonally in any direction. Capture all opponent pieces or block them completely to win.',
+        about: 'Move pieces diagonally and jump over opponents. Reach the far side to become a King.',
+        bestFor: 'Tactical captures and forward planning.',
+        origin: 'Descended from Alquerque (Egypt, ~1400 BCE). Computationally solved by Jonathan Schaeffer in 2007.',
+        howToPlay: 'Move diagonally forward. Capture by jumping over opponent pieces. Kings move in any diagonal direction.',
         difficulty: 'Easy',
         timeEstimate: '10–20 min',
         isPlayable: false,
@@ -252,19 +225,18 @@ export const collections = [
     id: 'words-reasoning',
     title: 'Words & Reasoning',
     description: 'Language and stepwise reasoning puzzles.',
+    tagline: 'Expand your mind through language.',
     icon: 'words',
     games: [
       {
         id: 'word-ladder',
         title: 'Word Ladder',
         category: 'words-reasoning',
-        quote: 'From one word to another, one letter at a time.',
-        about:
-          'Word Ladder challenges you to transform one word into another by changing a single letter at each step. Every intermediate step must be a valid word. The puzzle is a graph traversal problem dressed in language.',
-        origin:
-          'Invented by Lewis Carroll (author of Alice in Wonderland) in 1877 and originally called "Doublets." Carroll published a regular Doublets column in Vanity Fair magazine from 1879 to 1881. It was one of the first published word puzzles of its kind.',
-        howToPlay:
-          'Start with the given word. Change exactly one letter to form a new valid word. Repeat until you reach the target word. Try to complete the transformation in as few steps as possible.',
+        quote: 'One letter at a time.',
+        about: 'Transform one word into another by changing a single letter at each step through valid words.',
+        bestFor: 'Vocabulary breadth and lateral thinking.',
+        origin: 'Invented by Lewis Carroll in 1877 and published as Doublets in Vanity Fair magazine.',
+        howToPlay: 'Each step must be a valid word. Change exactly one letter per step.',
         difficulty: 'Easy',
         timeEstimate: '2–10 min',
         isPlayable: false,
@@ -274,12 +246,10 @@ export const collections = [
         title: 'Crossword',
         category: 'words-reasoning',
         quote: 'The intersection of knowledge and language.',
-        about:
-          'Crossword puzzles present a grid of white and black squares. Numbered white squares are the starting points for Across and Down answers. Clues — definitional, cryptic, or thematic — guide you to the correct words that interlock across the grid.',
-        origin:
-          'The modern crossword was invented by journalist Arthur Wynne and published in the New York World on December 21, 1913, making 2023 its 110th anniversary. The New York Times began publishing its famous crossword in 1942.',
-        howToPlay:
-          'Read each Across and Down clue and type the answer into the correspondingly numbered cells. Letters at the intersections of Across and Down answers must agree. The grid is complete when all cells are correctly filled.',
+        about: 'Fill a grid of interlocking words using definitional or cryptic clues for Across and Down answers.',
+        bestFor: 'Vocabulary, general knowledge, and wordplay.',
+        origin: 'Invented by Arthur Wynne, published in the New York World on December 21, 1913.',
+        howToPlay: 'Fill numbered cells with answers to Across and Down clues. Intersecting letters must agree.',
         difficulty: 'Moderate',
         timeEstimate: '10–30 min',
         isPlayable: false,
@@ -289,12 +259,10 @@ export const collections = [
         title: 'Anagrams',
         category: 'words-reasoning',
         quote: 'Every word is hiding another word.',
-        about:
-          'Anagrams rearrange the letters of a word or phrase to form a new word or phrase using exactly the same letters. The game presents scrambled letters; you must discover all valid anagrammatic words hidden within them.',
-        origin:
-          'Anagrams have been composed since ancient times — Greek and Hebrew scholars found mystical significance in rearranged letters. The word "anagram" itself comes from the Greek ana- (back, again) + gramma (letter).',
-        howToPlay:
-          'You are given a set of scrambled letters. Arrange all of them (or a subset) to form valid dictionary words. Points are awarded for each valid anagram found, with longer words scoring higher.',
+        about: 'Rearrange a set of scrambled letters to discover all valid words hidden within them.',
+        bestFor: 'Vocabulary and pattern recognition.',
+        origin: 'Anagrams have been composed since ancient times in Greek and Hebrew scholarship.',
+        howToPlay: 'Arrange the given letters to form valid dictionary words. Longer words score higher.',
         difficulty: 'Easy',
         timeEstimate: '2–10 min',
         isPlayable: false,
@@ -303,13 +271,11 @@ export const collections = [
         id: 'reasoning-puzzles',
         title: 'Reasoning Puzzles',
         category: 'words-reasoning',
-        quote: 'The clue is always present. Only attention is required.',
-        about:
-          'Reasoning Puzzles are a collection of logic riddles and deductive brainteasers — from classic river-crossing dilemmas and truth-teller/liar paradoxes to Einstein\'s Zebra puzzle and grid-based logic grids. Each puzzle rewards careful, systematic thinking.',
-        origin:
-          'Logic riddles appear in the oldest known written records. The Riddle of the Sphinx appears in ancient Greek myth. Medieval European scholars formulated river-crossing puzzles. Raymond Smullyan formalised truth-teller logic in the 20th century.',
-        howToPlay:
-          'Read the puzzle and its clues carefully. Use process of elimination and deductive reasoning to arrive at the unique solution. Some puzzles benefit from a grid or chart to track known and excluded possibilities.',
+        quote: 'Only one fits every clue.',
+        about: 'Solve logic riddles — river crossings, truth-teller paradoxes, and grid deductions — through systematic elimination.',
+        bestFor: 'Deductive elimination and lateral thinking.',
+        origin: 'Logic riddles appear in the oldest known records; formalised by Raymond Smullyan in the 20th century.',
+        howToPlay: 'Use the given clues to place all attributes into their correct positions through elimination.',
         difficulty: 'Hard',
         timeEstimate: '5–20 min',
         isPlayable: false,
@@ -319,12 +285,10 @@ export const collections = [
         title: 'Tower of Hanoi',
         category: 'words-reasoning',
         quote: 'Recursion made physical.',
-        about:
-          'The Tower of Hanoi is a mathematical puzzle with three rods and a set of discs of different sizes stacked in ascending order on one rod. The objective is to move the entire stack to another rod, following strict rules about which disc may be placed on which.',
-        origin:
-          'Invented by French mathematician Édouard Lucas in 1883, accompanied by a legend of a Hindu temple housing a puzzle of 64 golden discs — when completed by monks, the world would end. At optimal pace, the 64-disc puzzle would take over 580 billion years.',
-        howToPlay:
-          'Move the entire stack of discs from the left rod to the right rod. Only one disc may be moved at a time. A disc may only be placed on an empty rod or on a larger disc. Never place a larger disc on a smaller one. Try to complete in the minimum 2ⁿ − 1 moves.',
+        about: 'Move a stack of differently-sized discs from one rod to another, never placing a larger disc on a smaller one.',
+        bestFor: 'Recursive thinking and problem decomposition.',
+        origin: 'Invented by Édouard Lucas in 1883 with a legend of 64 golden discs marking the end of the world.',
+        howToPlay: 'Move one disc at a time. Never place a larger disc on a smaller one. Complete in 2ⁿ − 1 moves.',
         difficulty: 'Moderate',
         timeEstimate: '5–15 min',
         isPlayable: false,

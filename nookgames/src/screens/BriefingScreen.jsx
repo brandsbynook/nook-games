@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
-import { playTap, playChime } from '../utils/audio.js'
+import { ZenSplash } from '../components/ZenSplash.jsx'
+import { playTap } from '../utils/audio.js'
 
 export function BriefingScreen({ game, collection }) {
-  const [notice, setNotice] = useState(false)
+  const [showZen, setShowZen] = useState(false)
 
   function handleBack(e) {
     e.preventDefault()
@@ -15,86 +16,91 @@ export function BriefingScreen({ game, collection }) {
     e.preventDefault()
     playTap()
     if (game.isPlayable) {
-      playChime()
-      window.location.hash = `/game/${game.id}`
-    } else {
-      setNotice(true)
-      setTimeout(() => setNotice(false), 2800)
+      setShowZen(true)
     }
   }
 
+  const handleZenDone = useCallback(() => {
+    window.location.hash = `/play/${game.id}`
+  }, [game.id])
+
+  if (showZen) {
+    return <ZenSplash game={game} onDone={handleZenDone} />
+  }
+
   return (
-    <div className="briefing-page" role="main">
-      {/* ── Top nav bar ─────────────────────────────── */}
-      <div className="briefing-nav">
+    <div className="bs-page">
+      {/* ── Top bar: Left slim back chevron + centered game title ── */}
+      <div className="bs-topbar">
         <button
-          id="briefing-back-btn"
-          className="briefing-back-btn"
+          id="bs-back-btn"
+          className="bs-back-btn"
           onClick={handleBack}
           aria-label={`Back to ${collection.title}`}
         >
           <Icon name="back" size={20} />
         </button>
-        <span className="briefing-nav-label">{collection.title}</span>
-        <span className="briefing-nav-spacer" aria-hidden="true" />
+        <div className="bs-topbar-center">
+          <span className="bs-topbar-title">{game.title}</span>
+        </div>
+        <span className="bs-topbar-spacer" aria-hidden="true" />
       </div>
 
-      {/* ── Scrollable body ──────────────────────────── */}
-      <div className="briefing-body">
-        {/* Hero */}
-        <div className="briefing-hero" aria-hidden="true">
-          <div className="briefing-icon-wrap">
-            <Icon name={game.id} size={48} />
+      {/* ── Body: Strict mobile frame height, space-between layout ── */}
+      <div className="bs-body">
+        {/* ── Top Block: Hero Icon + Metadata Blocks ── */}
+        <div className="bs-top-block">
+          {/* Hero Icon: 48px centered white glyph with 28px margin top/bottom */}
+          <div className="bs-hero-section">
+            <div className="bs-hero" aria-hidden="true">
+              <Icon name={game.id} size={48} />
+            </div>
+          </div>
+
+          {/* Metadata Blocks: ABOUT, BEST FOR, ORIGIN, HOW TO PLAY */}
+          <div className="bs-essence">
+            <div className="bs-essence-row">
+              <span className="bs-essence-label">ABOUT {game.title.toUpperCase()}</span>
+              <p className="bs-essence-value">{game.about}</p>
+            </div>
+            <div className="bs-essence-row">
+              <span className="bs-essence-label">BEST FOR</span>
+              <p className="bs-essence-value">{game.bestFor}</p>
+            </div>
+            <div className="bs-essence-row">
+              <span className="bs-essence-label">ORIGIN</span>
+              <p className="bs-essence-value">{game.origin}</p>
+            </div>
+            <div className="bs-essence-row">
+              <span className="bs-essence-label">HOW TO PLAY</span>
+              <p className="bs-essence-value">{game.howToPlay}</p>
+            </div>
           </div>
         </div>
-        <h1 className="briefing-title">{game.title}</h1>
-        <p className="briefing-quote">"{game.quote}"</p>
 
-        {/* Text blocks */}
-        <div className="briefing-blocks">
-          <div className="briefing-block">
-            <h2 className="briefing-block-label">About</h2>
-            <p className="briefing-block-text">{game.about}</p>
+        {/* ── Bottom Cluster: 2-column info cards + Play Button ── */}
+        <div className="bs-bottom-block">
+          {/* Info cards: DIFFICULTY & TIME with 12px gap */}
+          <div className="bs-stats">
+            <div className="bs-stat-card">
+              <span className="bs-stat-label">DIFFICULTY</span>
+              <span className="bs-stat-value">{game.difficulty}</span>
+            </div>
+            <div className="bs-stat-card">
+              <span className="bs-stat-label">TIME</span>
+              <span className="bs-stat-value">{game.timeEstimate}</span>
+            </div>
           </div>
-          <div className="briefing-block">
-            <h2 className="briefing-block-label">Origin</h2>
-            <p className="briefing-block-text">{game.origin}</p>
-          </div>
-          <div className="briefing-block">
-            <h2 className="briefing-block-label">How to Play</h2>
-            <p className="briefing-block-text">{game.howToPlay}</p>
-          </div>
-        </div>
 
-        {/* Chips */}
-        <div className="briefing-chips" aria-label="Game details">
-          <span className="briefing-chip">
-            <span className="briefing-chip-label">Difficulty</span>
-            <span className="briefing-chip-value">{game.difficulty}</span>
-          </span>
-          <span className="briefing-chip">
-            <span className="briefing-chip-label">Time</span>
-            <span className="briefing-chip-value">{game.timeEstimate}</span>
-          </span>
-        </div>
-
-        {/* Play button */}
-        <div className="briefing-play-wrap">
+          {/* Full-width white pill Play button: 52px height, bold black text */}
           <button
-            id="briefing-play-btn"
-            className="briefing-play-btn"
+            id="bs-play-btn"
+            className={`bs-play-btn${game.isPlayable ? '' : ' bs-play-btn--unplayable'}`}
             onClick={handlePlay}
-            aria-label={game.isPlayable ? `Play ${game.title}` : `${game.title} is in development`}
+            aria-label={game.isPlayable ? `Play ${game.title}` : `${game.title} arriving in future release`}
           >
-            Play
+            {game.isPlayable ? '▶  Play' : 'Arriving in future release'}
           </button>
-          <div
-            className={`briefing-ambient-notice${notice ? ' is-visible' : ''}`}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            In Sanctum Development
-          </div>
         </div>
       </div>
     </div>

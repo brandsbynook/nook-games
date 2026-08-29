@@ -3,7 +3,8 @@ import { AppShell } from './components/AppShell.jsx'
 import { getCollection, getGame } from './data/catalogue.js'
 import { BriefingScreen } from './screens/BriefingScreen.jsx'
 import { CollectionScreen } from './screens/CollectionScreen.jsx'
-import { GamePlaceholderScreen } from './screens/GamePlaceholderScreen.jsx'
+import { EditorPickScreen } from './screens/EditorPickScreen.jsx'
+import { FifteenPuzzleScreen } from './screens/FifteenPuzzleScreen.jsx'
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -30,6 +31,10 @@ function parseRoute() {
     return { name: 'settings' }
   }
 
+  if (parts[0] === 'editors-pick') {
+    return { name: 'editors-pick' }
+  }
+
   if (parts[0] === 'collection' && parts[1]) {
     return { name: 'collection', id: parts[1] }
   }
@@ -37,6 +42,11 @@ function parseRoute() {
   // Briefing screen sits between CollectionScreen and GameScreen
   if (parts[0] === 'briefing' && parts[1]) {
     return { name: 'briefing', id: parts[1] }
+  }
+
+  // Playable game routes
+  if (parts[0] === 'play' && parts[1] === '15-puzzle') {
+    return { name: 'play-15-puzzle' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -59,33 +69,6 @@ function Screen({ route }) {
     return <SettingsScreen />
   }
 
-  if (route.name === 'collection') {
-    const collection = getCollection(route.id)
-    if (!collection) {
-      return <HomeScreen />
-    }
-    return <CollectionScreen collection={collection} />
-  }
-
-  // Briefing: Home -> Collection -> Briefing -> Game
-  if (route.name === 'briefing') {
-    const match = getGame(route.id)
-    if (!match) {
-      return <HomeScreen />
-    }
-    return <BriefingScreen game={match.game} collection={match.collection} />
-  }
-
-  if (route.name === 'game') {
-    const match = getGame(route.id)
-    if (!match) {
-      return <HomeScreen />
-    }
-    return (
-      <GamePlaceholderScreen game={match.game} collection={match.collection} />
-    )
-  }
-
   return <HomeScreen />
 }
 
@@ -105,12 +88,27 @@ function App() {
       ? route.name
       : 'home'
 
-  // BriefingScreen manages its own full-screen layout (no AppShell chrome)
+  // Dedicated screen routes (render with their own calibrated headers & frames)
   if (route.name === 'briefing') {
     const match = getGame(route.id)
     if (match) {
       return <BriefingScreen game={match.game} collection={match.collection} />
     }
+  }
+
+  if (route.name === 'collection') {
+    const collection = getCollection(route.id)
+    if (collection) {
+      return <CollectionScreen collection={collection} />
+    }
+  }
+
+  if (route.name === 'editors-pick') {
+    return <EditorPickScreen />
+  }
+
+  if (route.name === 'play-15-puzzle') {
+    return <FifteenPuzzleScreen />
   }
 
   return (
