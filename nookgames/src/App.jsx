@@ -13,6 +13,8 @@ import { TowerOfHanoiScreen } from './screens/TowerOfHanoiScreen.jsx'
 import { Game2048Screen } from './screens/Game2048Screen.jsx'
 import UntangleScreen from './screens/UntangleScreen';
 import MastermindScreen from './screens/MastermindScreen';
+import NonogramScreen from './screens/NonogramScreen';
+import AnagramsScreen from './screens/AnagramsScreen';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -65,6 +67,8 @@ function parseRoute() {
     if (gameId === '2048') return { name: 'play-2048' }
     if (gameId === 'untangle') return { name: 'play-untangle' }
     if (gameId === 'mastermind') return { name: 'play-mastermind' }
+    if (gameId === 'nonogram') return { name: 'play-nonogram' }
+    if (gameId === 'anagrams') return { name: 'play-anagrams' }
   }
 
   // Direct game route alias or fallback
@@ -88,6 +92,24 @@ function parseRoute() {
     parts[0] === 'play-mastermind'
   ) {
     return { name: 'play-mastermind' }
+  }
+
+  if (
+    path === 'play/nonogram' ||
+    parts[0] === 'nonogram' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'nonogram') ||
+    parts[0] === 'play-nonogram'
+  ) {
+    return { name: 'play-nonogram' }
+  }
+
+  if (
+    path === 'play/anagrams' ||
+    parts[0] === 'anagrams' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'anagrams') ||
+    parts[0] === 'play-anagrams'
+  ) {
+    return { name: 'play-anagrams' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -120,6 +142,14 @@ function Screen({ route }) {
 
   if (route.name === 'play-mastermind') {
     return <MastermindScreen onBack={() => navigate('briefing/mastermind')} />
+  }
+
+  if (route.name === 'play-nonogram') {
+    return <NonogramScreen onBack={() => navigate('briefing/nonogram')} />
+  }
+
+  if (route.name === 'play-anagrams') {
+    return <AnagramsScreen onBack={() => navigate('briefing/anagrams')} />
   }
 
   return <HomeScreen />
@@ -198,6 +228,14 @@ function App() {
 
   if (route.name === 'play-mastermind') {
     return <MastermindScreen onBack={() => navigate('briefing/mastermind')} />
+  }
+
+  if (route.name === 'play-nonogram') {
+    return <NonogramScreen onBack={() => navigate('briefing/nonogram')} />
+  }
+
+  if (route.name === 'play-anagrams') {
+    return <AnagramsScreen onBack={() => navigate('briefing/anagrams')} />
   }
 
   return (

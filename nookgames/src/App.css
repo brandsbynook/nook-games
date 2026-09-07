@@ -4079,6 +4079,1003 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   NONOGRAM SCREEN (Picross Engine & Monochrome Aesthetics)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ng-page {
+  width: 100%;
+  max-width: min(92vw, 480px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: max(14px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #0a0a0a;
+  margin: 0 auto;
+}
+
+.ng-top-bar {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 5.5rem;
+  align-items: center;
+  min-height: 2.8rem;
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.ng-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: #ffffff;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+  font-family: inherit;
+}
+.ng-action-btn:hover:not(:disabled) {
+  opacity: 0.6;
+}
+.ng-action-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.ng-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ng-title {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ng-subtitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+  font-style: italic;
+  color: #737373;
+}
+
+.ng-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* ── Segmented Difficulty Bar ── */
+.ng-difficulty-bar {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: #121212;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  padding: 3px;
+  margin: 6px auto 4px;
+  width: fit-content;
+  flex-shrink: 0;
+}
+
+.ng-diff-btn {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ng-diff-btn:hover {
+  color: #c0c0c0;
+}
+
+.ng-diff-btn--active {
+  background: #242424;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Puzzle Navigator ── */
+.ng-puzzle-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 6px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.ng-nav-arrow {
+  background: #141414;
+  border: 1px solid #222222;
+  color: #a0a0a0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ng-nav-arrow:hover {
+  background: #202020;
+  color: #ffffff;
+  border-color: #383838;
+}
+
+.ng-puzzle-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.ng-puzzle-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: #eaeaea;
+}
+
+.ng-puzzle-progress {
+  font-size: 10px;
+  color: #666666;
+  font-family: monospace, sans-serif;
+}
+
+/* ── Deductive Check Feedback Pill ── */
+.ng-feedback-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: var(--font-ui);
+  margin: 0 auto 6px;
+  width: fit-content;
+  max-width: 90%;
+  animation: mm-pop 0.25s ease;
+  flex-shrink: 0;
+}
+
+.ng-feedback-pill--ok {
+  background: #181818;
+  border: 1px solid #2e2e2e;
+  color: #eaeaea;
+}
+
+.ng-feedback-pill--error {
+  background: #241414;
+  border: 1px solid #4a2222;
+  color: #f28b82;
+}
+
+.ng-feedback-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
+}
+.ng-feedback-close:hover {
+  opacity: 1;
+}
+
+/* ── Nonogram Board Container & Grid ── */
+.ng-board-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+  margin: 4px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ng-board {
+  display: grid;
+  grid-template-areas:
+    "spacer colclues"
+    "rowclues grid";
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  background: #0d0d0d;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+  user-select: none;
+  touch-action: none;
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Corner Spacer */
+.ng-corner-spacer {
+  grid-area: spacer;
+  background: #111111;
+  border-right: 2px solid #333333;
+  border-bottom: 2px solid #333333;
+}
+
+/* Top Column Clues Header */
+.ng-col-clues-header {
+  grid-area: colclues;
+  display: grid;
+  background: #111111;
+  border-bottom: 2px solid #333333;
+}
+
+.ng-col-clue-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 4px 0;
+  gap: 2px;
+  box-sizing: border-box;
+  border-right: 1px solid #1f1f1f;
+  transition: opacity 0.2s ease;
+}
+
+/* Left Row Clues Sidebar */
+.ng-row-clues-sidebar {
+  grid-area: rowclues;
+  display: grid;
+  background: #111111;
+  border-right: 2px solid #333333;
+}
+
+.ng-row-clue-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 6px;
+  gap: 3px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #1f1f1f;
+  transition: opacity 0.2s ease;
+}
+
+.ng-clue-num {
+  font-family: monospace, sans-serif;
+  color: #a0a0a0;
+  line-height: 1;
+}
+
+.ng-clue--satisfied .ng-clue-num {
+  color: #3f3f3f;
+  text-decoration: line-through;
+}
+
+/* ── Tier Sizing Adjustments ── */
+.ng-board--size-5 .ng-col-clues-header { height: 46px; }
+.ng-board--size-5 .ng-row-clues-sidebar { min-width: 44px; }
+.ng-board--size-5 .ng-clue-num { font-size: 13px; font-weight: 700; }
+
+.ng-board--size-10 .ng-col-clues-header { height: 56px; }
+.ng-board--size-10 .ng-row-clues-sidebar { min-width: 52px; }
+.ng-board--size-10 .ng-clue-num { font-size: 11px; font-weight: 700; }
+
+.ng-board--size-15 .ng-col-clues-header { height: 68px; }
+.ng-board--size-15 .ng-row-clues-sidebar { min-width: 60px; }
+.ng-board--size-15 .ng-clue-num { font-size: 9px; font-weight: 700; }
+
+/* ── Interactive Grid & Cells ── */
+.ng-grid {
+  grid-area: grid;
+  display: grid;
+  background: #0a0a0a;
+  touch-action: none;
+}
+
+.ng-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #131313;
+  border-right: 1px solid #202020;
+  border-bottom: 1px solid #202020;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  box-sizing: border-box;
+}
+
+.ng-cell--filled {
+  background: #eaeaea;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.ng-cell--crossed {
+  background: #111111;
+}
+
+.ng-cell-cross {
+  color: #555555;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.ng-board--size-15 .ng-cell-cross {
+  font-size: 9px;
+}
+
+/* 5x5 Block Dividing Borders */
+.ng-border-right-thick {
+  border-right: 2px solid #444444 !important;
+}
+
+.ng-border-bottom-thick {
+  border-bottom: 2px solid #444444 !important;
+}
+
+/* ── Dual-Action Control Dock ── */
+.ng-dock {
+  background: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  border-radius: 18px;
+  padding: 10px 14px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.ng-controls-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ng-tool-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  color: #737373;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ng-tool-btn:hover {
+  background: #1c1c1c;
+  color: #c0c0c0;
+  border-color: #333333;
+}
+
+.ng-tool-btn--active {
+  background: #242424;
+  color: #ffffff;
+  border-color: #4a4a4a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.ng-tool-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ng-tool-icon--fill {
+  width: 13px;
+  height: 13px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.ng-tool-icon--cross {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── Solved Completion Card ── */
+.ng-solved-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+}
+
+.ng-solved-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ng-solved-badge {
+  font-size: 10px;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.ng-solved-name {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ng-next-btn {
+  background: #ffffff;
+  color: #0a0a0a;
+  border: none;
+  border-radius: 9999px;
+  padding: 9px 24px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.ng-next-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANAGRAMS SCREEN (Words & Reasoning Discovery)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ag-page {
+  width: 100%;
+  max-width: min(92vw, 480px);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: max(14px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #0a0a0a;
+  margin: 0 auto;
+}
+
+.ag-top-bar {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 5.5rem;
+  align-items: center;
+  min-height: 2.8rem;
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.ag-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: #ffffff;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+  font-family: inherit;
+}
+.ag-action-btn:hover:not(:disabled) {
+  opacity: 0.6;
+}
+.ag-action-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.ag-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ag-title {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ag-subtitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+  font-style: italic;
+  color: #737373;
+}
+
+.ag-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* ── Segmented Difficulty Bar ── */
+.ag-difficulty-bar {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: #121212;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  padding: 3px;
+  margin: 6px auto 4px;
+  width: fit-content;
+  flex-shrink: 0;
+}
+
+.ag-diff-btn {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ag-diff-btn:hover {
+  color: #c0c0c0;
+}
+
+.ag-diff-btn--active {
+  background: #242424;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Puzzle Navigator ── */
+.ag-puzzle-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 6px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.ag-nav-arrow {
+  background: #141414;
+  border: 1px solid #222222;
+  color: #a0a0a0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ag-nav-arrow:hover {
+  background: #202020;
+  color: #ffffff;
+  border-color: #383838;
+}
+
+.ag-puzzle-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.ag-puzzle-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: #eaeaea;
+}
+
+.ag-puzzle-progress {
+  font-size: 10px;
+  color: #666666;
+  font-family: monospace, sans-serif;
+}
+
+/* ── Discovery Board (Target Words Grouped by Length) ── */
+.ag-discovery-board {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 4px;
+  margin: 4px 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ag-word-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ag-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #666666;
+  font-family: var(--font-ui);
+}
+
+.ag-word-tokens-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ag-word-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  background: #111111;
+  border: 1px solid #1c1c1c;
+  border-radius: 8px;
+  font-family: monospace, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #444444;
+  letter-spacing: 2px;
+  min-width: 46px;
+  min-height: 30px;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ag-word-slot--found {
+  background: #181818;
+  border-color: #383838;
+  color: #eaeaea;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  animation: mm-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ag-letter-dash {
+  font-size: 10px;
+  opacity: 0.35;
+  letter-spacing: 1px;
+}
+
+/* ── Bottom Interactive Zone ── */
+.ag-dock-container {
+  background: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  border-radius: 20px;
+  padding: 8px 12px 14px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.ag-feedback-container {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.ag-feedback-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  animation: mm-pop 0.2s ease;
+}
+
+.ag-feedback-pill--info {
+  background: #181818;
+  border: 1px solid #282828;
+  color: #a0a0a0;
+}
+
+.ag-feedback-pill--success {
+  background: #162016;
+  border: 1px solid #284428;
+  color: #81c995;
+}
+
+.ag-feedback-pill--error {
+  background: #241414;
+  border: 1px solid #482222;
+  color: #f28b82;
+}
+
+/* Active Input Row */
+.ag-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #131313;
+  border: 1px solid #222222;
+  border-radius: 12px;
+  padding: 4px 6px 4px 10px;
+  min-height: 44px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.ag-input-row--shake {
+  animation: ag-shake 0.35s ease;
+  border-color: #552222;
+}
+
+.ag-input-letters {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  overflow-x: auto;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.ag-input-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 32px;
+  background: #1c1c1c;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+.ag-input-tile:hover {
+  background: #262626;
+  border-color: #555555;
+}
+
+.ag-input-placeholder {
+  font-size: 12px;
+  color: #555555;
+  font-style: italic;
+  font-family: var(--font-ui);
+}
+
+.ag-cursor {
+  width: 2px;
+  height: 18px;
+  background: #eaeaea;
+  animation: ag-blink 1s infinite;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+.ag-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ag-action-text-btn {
+  background: none;
+  border: none;
+  color: #737373;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.ag-action-text-btn:hover:not(:disabled) {
+  color: #ffffff;
+}
+.ag-action-text-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ag-submit-btn {
+  background: #1c1c1c;
+  border: 1px solid #282828;
+  border-radius: 8px;
+  color: #555555;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  cursor: not-allowed;
+  transition: all 0.15s ease;
+}
+
+.ag-submit-btn--ready {
+  background: #ffffff;
+  color: #0a0a0a;
+  border-color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+.ag-submit-btn--ready:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Circular Letter Dock */
+.ag-letter-dock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.ag-letter-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #151515;
+  border: 1.5px solid #262626;
+  color: #eaeaea;
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  padding: 0;
+}
+
+.ag-letter-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.06);
+  border-color: #555555;
+  background: #202020;
+  color: #ffffff;
+}
+
+.ag-letter-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.96);
+}
+
+.ag-letter-btn--selected {
+  opacity: 0.15;
+  transform: scale(0.9);
+  cursor: default;
+  border-color: #1a1a1a;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Solved Victory Card */
+.ag-victory-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+}
+
+.ag-victory-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ag-victory-tag {
+  font-size: 10px;
+  color: #81c995;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+.ag-victory-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ag-next-btn {
+  background: #ffffff;
+  color: #0a0a0a;
+  border: none;
+  border-radius: 9999px;
+  padding: 9px 24px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.ag-next-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+@keyframes ag-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes ag-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+
+
 
 
 

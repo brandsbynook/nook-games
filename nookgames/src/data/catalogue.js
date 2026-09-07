@@ -30,7 +30,7 @@ export const collections = [
         howToPlay: 'Each row and column clue lists the lengths of consecutive filled blocks in order.',
         difficulty: 'Moderate',
         timeEstimate: '5–15 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'kakuro',
@@ -265,7 +265,7 @@ export const collections = [
         howToPlay: 'Arrange the given letters to form valid dictionary words. Longer words score higher.',
         difficulty: 'Easy',
         timeEstimate: '2–10 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'mastermind',
