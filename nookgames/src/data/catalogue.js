@@ -130,7 +130,7 @@ export const collections = [
         howToPlay: 'Trace a path using each edge exactly once without lifting your finger.',
         difficulty: 'Easy',
         timeEstimate: '1–5 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: '2048',
