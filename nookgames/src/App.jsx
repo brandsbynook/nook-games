@@ -15,6 +15,7 @@ import UntangleScreen from './screens/UntangleScreen';
 import MastermindScreen from './screens/MastermindScreen';
 import NonogramScreen from './screens/NonogramScreen';
 import AnagramsScreen from './screens/AnagramsScreen';
+import CrosswordScreen from './screens/CrosswordScreen';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -69,6 +70,7 @@ function parseRoute() {
     if (gameId === 'mastermind') return { name: 'play-mastermind' }
     if (gameId === 'nonogram') return { name: 'play-nonogram' }
     if (gameId === 'anagrams') return { name: 'play-anagrams' }
+    if (gameId === 'crossword') return { name: 'play-crossword' }
   }
 
   // Direct game route alias or fallback
@@ -112,6 +114,15 @@ function parseRoute() {
     return { name: 'play-anagrams' }
   }
 
+  if (
+    path === 'play/crossword' ||
+    parts[0] === 'crossword' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'crossword') ||
+    parts[0] === 'play-crossword'
+  ) {
+    return { name: 'play-crossword' }
+  }
+
   if (parts[0] === 'game' && parts[1]) {
     return { name: 'game', id: parts[1] }
   }
@@ -150,6 +161,10 @@ function Screen({ route }) {
 
   if (route.name === 'play-anagrams') {
     return <AnagramsScreen onBack={() => navigate('briefing/anagrams')} />
+  }
+
+  if (route.name === 'play-crossword') {
+    return <CrosswordScreen onBack={() => navigate('briefing/crossword')} />
   }
 
   return <HomeScreen />
@@ -236,6 +251,10 @@ function App() {
 
   if (route.name === 'play-anagrams') {
     return <AnagramsScreen onBack={() => navigate('briefing/anagrams')} />
+  }
+
+  if (route.name === 'play-crossword') {
+    return <CrosswordScreen onBack={() => navigate('briefing/crossword')} />
   }
 
   return (

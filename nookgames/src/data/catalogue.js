@@ -252,7 +252,7 @@ export const collections = [
         howToPlay: 'Fill numbered cells with answers to Across and Down clues. Intersecting letters must agree.',
         difficulty: 'Moderate',
         timeEstimate: '10–30 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'anagrams',

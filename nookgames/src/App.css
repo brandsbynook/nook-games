@@ -5074,6 +5074,585 @@
   40%, 80% { transform: translateX(4px); }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   CROSSWORD SCREEN STYLES (.cw-*)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.cw-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0a0a0a;
+  color: #eaeaea;
+  padding: 16px;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+/* Header */
+.cw-header {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cw-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cw-icon-btn {
+  background: none;
+  border: none;
+  outline: none;
+  color: #888888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.cw-icon-btn:hover {
+  color: #eaeaea;
+  background: #141414;
+}
+
+.cw-icon-btn.active {
+  color: #ffffff;
+  background: #222222;
+}
+
+.cw-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #eaeaea;
+  margin: 0;
+  text-align: center;
+}
+
+/* Difficulty Selector */
+.cw-difficulty-selector {
+  background: #161616;
+  border: 1px solid #262626;
+  border-radius: 999px;
+  display: flex;
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.cw-diff-btn {
+  background: none;
+  border: none;
+  outline: none;
+  color: #888888;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.cw-diff-btn:hover {
+  color: #eaeaea;
+}
+
+.cw-diff-btn.active {
+  background: #eaeaea;
+  color: #0a0a0a;
+  font-weight: 600;
+}
+
+/* 2D Grid */
+.cw-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 2px;
+  background: #262626;
+  border: 2px solid #262626;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Cell Elements */
+.cw-cell {
+  background: #111111;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  padding: 0;
+  font-family: monospace, sans-serif;
+  transition: background 0.12s;
+}
+
+.cw-cell--black {
+  background: #000000;
+  pointer-events: none;
+}
+
+.cw-cell--active-word {
+  background: #1e1e1e;
+}
+
+.cw-cell--focused {
+  background: #2a2a2a;
+  outline: 2px solid #eaeaea;
+  z-index: 2;
+}
+
+.cw-cell-number {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 9px;
+  color: #888888;
+  font-family: sans-serif;
+  font-weight: normal;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.cw-cell-letter {
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* Active Clue Bar */
+.cw-clue-bar {
+  background: #141414;
+  border: 1px solid #222222;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  max-width: 340px;
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  min-height: 48px;
+  gap: 8px;
+}
+
+.cw-clue-nav-btn {
+  background: none;
+  border: none;
+  outline: none;
+  color: #888888;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.cw-clue-nav-btn:hover {
+  color: #eaeaea;
+}
+
+.cw-clue-content {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cw-clue-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.cw-clue-text {
+  color: #eaeaea;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+/* Scratchpad / Rough Work Bar */
+.cw-scratchpad {
+  background: #121212;
+  border: 1px dashed #333333;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+}
+
+.cw-scratchpad-label {
+  color: #666666;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.cw-scratchpad-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  font-family: monospace, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffffff;
+  min-height: 24px;
+}
+
+.cw-scratchpad-text {
+  color: #ffffff;
+}
+
+.cw-scratchpad-placeholder {
+  color: #555555;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  font-style: italic;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+.cw-scratchpad-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: #ffffff;
+  margin-left: 2px;
+  animation: cw-blink 1s infinite;
+}
+
+@keyframes cw-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cw-scratchpad-clear-btn {
+  background: none;
+  border: none;
+  outline: none;
+  color: #666666;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.cw-scratchpad-clear-btn:hover {
+  color: #eaeaea;
+  background: #1e1e1e;
+}
+
+.cw-scratchpad-transfer-btn {
+  background: #222222;
+  border: 1px solid #333333;
+  color: #eaeaea;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.cw-scratchpad-transfer-btn:hover:not(:disabled) {
+  background: #333333;
+  border-color: #555555;
+  color: #ffffff;
+}
+
+.cw-scratchpad-transfer-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Keyboard */
+.cw-keyboard {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cw-keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.cw-key-btn {
+  flex: 1;
+  background: #1a1a1a;
+  color: #eaeaea;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s, transform 0.08s;
+  box-sizing: border-box;
+}
+
+.cw-key-btn:hover {
+  background: #262626;
+  border-color: #383838;
+}
+
+.cw-key-btn:active {
+  background: #eaeaea;
+  color: #0a0a0a;
+  transform: translateY(1px);
+}
+
+.cw-key-btn--special {
+  flex: 1.4;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #aaaaaa;
+}
+
+/* Clues List Section */
+.cw-clues-section {
+  width: 100%;
+  max-width: 340px;
+  background: #0e0e0e;
+  border: 1px solid #222222;
+  border-radius: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.cw-clues-tabs {
+  display: flex;
+  border-bottom: 1px solid #222222;
+  margin-bottom: 8px;
+  padding-bottom: 2px;
+}
+
+.cw-clues-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 6px 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #666666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+
+.cw-clues-tab-btn:hover {
+  color: #aaaaaa;
+}
+
+.cw-clues-tab-btn.active {
+  color: #eaeaea;
+  border-bottom-color: #eaeaea;
+}
+
+.cw-clues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.cw-clue-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  transition: background 0.15s;
+  color: #bbbbbb;
+}
+
+.cw-clue-item:hover {
+  background: #161616;
+}
+
+.cw-clue-item.active {
+  background: #1e1e1e;
+  color: #ffffff;
+  border: 1px solid #333333;
+}
+
+.cw-clue-item.solved {
+  color: #555555;
+  text-decoration: line-through;
+}
+
+.cw-clue-num {
+  font-weight: 700;
+  color: #888888;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.cw-clue-text-item {
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* Victory Overlay */
+.cw-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+  animation: cw-fade-in 0.25s ease-out;
+}
+
+.cw-modal-card {
+  background: #141414;
+  border: 1px solid #2e2e2e;
+  padding: 24px 20px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.cw-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #eaeaea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  font-size: 18px;
+  color: #eaeaea;
+}
+
+.cw-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 6px;
+}
+
+.cw-modal-desc {
+  font-size: 0.78rem;
+  color: #888888;
+  margin: 0 0 20px;
+  line-height: 1.4;
+}
+
+.cw-modal-btn-primary {
+  width: 100%;
+  padding: 10px 0;
+  background: #eaeaea;
+  color: #0a0a0a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 8px;
+}
+
+.cw-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.cw-modal-btn-secondary {
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  color: #888888;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.cw-modal-btn-secondary:hover {
+  color: #eaeaea;
+}
+
+@keyframes cw-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 
 
 
