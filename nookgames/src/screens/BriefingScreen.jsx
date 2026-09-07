@@ -9,7 +9,7 @@ export function BriefingScreen({ game, collection }) {
   function handleBack(e) {
     e.preventDefault()
     playTap()
-    window.location.hash = `/collection/${collection.id}`
+    window.location.hash = `#/collection/${collection.id}`
   }
 
   function handlePlay(e) {
@@ -21,7 +21,7 @@ export function BriefingScreen({ game, collection }) {
   }
 
   const handleZenDone = useCallback(() => {
-    window.location.hash = `/play/${game.id}`
+    window.location.hash = `#/play/${game.id}`
   }, [game.id])
 
   if (showZen) {

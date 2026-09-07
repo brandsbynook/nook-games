@@ -257,6 +257,21 @@ const icons = {
       <path d="M8 13h8" />
     </>
   ),
+  mastermind: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="7" cy="8" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="8" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="17" cy="8" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="7" cy="14" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="17" cy="14" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="6.5" cy="18.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="18.5" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="18.5" r="0.9" fill="none" stroke="currentColor" strokeWidth="0.8" />
+      <circle cx="17.5" cy="18.5" r="0.9" fill="none" stroke="currentColor" strokeWidth="0.8" />
+    </>
+  ),
   'reasoning-puzzles': (
     <>
       <circle cx="12" cy="12" r="9" />

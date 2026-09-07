@@ -12,6 +12,7 @@ import { LightsOutScreen } from './screens/LightsOutScreen.jsx'
 import { TowerOfHanoiScreen } from './screens/TowerOfHanoiScreen.jsx'
 import { Game2048Screen } from './screens/Game2048Screen.jsx'
 import UntangleScreen from './screens/UntangleScreen';
+import MastermindScreen from './screens/MastermindScreen';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -63,6 +64,7 @@ function parseRoute() {
     if (gameId === 'tower-of-hanoi') return { name: 'play-tower-of-hanoi' }
     if (gameId === '2048') return { name: 'play-2048' }
     if (gameId === 'untangle') return { name: 'play-untangle' }
+    if (gameId === 'mastermind') return { name: 'play-mastermind' }
   }
 
   // Direct game route alias or fallback
@@ -77,6 +79,15 @@ function parseRoute() {
     parts[0] === 'play-untangle'
   ) {
     return { name: 'play-untangle' }
+  }
+
+  if (
+    path === 'play/mastermind' ||
+    parts[0] === 'mastermind' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'mastermind') ||
+    parts[0] === 'play-mastermind'
+  ) {
+    return { name: 'play-mastermind' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -105,6 +116,10 @@ function Screen({ route }) {
 
   if (route.name === 'play-untangle') {
     return <UntangleScreen onBack={() => navigate('briefing/untangle')} />
+  }
+
+  if (route.name === 'play-mastermind') {
+    return <MastermindScreen onBack={() => navigate('briefing/mastermind')} />
   }
 
   return <HomeScreen />
@@ -179,6 +194,10 @@ function App() {
 
   if (route.name === 'play-untangle') {
     return <UntangleScreen onBack={() => navigate('briefing/untangle')} />
+  }
+
+  if (route.name === 'play-mastermind') {
+    return <MastermindScreen onBack={() => navigate('briefing/mastermind')} />
   }
 
   return (
