@@ -11,6 +11,7 @@ import { ReversiScreen } from './screens/ReversiScreen.jsx'
 import { LightsOutScreen } from './screens/LightsOutScreen.jsx'
 import { TowerOfHanoiScreen } from './screens/TowerOfHanoiScreen.jsx'
 import { Game2048Screen } from './screens/Game2048Screen.jsx'
+import UntangleScreen from './screens/UntangleScreen';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -18,10 +19,11 @@ import { SettingsScreen } from './screens/SettingsScreen.jsx'
 import './App.css'
 
 function parseRoute() {
-  const hash = window.location.hash.replace(/^#/, '') || '/'
-  const parts = hash.split('/').filter(Boolean)
+  const rawHash = window.location.hash.replace(/^#\/?/, '').split('?')[0] || ''
+  const path = rawHash.replace(/^\/+/, '')
+  const parts = path.split('/').filter(Boolean)
 
-  if (parts.length === 0) {
+  if (parts.length === 0 || parts[0] === 'home') {
     return { name: 'home' }
   }
 
@@ -41,7 +43,7 @@ function parseRoute() {
     return { name: 'editors-pick' }
   }
 
-  if (parts[0] === 'collection' && parts[1]) {
+  if ((parts[0] === 'collection' || parts[0] === 'category') && parts[1]) {
     return { name: 'collection', id: parts[1] }
   }
 
@@ -52,7 +54,7 @@ function parseRoute() {
 
   // Playable game routes
   if (parts[0] === 'play') {
-    const gameId = String(parts[1] || '')
+    const gameId = String(parts[1] || '').toLowerCase()
     if (gameId === '15-puzzle') return { name: 'play-15-puzzle' }
     if (gameId === 'sudoku') return { name: 'play-sudoku' }
     if (gameId === 'word-ladder') return { name: 'play-word-ladder' }
@@ -60,11 +62,21 @@ function parseRoute() {
     if (gameId === 'lights-out' || gameId === 'shikaku') return { name: 'play-lights-out' }
     if (gameId === 'tower-of-hanoi') return { name: 'play-tower-of-hanoi' }
     if (gameId === '2048') return { name: 'play-2048' }
+    if (gameId === 'untangle') return { name: 'play-untangle' }
   }
 
   // Direct game route alias or fallback
-  if (parts[0] === '2048' || (parts[0] === 'game' && String(parts[1]) === '2048')) {
+  if (parts[0] === '2048' || (parts[0] === 'game' && String(parts[1]).toLowerCase() === '2048')) {
     return { name: 'play-2048' }
+  }
+
+  if (
+    path === 'play/untangle' ||
+    parts[0] === 'untangle' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'untangle') ||
+    parts[0] === 'play-untangle'
+  ) {
+    return { name: 'play-untangle' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -75,6 +87,10 @@ function parseRoute() {
 }
 
 function Screen({ route }) {
+  const navigate = (path) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`
+  }
+
   if (route.name === 'progress') {
     return <ProgressScreen />
   }
@@ -87,11 +103,19 @@ function Screen({ route }) {
     return <SettingsScreen />
   }
 
+  if (route.name === 'play-untangle') {
+    return <UntangleScreen onBack={() => navigate('briefing/untangle')} />
+  }
+
   return <HomeScreen />
 }
 
 function App() {
   const [route, setRoute] = useState(parseRoute)
+
+  const navigate = (path) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`
+  }
 
   useEffect(() => {
     const onHashChange = () => setRoute(parseRoute())
@@ -151,6 +175,10 @@ function App() {
 
   if (route.name === 'play-2048') {
     return <Game2048Screen />
+  }
+
+  if (route.name === 'play-untangle') {
+    return <UntangleScreen onBack={() => navigate('briefing/untangle')} />
   }
 
   return (

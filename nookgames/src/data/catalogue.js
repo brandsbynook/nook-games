@@ -104,7 +104,7 @@ export const collections = [
         howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
         difficulty: 'Moderate',
         timeEstimate: '5–20 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'arrow-puzzle',
