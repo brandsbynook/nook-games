@@ -1,13 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { isMuted, toggleMute } from '../utils/audio.js'
+import {
+  getStoredSettings,
+  saveStoredSettings,
+  resetAllData,
+} from '../utils/storage.js'
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const THEMES = ['dark', 'oled']
+const THEME_LABELS = { dark: 'Dark', oled: 'OLED Black' }
+
+const TEXT_SIZES = ['medium', 'large']
+const TEXT_LABELS = { medium: 'Normal', large: 'Large' }
+
+const BREAK_INTERVALS = [0, 20, 30, 45]
+const BREAK_LABELS = { 0: 'Off', 20: '20 min', 30: '30 min', 45: '45 min' }
+
+function cycleNext(arr, current) {
+  const idx = arr.indexOf(current)
+  return arr[(idx + 1) % arr.length]
+}
+
+// ── Sub-components ───────────────────────────────────────────────────────────
 
 function Toggle({ id, checked, onChange, label }) {
   return (
-    <label
-      className="st-toggle-label"
-      htmlFor={id}
-      aria-label={label}
-    >
+    <label className="st-toggle-label" htmlFor={id} aria-label={label}>
       <input
         type="checkbox"
         id={id}
@@ -28,37 +47,69 @@ function SettingsGroup({ label, children }) {
   return (
     <div className="st-group">
       <span className="st-group-label">{label}</span>
-      <div className="st-group-card">
-        {children}
-      </div>
+      <div className="st-group-card">{children}</div>
     </div>
   )
 }
 
-function SettingsRow({ label, trailing, divided = true, id }) {
+function SettingsRow({ label, trailing, divided = true, id, onClick }) {
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <div className={`st-row${divided ? ' st-row--divided' : ''}`} id={id}>
+    <Tag
+      className={`st-row${divided ? ' st-row--divided' : ''}${onClick ? ' st-row--button' : ''}`}
+      id={id}
+      onClick={onClick}
+    >
       <span className="st-row-label">{label}</span>
       <span className="st-row-trailing">{trailing}</span>
-    </div>
+    </Tag>
   )
 }
 
+// ── Screen ───────────────────────────────────────────────────────────────────
+
 export function SettingsScreen() {
-  // Sound Effects: wired to audio.js isMuted / toggleMute
+  // ── Initialise from storage ───────────────────────────────────────────────
+  const [settings, setSettings] = useState(() => getStoredSettings())
+
+  // Sound Effects: wired to audio.js
   const [soundEnabled, setSoundEnabled] = useState(() => !isMuted())
-  // Music: persisted in localStorage
+  // Music: persisted in localStorage (separate simple key)
   const [musicEnabled, setMusicEnabled] = useState(() => {
     try { return localStorage.getItem('nook-music') !== 'false' } catch { return true }
   })
-  // Offline Mode
-  const [offlineEnabled, setOfflineEnabled] = useState(() => {
-    try { return localStorage.getItem('nook-offline') === 'true' } catch { return false }
-  })
+
+  // Apply stored settings on first mount (theme + text scale)
+  useEffect(() => {
+    saveStoredSettings(settings)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function updateSettings(patch) {
+    const next = { ...settings, ...patch }
+    setSettings(next)
+    saveStoredSettings(next)
+  }
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  function handleThemeClick() {
+    updateSettings({ theme: cycleNext(THEMES, settings.theme) })
+  }
+
+  function handleTextSizeClick() {
+    updateSettings({ textSize: cycleNext(TEXT_SIZES, settings.textSize ?? 'medium') })
+  }
+
+  function handleBreakClick() {
+    updateSettings({ breakInterval: cycleNext(BREAK_INTERVALS, settings.breakInterval ?? 30) })
+  }
 
   function handleSoundToggle() {
-    const newMuted = toggleMute()     // toggleMute flips the muted flag
-    setSoundEnabled(!newMuted)         // soundEnabled is the inverse of muted
+    const newMuted = toggleMute()
+    setSoundEnabled(!newMuted)
   }
 
   function handleMusicToggle() {
@@ -67,19 +118,20 @@ export function SettingsScreen() {
     try { localStorage.setItem('nook-music', String(next)) } catch {}
   }
 
-  function handleOfflineToggle() {
-    const next = !offlineEnabled
-    setOfflineEnabled(next)
-    try { localStorage.setItem('nook-offline', String(next)) } catch {}
-  }
-
   function handleResetProgress() {
-    if (window.confirm('Reset all progress? This cannot be undone.')) {
-      try {
-        localStorage.removeItem('nook-progress')
-      } catch {}
+    if (window.confirm('Reset all progress and session history? This cannot be undone.')) {
+      resetAllData()
+      alert('All progress has been reset.')
     }
   }
+
+  // ── Derived display values ────────────────────────────────────────────────
+
+  const themeLabel = THEME_LABELS[settings.theme] ?? 'Dark'
+  const textLabel = TEXT_LABELS[settings.textSize ?? 'medium'] ?? 'Normal'
+  const breakLabel = BREAK_LABELS[settings.breakInterval ?? 30] ?? '30 min'
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="page st-page">
@@ -90,14 +142,31 @@ export function SettingsScreen() {
         <SettingsRow
           id="st-theme-row"
           label="Theme"
-          trailing={<span className="st-value">Dark</span>}
+          onClick={handleThemeClick}
+          trailing={
+            <span className="st-value st-value--chevron">
+              {themeLabel} <span className="st-chevron">›</span>
+            </span>
+          }
         />
         <SettingsRow
           id="st-textsize-row"
           label="Text Size"
+          onClick={handleTextSizeClick}
           trailing={
             <span className="st-value st-value--chevron">
-              Medium <span className="st-chevron">›</span>
+              {textLabel} <span className="st-chevron">›</span>
+            </span>
+          }
+        />
+        <SettingsRow
+          id="st-break-row"
+          label="Break Reminder"
+          divided={false}
+          onClick={handleBreakClick}
+          trailing={
+            <span className="st-value st-value--chevron">
+              {breakLabel} <span className="st-chevron">›</span>
             </span>
           }
         />
@@ -134,33 +203,16 @@ export function SettingsScreen() {
 
       {/* GENERAL */}
       <SettingsGroup label="GENERAL">
-        <SettingsRow
-          id="st-offline-row"
-          label="Offline Mode"
-          divided={false}
-          trailing={
-            <Toggle
-              id="st-offline-toggle"
-              checked={offlineEnabled}
-              onChange={handleOfflineToggle}
-              label="Toggle offline mode"
-            />
-          }
-        />
         <button
           id="st-reset-btn"
-          className="st-row st-row--divided st-row--button"
+          className="st-row st-row--divided st-row--button st-row--danger"
           onClick={handleResetProgress}
         >
           <span className="st-row-label">Reset Progress</span>
           <span className="st-row-trailing st-chevron">›</span>
         </button>
-        <SettingsRow
-          id="st-about-row"
-          label="About Nook"
-          trailing={<span className="st-value st-value--muted">v1.0.0</span>}
-        />
       </SettingsGroup>
     </div>
   )
 }
+

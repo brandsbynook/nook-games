@@ -6,6 +6,15 @@ const icons = {
       <path d="M4 12h16M12 4v16" />
     </>
   ),
+  sequence: (
+    <>
+      <circle cx="7" cy="8" r="2" />
+      <circle cx="17" cy="7" r="2" />
+      <circle cx="8" cy="17" r="2" />
+      <circle cx="16" cy="16" r="2" />
+      <path d="M8.7 9.4 15.3 8.6M8.8 15.2 15.2 8.8M9.8 17.2 14.2 16.8" />
+    </>
+  ),
   spatial: (
     <>
       <circle cx="7" cy="8" r="2" />

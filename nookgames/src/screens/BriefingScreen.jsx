@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
 import { ZenSplash } from '../components/ZenSplash.jsx'
 import { playTap } from '../utils/audio.js'
+import { setLastActiveGame } from '../utils/storage.js'
 
 export function BriefingScreen({ game, collection }) {
   const [showZen, setShowZen] = useState(false)
@@ -21,8 +22,10 @@ export function BriefingScreen({ game, collection }) {
   }
 
   const handleZenDone = useCallback(() => {
+    // Persist to storage so the Home resume card reflects the last game played
+    setLastActiveGame(game.id, game.title, collection?.title ?? '')
     window.location.hash = `#/play/${game.id}`
-  }, [game.id])
+  }, [game.id, game.title, collection])
 
   if (showZen) {
     return <ZenSplash game={game} onDone={handleZenDone} />

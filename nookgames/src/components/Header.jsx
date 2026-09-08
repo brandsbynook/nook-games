@@ -1,13 +1,9 @@
-import { Icon } from '../icons.jsx'
-
 export function Header() {
   return (
-    <header className="app-header">
-      <span className="app-header-side" />
-      <p className="wordmark">nook</p>
-      <span className="app-header-side app-header-profile" aria-hidden="true">
-        <Icon name="profile" size={20} />
-      </span>
+    <header className="home-header" role="banner">
+      <h1 className="home-header-title">nook games.</h1>
+      <p className="home-header-tagline">quiet play for focused minds</p>
     </header>
   )
 }
+

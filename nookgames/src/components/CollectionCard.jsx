@@ -18,7 +18,7 @@ export function CollectionCard({ collection }) {
       </span>
       <div className="collection-card-body">
         <span className="collection-card-title">{collection.title}</span>
-        <span className="collection-card-sub">{collection.description}</span>
+        <span className="collection-card-sub">{collection.tagline || collection.description}</span>
       </div>
       <span className="collection-card-chevron" aria-hidden="true">
         <Icon name="chevron" size={18} />

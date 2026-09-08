@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppShell } from './components/AppShell.jsx'
 import { getCollection, getGame } from './data/catalogue.js'
 import { BriefingScreen } from './screens/BriefingScreen.jsx'
@@ -28,7 +28,96 @@ import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
 import { SettingsScreen } from './screens/SettingsScreen.jsx'
+import {
+  getStoredSettings,
+  shouldShowFeedbackPrompt,
+  markFeedbackResolved,
+  markFeedbackDismissed,
+} from './utils/storage.js'
 import './App.css'
+
+// ═══════════════════════════════════════════════════════════════════
+// MINDFUL BREAK OVERLAY
+// ═══════════════════════════════════════════════════════════════════
+
+function MindfulBreakOverlay({ intervalMinutes, onResume }) {
+  return (
+    <div className="brk-backdrop" role="dialog" aria-modal="true" aria-label="Mindful break reminder">
+      <div className="brk-card">
+        {/* Resting eye glyph */}
+        <div className="brk-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M2 12C2 12 5.5 6 12 6s10 6 10 6-3.5 6-10 6S2 12 2 12z"
+              stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"
+            />
+            <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+            {/* Closed lid lines */}
+            <path d="M7 16.5C8.5 18 10.2 18.5 12 18.5s3.5-.5 5-2"
+              stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.4" />
+          </svg>
+        </div>
+
+        <h2 className="brk-title">Time to breathe</h2>
+        <p className="brk-message">
+          You've been playing for {intervalMinutes}{' '}
+          {intervalMinutes === 1 ? 'minute' : 'minutes'}. Take a quiet breath
+          or rest your eyes for a moment.
+        </p>
+
+        <button
+          id="brk-resume-btn"
+          className="brk-resume-btn"
+          onClick={onResume}
+          autoFocus
+        >
+          Resume
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DUAL-ROUTE FEEDBACK PROMPT
+// ═══════════════════════════════════════════════════════════════════
+
+function FeedbackPrompt({ onClose }) {
+  function handlePositive() {
+    markFeedbackResolved()
+    // Open Play Store listing (replace with real URL when published)
+    window.open('https://play.google.com/store/apps/details?id=app.nookgames', '_blank', 'noopener')
+    onClose()
+  }
+
+  function handleNegative() {
+    markFeedbackResolved()
+    window.location.href = 'mailto:feedback@nookgames.app?subject=Nook%20Games%20Feedback'
+    onClose()
+  }
+
+  function handleDismiss() {
+    markFeedbackDismissed()
+    onClose()
+  }
+
+  return (
+    <div className="fbk-banner" role="dialog" aria-label="Feedback prompt">
+      <p className="fbk-question">How is your experience with Nook so far?</p>
+      <div className="fbk-actions">
+        <button id="fbk-positive-btn" className="fbk-btn fbk-btn--positive" onClick={handlePositive}>
+          Quiet &amp; Enjoyable
+        </button>
+        <button id="fbk-negative-btn" className="fbk-btn fbk-btn--negative" onClick={handleNegative}>
+          Needs Work
+        </button>
+        <button id="fbk-dismiss-btn" className="fbk-btn fbk-btn--dismiss" onClick={handleDismiss}>
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function parseRoute() {
   const rawHash = window.location.hash.replace(/^#\/?/, '').split('?')[0] || ''
@@ -56,7 +145,17 @@ function parseRoute() {
   }
 
   if ((parts[0] === 'collection' || parts[0] === 'category') && parts[1]) {
-    return { name: 'collection', id: parts[1] }
+    const rawId = String(parts[1]).toLowerCase()
+    // Support legacy redirects
+    if (rawId === 'spatial') {
+      window.location.replace('#/collection/sequence')
+      return { name: 'collection', id: 'sequence' }
+    }
+    if (rawId === 'words-reasoning' || rawId === 'word-reasoning') {
+      window.location.replace('#/collection/words')
+      return { name: 'collection', id: 'words' }
+    }
+    return { name: 'collection', id: rawId }
   }
 
   // Briefing screen sits between CollectionScreen and GameScreen
@@ -281,6 +380,31 @@ function Screen({ route }) {
 function App() {
   const [route, setRoute] = useState(parseRoute)
 
+  // ── Mindful break state ──────────────────────────────────────────
+  const [showBreak, setShowBreak] = useState(false)
+  const elapsedRef = useRef(0) // minutes elapsed, tracked in memory only
+
+  useEffect(() => {
+    // Tick every 60 seconds
+    const id = setInterval(() => {
+      const { breakInterval } = getStoredSettings()
+      if (!breakInterval || breakInterval <= 0) return
+      elapsedRef.current += 1
+      if (elapsedRef.current >= breakInterval) {
+        setShowBreak(true)
+      }
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  function handleBreakResume() {
+    setShowBreak(false)
+    elapsedRef.current = 0
+  }
+
+  // ── Feedback prompt state ────────────────────────────────────────
+  const [showFeedback, setShowFeedback] = useState(() => shouldShowFeedbackPrompt())
+
   const navigate = (path) => {
     window.location.hash = path.startsWith('/') ? path : `/${path}`
   }
@@ -390,9 +514,23 @@ function App() {
   }
 
   return (
-    <AppShell navActive={navActive}>
-      <Screen route={route} />
-    </AppShell>
+    <>
+      <AppShell navActive={navActive}>
+        <Screen route={route} />
+        {/* Feedback prompt — shown inside the scroll area above bottom nav */}
+        {showFeedback && (
+          <FeedbackPrompt onClose={() => setShowFeedback(false)} />
+        )}
+      </AppShell>
+
+      {/* Mindful break overlay — rendered above everything */}
+      {showBreak && (
+        <MindfulBreakOverlay
+          intervalMinutes={getStoredSettings().breakInterval}
+          onResume={handleBreakResume}
+        />
+      )}
+    </>
   )
 }
 

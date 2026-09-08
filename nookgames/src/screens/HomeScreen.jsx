@@ -1,11 +1,16 @@
+import { useState } from 'react'
 import { collections } from '../data/catalogue.js'
 import { getDailyEssay } from '../data/essays.js'
 import { CollectionCard } from '../components/CollectionCard.jsx'
 import { SectionLabel } from '../components/SectionLabel.jsx'
+import { Header } from '../components/Header.jsx'
 import { playTap } from '../utils/audio.js'
+import { getLastActiveGame } from '../utils/storage.js'
 
 export function HomeScreen() {
   const essay = getDailyEssay()
+  // Read once on mount — game screens update storage so next Home visit reflects it
+  const [lastGame] = useState(() => getLastActiveGame())
 
   function handleEditorsPick(e) {
     e.preventDefault()
@@ -13,14 +18,40 @@ export function HomeScreen() {
     window.location.hash = '/editors-pick'
   }
 
+  function handleResume(e) {
+    e.preventDefault()
+    playTap()
+    window.location.hash = `/briefing/${lastGame.gameId}`
+  }
+
   return (
     <div className="page">
+      {/* ── Sanctuary branding header ──────────────────────────── */}
+      <Header />
+
       {/* Pick up where you left off */}
       <section className="home-section" aria-labelledby="resume-label">
         <SectionLabel>
           <span id="resume-label">Pick up where you left off</span>
         </SectionLabel>
-        <p className="empty-state">Nothing in progress yet.</p>
+
+        {lastGame ? (
+          <a
+            id="resume-card"
+            className="resume-card"
+            href={`#/briefing/${lastGame.gameId}`}
+            onClick={handleResume}
+            aria-label={`Resume ${lastGame.gameName}`}
+          >
+            <div className="resume-card-body">
+              <span className="resume-card-game">{lastGame.gameName}</span>
+              <span className="resume-card-suite">{lastGame.suiteName}</span>
+            </div>
+            <span className="resume-card-chevron" aria-hidden="true">›</span>
+          </a>
+        ) : (
+          <p className="empty-state">Nothing in progress yet.</p>
+        )}
       </section>
 
       {/* Browse by collection */}
@@ -50,7 +81,6 @@ export function HomeScreen() {
           aria-label={`Read: ${essay.title}`}
         >
           <div className="ep-home-thumb" aria-hidden="true">
-            {/* Book / essay glyph */}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
               <line x1="7" y1="8" x2="17" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
