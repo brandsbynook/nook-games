@@ -12,9 +12,9 @@ export function CollectionScreen({ collection, category = collection }) {
   }
 
   return (
-    <div className="cs-page">
+    <div className="cs-page page">
       {/* ── Top Navigation Bar ───────────────────────────────── */}
-      <header className="cs-header">
+      <header className="cs-header category-header">
         <button
           id="category-back-btn"
           className="cs-back-btn"
@@ -33,7 +33,7 @@ export function CollectionScreen({ collection, category = collection }) {
       </header>
 
       {/* ── Scrollable Body with Hero, Games, and Negative Space ── */}
-      <div className="cs-body">
+      <div className="cs-body page-content">
         {/* Category Hero Section: Centered glyph + contemplative subtitle */}
         <div className="cs-hero">
           <div className="cs-hero-icon" aria-hidden="true">
@@ -45,7 +45,7 @@ export function CollectionScreen({ collection, category = collection }) {
         {/* Section Label + Game Cards */}
         <div className="cs-games-section">
           <span className="cs-games-label">GAMES</span>
-          <div className="cs-game-list">
+          <div className="cs-game-list games-list">
             {(activeCategory.games || []).map((game) => (
               <GameCard key={game.id} game={game} />
             ))}

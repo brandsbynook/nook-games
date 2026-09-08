@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { isMuted, toggleMute } from '../utils/audio.js'
+import { PageHeader } from '../components/PageHeader.jsx'
 import {
   getStoredSettings,
   saveStoredSettings,
@@ -115,7 +116,7 @@ export function SettingsScreen() {
   function handleMusicToggle() {
     const next = !musicEnabled
     setMusicEnabled(next)
-    try { localStorage.setItem('nook-music', String(next)) } catch {}
+    try { localStorage.setItem('nook-music', String(next)) } catch { }
   }
 
   function handleResetProgress() {
@@ -135,84 +136,85 @@ export function SettingsScreen() {
 
   return (
     <div className="page st-page">
-      <h1 className="st-title">Settings</h1>
+      <PageHeader title="Settings" />
 
-      {/* APPEARANCE */}
-      <SettingsGroup label="APPEARANCE">
-        <SettingsRow
-          id="st-theme-row"
-          label="Theme"
-          onClick={handleThemeClick}
-          trailing={
-            <span className="st-value st-value--chevron">
-              {themeLabel} <span className="st-chevron">›</span>
-            </span>
-          }
-        />
-        <SettingsRow
-          id="st-textsize-row"
-          label="Text Size"
-          onClick={handleTextSizeClick}
-          trailing={
-            <span className="st-value st-value--chevron">
-              {textLabel} <span className="st-chevron">›</span>
-            </span>
-          }
-        />
-        <SettingsRow
-          id="st-break-row"
-          label="Break Reminder"
-          divided={false}
-          onClick={handleBreakClick}
-          trailing={
-            <span className="st-value st-value--chevron">
-              {breakLabel} <span className="st-chevron">›</span>
-            </span>
-          }
-        />
-      </SettingsGroup>
+      <div className="st-groups">
+        {/* APPEARANCE */}
+        <SettingsGroup label="APPEARANCE">
+          <SettingsRow
+            id="st-theme-row"
+            label="Theme"
+            onClick={handleThemeClick}
+            trailing={
+              <span className="st-value st-value--chevron">
+                {themeLabel} <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+          <SettingsRow
+            id="st-textsize-row"
+            label="Text Size"
+            onClick={handleTextSizeClick}
+            trailing={
+              <span className="st-value st-value--chevron">
+                {textLabel} <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+          <SettingsRow
+            id="st-break-row"
+            label="Break Reminder"
+            divided={false}
+            onClick={handleBreakClick}
+            trailing={
+              <span className="st-value st-value--chevron">
+                {breakLabel} <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+        </SettingsGroup>
 
-      {/* SOUND */}
-      <SettingsGroup label="SOUND">
-        <SettingsRow
-          id="st-sound-row"
-          label="Sound Effects"
-          divided={false}
-          trailing={
-            <Toggle
-              id="st-sound-toggle"
-              checked={soundEnabled}
-              onChange={handleSoundToggle}
-              label="Toggle sound effects"
-            />
-          }
-        />
-        <SettingsRow
-          id="st-music-row"
-          label="Music"
-          trailing={
-            <Toggle
-              id="st-music-toggle"
-              checked={musicEnabled}
-              onChange={handleMusicToggle}
-              label="Toggle music"
-            />
-          }
-        />
-      </SettingsGroup>
+        {/* SOUND */}
+        <SettingsGroup label="SOUND">
+          <SettingsRow
+            id="st-sound-row"
+            label="Sound Effects"
+            divided={false}
+            trailing={
+              <Toggle
+                id="st-sound-toggle"
+                checked={soundEnabled}
+                onChange={handleSoundToggle}
+                label="Toggle sound effects"
+              />
+            }
+          />
+          <SettingsRow
+            id="st-music-row"
+            label="Music"
+            trailing={
+              <Toggle
+                id="st-music-toggle"
+                checked={musicEnabled}
+                onChange={handleMusicToggle}
+                label="Toggle music"
+              />
+            }
+          />
+        </SettingsGroup>
 
-      {/* GENERAL */}
-      <SettingsGroup label="GENERAL">
-        <button
-          id="st-reset-btn"
-          className="st-row st-row--divided st-row--button st-row--danger"
-          onClick={handleResetProgress}
-        >
-          <span className="st-row-label">Reset Progress</span>
-          <span className="st-row-trailing st-chevron">›</span>
-        </button>
-      </SettingsGroup>
+        {/* GENERAL */}
+        <SettingsGroup label="GENERAL">
+          <button
+            id="st-reset-btn"
+            className="st-row st-row--divided st-row--button st-row--danger"
+            onClick={handleResetProgress}
+          >
+            <span className="st-row-label">Reset Progress</span>
+            <span className="st-row-trailing st-chevron">›</span>
+          </button>
+        </SettingsGroup>
+      </div>
     </div>
   )
 }
-

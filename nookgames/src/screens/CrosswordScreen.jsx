@@ -358,7 +358,7 @@ export function CrosswordScreen({ onBack }) {
         className="cw-grid"
         style={{
           '--cols': puzzle.gridSize.cols,
-          gridTemplateRows: `repeat(${puzzle.gridSize.rows}, 1fr)`,
+          '--rows': puzzle.gridSize.rows,
         }}
       >
         {puzzle.grid.map((rowArr, r) =>

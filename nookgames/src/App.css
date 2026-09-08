@@ -9,7 +9,9 @@
 
 .app-shell {
   width: 100%;
-  max-width: min(92vw, 560px);
+  max-width: 480px;
+  height: 100%;
+  max-height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
   background: #0a0a0a;
@@ -17,12 +19,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
   box-sizing: border-box;
-  padding-top: max(16px, env(safe-area-inset-top));
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
+  overflow: hidden;
 }
 
 /* ── App Header Bar ─────────────────────────────────────────── */
@@ -65,7 +63,8 @@
 
 /* ── Scrollable Content Area ────────────────────────────────── */
 .app-main {
-  flex: 1 0 auto;
+  flex: 1 1 0%;
+  min-height: 0;
   min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -321,7 +320,7 @@
 }
 
 .cs-body {
-  flex: 1;
+  flex: 1 1 0%;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -438,8 +437,8 @@
 }
 
 .cs-negative-space {
-  height: 160px;
-  flex-shrink: 0;
+  height: 0;
+  display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -5228,18 +5227,21 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 .cw-container {
+  width: 100%;
   max-width: 480px;
+  height: 100%;
+  max-height: 100dvh;
   margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: #0a0a0a;
   color: #eaeaea;
-  padding: 16px;
+  padding: 12px 16px 32px;
   box-sizing: border-box;
   user-select: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Header */
@@ -5330,27 +5332,34 @@
 .cw-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows, var(--cols)), 1fr);
   gap: 2px;
   background: #262626;
   border: 2px solid #262626;
   border-radius: 6px;
-  width: 100%;
-  max-width: 340px;
-  aspect-ratio: 1;
-  overflow: hidden;
+  width: min(84vw, 320px);
+  height: min(84vw, 320px);
+  aspect-ratio: 1 / 1;
   box-sizing: border-box;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin: 0 auto 12px;
 }
 
 /* Cell Elements */
 .cw-cell {
-  background: #111111;
-  color: #ffffff;
-  font-size: 1.1rem;
-  font-weight: 600;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  box-sizing: border-box;
+  background: #111111;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
   border: none;
   outline: none;
   cursor: pointer;
@@ -10039,4 +10048,161 @@ html, body {
 }
 .fbk-btn--dismiss:hover {
   color: #666666;
+}
+
+
+/* =======================================================================
+   MOBILE VIEWPORT, FLUID LAYOUT & SCROLL FLOW
+   ======================================================================= */
+
+/* 1. Safe Top Breathing Room */
+.app-shell, #root {
+  padding-top: max(1.25rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+#root > .app-shell {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Sub-screens (CategoryScreen, InfoScreen, SettingsScreen) top bar/back button */
+.cs-header,
+.category-header,
+.subscreen-header,
+.st-header {
+  padding: 0.75rem 1rem 1rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.st-header .st-title {
+  padding: 0;
+  margin: 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 0 1.25rem;
+}
+
+.page-header-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.page-header-title {
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+}
+
+.page-header-back-spacer {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+/* 2. Side Margins & Fluid Card Widths */
+.page, .page-content, main {
+  width: 100%;
+  max-width: 480px; /* Comfortably fills phone screens up to small tablets */
+  margin: 0 auto;
+  padding: 0 1rem 5.5rem; /* 16px side gutters, ample room above bottom nav */
+  box-sizing: border-box;
+}
+
+main > .page,
+main > .page-content {
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  max-width: 100%;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  max-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0a0a0a;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.cs-page {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.cs-games-section {
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 3. Natural Vertical Stacking (Kill Space-Between) */
+.collection-list, .games-list, .cs-game-list, .st-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Calm, consistent breathing room */
+  justify-content: flex-start;
+}
+
+.st-group {
+  margin: 0 0 1rem 0;
+  width: 100%;
+}
+
+/* 4. Enable Scroll & Prevent Frozen Overflow */
+main, .page {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+main > .page,
+main > .page-content {
+  overflow-y: visible;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.app-main::-webkit-scrollbar {
+  display: none;
 }

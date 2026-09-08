@@ -2,7 +2,7 @@ import { Icon } from '../icons.jsx'
 
 export function PageHeader({ title, backHref }) {
   return (
-    <div className="page-header">
+    <header className="page-header subscreen-header" role="banner">
       {backHref ? (
         <a className="page-header-back" href={backHref} aria-label="Back">
           <Icon name="back" size={20} />
@@ -12,6 +12,6 @@ export function PageHeader({ title, backHref }) {
       )}
       <h1 className="page-header-title">{title}</h1>
       <span className="page-header-back-spacer" />
-    </div>
+    </header>
   )
 }
