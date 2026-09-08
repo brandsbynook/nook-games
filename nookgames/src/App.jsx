@@ -24,6 +24,7 @@ import { CheckersScreen } from './screens/CheckersScreen.jsx';
 import { ShikakuScreen } from './screens/ShikakuScreen.jsx';
 import { KakuroScreen } from './screens/KakuroScreen.jsx';
 import { SlitherlinkScreen } from './screens/SlitherlinkScreen.jsx';
+import { GomokuScreen } from './screens/GomokuScreen.jsx';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -186,6 +187,7 @@ function parseRoute() {
     if (gameId === 'chess') return { name: 'play-chess' }
     if (gameId === 'knights-tour' || gameId === 'knightstour') return { name: 'play-knights-tour' }
     if (gameId === 'checkers' || gameId === 'draughts') return { name: 'play-checkers' }
+    if (gameId === 'gomoku' || gameId === 'go') return { name: 'play-gomoku' }
   }
 
   // Direct game route alias or fallback
@@ -218,6 +220,15 @@ function parseRoute() {
     parts[0] === 'play-slitherlink'
   ) {
     return { name: 'play-slitherlink' }
+  }
+
+  if (
+    path === 'play/gomoku' ||
+    parts[0] === 'gomoku' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'gomoku') ||
+    parts[0] === 'play-gomoku'
+  ) {
+    return { name: 'play-gomoku' }
   }
 
   if (
@@ -374,6 +385,10 @@ function Screen({ route }) {
     return <SlitherlinkScreen onBack={() => navigate('briefing/slitherlink')} />
   }
 
+  if (route.name === 'play-gomoku') {
+    return <GomokuScreen onBack={() => navigate('collection/strategy')} />
+  }
+
   return <HomeScreen />
 }
 
@@ -511,6 +526,10 @@ function App() {
 
   if (route.name === 'play-shikaku') {
     return <ShikakuScreen onBack={() => navigate('briefing/shikaku')} />
+  }
+
+  if (route.name === 'play-gomoku') {
+    return <GomokuScreen onBack={() => navigate('collection/strategy')} />
   }
 
   return (

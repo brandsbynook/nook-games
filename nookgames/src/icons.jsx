@@ -226,6 +226,16 @@ const icons = {
       <circle cx="16" cy="16" r="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </>
   ),
+  gomoku: (
+    <>
+      <path d="M4 12h16M12 4v16M4 4l16 16M4 20L20 4" stroke="currentColor" strokeWidth="1" opacity="0.35" />
+      <circle cx="6" cy="6" r="2" fill="currentColor" />
+      <circle cx="9" cy="9" r="2" fill="currentColor" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <circle cx="15" cy="15" r="2" fill="currentColor" />
+      <circle cx="18" cy="18" r="2" fill="currentColor" />
+    </>
+  ),
   reversi: (
     <>
       <circle cx="12" cy="12" r="9" />
