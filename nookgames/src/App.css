@@ -7411,6 +7411,435 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   CHECKERS SCREEN (Game #17)
+   Sanctuary Monochrome Aesthetics
+───────────────────────────────────────────────────────────── */
+.chk-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: #eaeaea;
+  padding: 16px 20px 32px;
+  box-sizing: border-box;
+  user-select: none;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  gap: 12px;
+}
+
+.chk-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 2px;
+}
+
+.chk-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: #141414;
+  border: 1px solid #222222;
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.chk-icon-btn:hover {
+  background: #1f1f1f;
+}
+
+.chk-icon-btn:active {
+  transform: scale(0.94);
+}
+
+.chk-title {
+  font-family: var(--font-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+}
+
+.chk-status-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+}
+
+.chk-counts-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.chk-count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cccccc;
+}
+
+.chk-mini-disc {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.chk-mini-disc--white {
+  background: #eaeaea;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+.chk-mini-disc--black {
+  background: #444444;
+  border: 1px solid #666666;
+}
+
+.chk-count-val {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chk-king-tally {
+  font-size: 10px;
+  color: #888888;
+  margin-left: 2px;
+}
+
+.chk-turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #141414;
+  border: 1px solid #282828;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #aaaaaa;
+}
+
+.chk-turn-pill--player {
+  border-color: #383838;
+  color: #eaeaea;
+}
+
+.chk-turn-pill--player .chk-turn-dot {
+  background: #eaeaea;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+.chk-turn-pill--thinking {
+  color: #888888;
+}
+
+.chk-turn-pill--thinking .chk-turn-dot {
+  background: #888888;
+  animation: chk-pulse 1.2s infinite ease-in-out;
+}
+
+.chk-turn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #444444;
+}
+
+.chk-board-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.chk-board {
+  width: min(88vw, 420px);
+  height: min(88vw, 420px);
+  max-width: 420px;
+  max-height: 420px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  border: 1px solid #282828;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.chk-square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  outline: none;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chk-square--dark {
+  background-color: #1c1c1c;
+  cursor: pointer;
+}
+
+.chk-square--light {
+  background-color: #111111;
+  cursor: default;
+}
+
+.chk-square--last {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.chk-square--selected {
+  box-shadow: inset 0 0 0 2px #888888;
+  z-index: 2;
+}
+
+.chk-piece {
+  width: 74%;
+  height: 74%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.chk-piece--white {
+  background: #eaeaea;
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.8), inset 0 -3px 4px rgba(0, 0, 0, 0.35),
+    0 3px 6px rgba(0, 0, 0, 0.5);
+  color: #1a1a1a;
+}
+
+.chk-piece--black {
+  background: #444444;
+  border: 1px solid #5a5a5a;
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.15), inset 0 -3px 4px rgba(0, 0, 0, 0.6),
+    0 3px 6px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+}
+
+.chk-piece--selected {
+  box-shadow: 0 0 0 3px #888888, 0 4px 10px rgba(0, 0, 0, 0.6);
+  transform: scale(1.06);
+}
+
+.chk-crown-glyph {
+  font-size: clamp(14px, 3.8vw, 18px);
+  line-height: 1;
+  font-weight: 700;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.chk-step-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #555555;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.chk-capture-ring {
+  position: absolute;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.chk-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.chk-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  background: #141414;
+  border: 1px solid #262626;
+  border-radius: 9999px;
+  color: #cccccc;
+  font-family: var(--font-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chk-action-btn:hover:not(:disabled) {
+  background: #1f1f1f;
+  color: #ffffff;
+  border-color: #383838;
+}
+
+.chk-action-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.chk-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.chk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: chk-fade-in 0.2s ease;
+}
+
+.chk-modal {
+  background: #141414;
+  border: 1px solid #282828;
+  border-radius: 16px;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+}
+
+.chk-modal-title {
+  font-family: var(--font-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+}
+
+.chk-modal--won .chk-modal-title {
+  color: #5cdb95;
+}
+
+.chk-modal--lost .chk-modal-title {
+  color: #e25858;
+}
+
+.chk-modal-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #888888;
+  margin: 0 0 20px 0;
+}
+
+.chk-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chk-modal-btn-primary {
+  width: 100%;
+  padding: 11px 0;
+  background: #eaeaea;
+  color: #0a0a0a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.chk-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.chk-footer {
+  margin-top: auto;
+  padding-top: 6px;
+  text-align: center;
+}
+
+.chk-quote {
+  font-size: 11px;
+  color: #555555;
+  letter-spacing: 0.04em;
+  font-style: italic;
+  margin: 0;
+}
+
+@keyframes chk-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes chk-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 
 
 
