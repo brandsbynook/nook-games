@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
 import {
-  initGameGrid,
-  moveGrid,
-  spawnRandomTile,
+  initGameTiles,
+  moveTiles,
+  spawnRandomTileInTiles,
+  tilesToGrid,
   hasValidMoves,
   hasReached2048,
 } from '../utils/game2048Logic.js'
+import { Tile } from '../components/games/2048/Tile.jsx'
 import { playTap, playChime } from '../utils/audio.js'
 
 export function Game2048Screen() {
-  const [gridState, setGridState] = useState(() => initGameGrid())
+  const [tiles, setTiles] = useState(() => initGameTiles())
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(() => {
     try {
@@ -23,13 +25,20 @@ export function Game2048Screen() {
   const [hasWon, setHasWon] = useState(false)
   const [isGameOver, setIsGameOver] = useState(false)
   const [toastMessage, setToastMessage] = useState(null)
-  const [mergedCells, setMergedCells] = useState([])
-  const [spawnedCell, setSpawnedCell] = useState(null)
 
   const boardRef = useRef(null)
   const touchStartRef = useRef(null)
+  const cleanupTimeoutRef = useRef(null)
 
-  const grid = gridState.grid
+  // Derive 4x4 grid matrix for score/valid moves/status checks
+  const grid = tilesToGrid(tiles)
+
+  // Clean up animation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
+    }
+  }, [])
 
   // Show a gentle toast notification
   const showToast = useCallback((msg, duration = 3000) => {
@@ -44,29 +53,35 @@ export function Game2048Screen() {
   // Start new game
   const handleRestart = useCallback(() => {
     playTap()
-    const newInit = initGameGrid()
-    setGridState(newInit)
+    if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
+    const newTiles = initGameTiles()
+    setTiles(newTiles)
     setScore(0)
     setHistory([])
     setHasWon(false)
     setIsGameOver(false)
     setToastMessage(null)
-    setMergedCells([])
-    setSpawnedCell(null)
   }, [])
 
   // Undo last move
   const handleUndo = useCallback(() => {
     if (history.length === 0) return
     playTap()
+    if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
     const lastState = history[history.length - 1]
     setHistory((prev) => prev.slice(0, -1))
-    setGridState({ grid: lastState.grid, spawnedCells: [] })
+    setTiles(
+      lastState.tiles.map((t) => ({
+        ...t,
+        previousPosition: null,
+        isNew: false,
+        isMerged: false,
+        isDeleting: false,
+      }))
+    )
     setScore(lastState.score)
     setIsGameOver(false)
     setToastMessage(null)
-    setMergedCells([])
-    setSpawnedCell(null)
   }, [history])
 
   // Move handler
@@ -74,17 +89,18 @@ export function Game2048Screen() {
     (direction) => {
       if (isGameOver) return
 
-      const { grid: movedGrid, scoreGained, changed, mergedCells: newMergedCells } = moveGrid(
-        grid,
-        direction
-      )
+      // Process movement and merges on current active tiles
+      const { nextTiles, scoreGained, changed } = moveTiles(tiles, direction)
 
       if (!changed) return // Invalid move in this direction
 
       playTap()
 
-      // Save previous state for Undo
-      setHistory((prev) => [...prev.slice(-30), { grid, score }])
+      // Save previous stable state for Undo
+      setHistory((prev) => [
+        ...prev.slice(-30),
+        { tiles: tiles.filter((t) => !t.isDeleting), score },
+      ])
 
       // Update score and best
       const nextScore = score + scoreGained
@@ -98,13 +114,22 @@ export function Game2048Screen() {
         }
       }
 
-      // Spawn new tile on random empty cell
-      const { grid: finalGrid, spawnedCell: newSpawnedCell } = spawnRandomTile(movedGrid)
-      setGridState({ grid: finalGrid, spawnedCells: newSpawnedCell ? [newSpawnedCell] : [] })
-      setMergedCells(newMergedCells)
-      setSpawnedCell(newSpawnedCell)
+      // Spawn new tile into a free position
+      const { nextTiles: withSpawn } = spawnRandomTileInTiles(nextTiles)
+      setTiles(withSpawn)
+
+      // Schedule cleanup of parent tiles that merged and are now deleting
+      if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
+      cleanupTimeoutRef.current = setTimeout(() => {
+        setTiles((prev) =>
+          prev
+            .filter((t) => !t.isDeleting)
+            .map((t) => ({ ...t, isMerged: false, isNew: false }))
+        )
+      }, 190)
 
       // Check 2048 achievement
+      const finalGrid = tilesToGrid(withSpawn)
       if (!hasWon && hasReached2048(finalGrid)) {
         setHasWon(true)
         setTimeout(() => {
@@ -121,7 +146,7 @@ export function Game2048Screen() {
         }, 300)
       }
     },
-    [grid, score, bestScore, isGameOver, hasWon, showToast]
+    [tiles, score, bestScore, isGameOver, hasWon, showToast]
   )
 
   // Keyboard navigation
@@ -148,62 +173,73 @@ export function Game2048Screen() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleMove, handleUndo])
 
-  // Non-passive Touch Swipe listeners attached directly to the board
+  // Touch Swipe Event Handlers bound directly to the main 4x4 grid container
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now(),
+      }
+    }
+  }
+
+  const handleTouchMove = (e) => {
+    // Prevent default scrolling behavior to keep the game locked in place
+    if (touchStartRef.current && e.cancelable) {
+      e.preventDefault()
+    }
+  }
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartRef.current) return
+    const touch = e.changedTouches ? e.changedTouches[0] : null
+    if (!touch) {
+      touchStartRef.current = null
+      return
+    }
+
+    const endX = touch.clientX
+    const endY = touch.clientY
+    const deltaX = endX - touchStartRef.current.x
+    const deltaY = endY - touchStartRef.current.y
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+    const minDistance = 20
+
+    // Filter accidental taps using threshold
+    if (Math.max(absX, absY) >= minDistance) {
+      // Determine dominant swipe axis
+      if (absX > absY) {
+        handleMove(deltaX > 0 ? 'right' : 'left')
+      } else {
+        handleMove(deltaY > 0 ? 'down' : 'up')
+      }
+    }
+
+    touchStartRef.current = null
+  }
+
+  const handleTouchCancel = () => {
+    touchStartRef.current = null
+  }
+
+  // Non-passive native listener fallback to guarantee touchmove preventDefault
   useEffect(() => {
     const boardEl = boardRef.current
     if (!boardEl) return
 
-    const onTouchStart = (e) => {
-      if (e.touches.length === 1) {
-        touchStartRef.current = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
-        }
-      }
-    }
-
-    const onTouchMove = (e) => {
-      // Prevent screen scrolling & bounce during swipe gesture inside board
+    const onNativeTouchMove = (e) => {
       if (touchStartRef.current && e.cancelable) {
         e.preventDefault()
       }
     }
 
-    const onTouchEnd = (e) => {
-      if (!touchStartRef.current) return
-      const touch = e.changedTouches[0]
-      const dx = touch.clientX - touchStartRef.current.x
-      const dy = touch.clientY - touchStartRef.current.y
-      const absX = Math.abs(dx)
-      const absY = Math.abs(dy)
-      const minDistance = 20
-
-      if (Math.max(absX, absY) >= minDistance) {
-        if (absX > absY) {
-          handleMove(dx > 0 ? 'right' : 'left')
-        } else {
-          handleMove(dy > 0 ? 'down' : 'up')
-        }
-      }
-      touchStartRef.current = null
-    }
-
-    const onTouchCancel = () => {
-      touchStartRef.current = null
-    }
-
-    boardEl.addEventListener('touchstart', onTouchStart, { passive: false })
-    boardEl.addEventListener('touchmove', onTouchMove, { passive: false })
-    boardEl.addEventListener('touchend', onTouchEnd, { passive: false })
-    boardEl.addEventListener('touchcancel', onTouchCancel, { passive: false })
-
+    boardEl.addEventListener('touchmove', onNativeTouchMove, { passive: false })
     return () => {
-      boardEl.removeEventListener('touchstart', onTouchStart)
-      boardEl.removeEventListener('touchmove', onTouchMove)
-      boardEl.removeEventListener('touchend', onTouchEnd)
-      boardEl.removeEventListener('touchcancel', onTouchCancel)
+      boardEl.removeEventListener('touchmove', onNativeTouchMove)
     }
-  }, [handleMove])
+  }, [])
 
   function handleBack(e) {
     e.preventDefault()
@@ -273,40 +309,45 @@ export function Game2048Screen() {
         </p>
       </div>
 
-      {/* ── 4x4 Grid Board ── */}
+      {/* ── 4x4 Grid Board with bound touch handlers ── */}
       <div className="g2048-board-wrap">
         <div
           ref={boardRef}
           className="g2048-board"
+          style={{ position: 'relative', aspectRatio: '1' }}
           role="grid"
           aria-label="2048 4x4 Board"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
         >
-          {grid.map((row, r) =>
-            row.map((val, c) => {
-              const isMerged = mergedCells.some((cell) => cell.r === r && cell.c === c)
-              const isNew = spawnedCell && spawnedCell.r === r && spawnedCell.c === c
-
-              let tileClass = 'g2048-slot'
-              if (val > 0) {
-                tileClass += ` g2048-tile g2048-tile--${val <= 2048 ? val : 'super'}`
-                if (isMerged) tileClass += ' g2048-tile--merged'
-                if (isNew) tileClass += ' g2048-tile--new'
-              } else {
-                tileClass += ' g2048-slot--empty'
-              }
-
-              return (
-                <div
-                  key={`cell-${r}-${c}`}
-                  className={tileClass}
-                  role="gridcell"
-                  aria-label={val > 0 ? `Tile ${val}` : 'Empty'}
-                >
-                  {val > 0 && <span className="g2048-tile-text">{val}</span>}
-                </div>
-              )
-            })
+          {/* 16 Static Background Slots */}
+          {Array.from({ length: 4 }).map((_, r) =>
+            Array.from({ length: 4 }).map((__, c) => (
+              <div
+                key={`bg-cell-${r}-${c}`}
+                className="g2048-slot g2048-slot--empty"
+                role="gridcell"
+                aria-label="Empty"
+              />
+            ))
           )}
+
+          {/* Dynamic Tiles Layer with smooth CSS transform translations */}
+          <div
+            className="g2048-tiles-container"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              padding: 'inherit',
+              pointerEvents: 'none',
+            }}
+          >
+            {tiles.map((tile) => (
+              <Tile key={tile.id} tile={tile} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -318,7 +359,7 @@ export function Game2048Screen() {
           </button>
         ) : (
           <span className="g2048-footer-quote">
-            Swipe or use arrow keys to slide.
+            Swipe to slide and merge
           </span>
         )}
       </div>
@@ -334,3 +375,5 @@ export function Game2048Screen() {
     </div>
   )
 }
+
+export default Game2048Screen

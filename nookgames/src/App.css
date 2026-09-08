@@ -2870,7 +2870,7 @@
 .g2048-board {
   width: 100%;
   max-width: 330px;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1;
   background: #0f0f0f;
   border: 1px solid #222222;
   border-radius: 16px;
@@ -2878,10 +2878,43 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
-  gap: 10px;
+  gap: var(--gap, 10px);
   box-sizing: border-box;
   touch-action: none;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  --gap: 10px;
+}
+
+/* ── Dynamic Tiles Layer ── */
+.g2048-tiles-container {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.g2048-tile-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((100% - 3 * var(--gap, 10px)) / 4);
+  height: calc((100% - 3 * var(--gap, 10px)) / 4);
+  transform: translate(
+    calc(var(--c) * (100% + var(--gap, 10px))),
+    calc(var(--r) * (100% + var(--gap, 10px)))
+  );
+  transition: transform 150ms ease-in-out;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.g2048-tile-wrapper--deleting {
+  opacity: 0.9;
+  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
 }
 
 /* ── Slots & Minimalist Sanctuary Tiles ── */
@@ -2909,7 +2942,7 @@
   font-weight: 700;
   font-size: 1.4rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  transition: transform 100ms ease, background 100ms ease;
+  transition: background 150ms ease;
 }
 
 /* ── Tile Values ── */
@@ -2999,12 +3032,12 @@
 
 /* ── Tile Animations ── */
 .g2048-tile--new {
-  animation: tileSpawn 100ms ease-out forwards;
+  animation: tileSpawn 120ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes tileSpawn {
   0% {
-    transform: scale(0.7);
-    opacity: 0.5;
+    transform: scale(0);
+    opacity: 0;
   }
   100% {
     transform: scale(1);
@@ -3013,14 +3046,14 @@
 }
 
 .g2048-tile--merged {
-  animation: mergePop 100ms ease-in-out forwards;
+  animation: mergePop 180ms ease-in-out forwards;
 }
 @keyframes mergePop {
   0% {
-    transform: scale(0.92);
+    transform: scale(1);
   }
   50% {
-    transform: scale(1.06);
+    transform: scale(1.2);
   }
   100% {
     transform: scale(1);
@@ -6025,6 +6058,515 @@
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAME #14: ARROW PUZZLE (SANCTUARY AESTHETIC)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ap-page {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: #0a0a0a;
+  color: #eaeaea;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ── Top Header ───────────────────────────────────────────── */
+.ap-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ap-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #888888;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 6px 4px;
+  transition: color 0.15s ease;
+}
+
+.ap-back-btn:hover {
+  color: #eaeaea;
+}
+
+.ap-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #eaeaea;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.ap-icon-btn {
+  background: none;
+  border: none;
+  color: #888888;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.ap-icon-btn:hover {
+  color: #eaeaea;
+  background-color: #1a1a1a;
+}
+
+/* ── Difficulty Tabs ──────────────────────────────────────── */
+.ap-difficulty-tabs {
+  display: flex;
+  background: #111111;
+  border: 1px solid #222222;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+.ap-diff-tab {
+  flex: 1;
+  padding: 7px 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #777777;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ap-diff-tab:hover {
+  color: #bbbbbb;
+}
+
+.ap-diff-tab--active {
+  background: #1f1f1f;
+  color: #eaeaea;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Level Bar ────────────────────────────────────────────── */
+.ap-level-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.ap-level-nav-btn {
+  background: #141414;
+  border: 1px solid #242424;
+  color: #888888;
+  font-size: 1.2rem;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ap-level-nav-btn:hover {
+  background: #222222;
+  color: #eaeaea;
+}
+
+.ap-level-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ap-level-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #eaeaea;
+  letter-spacing: 0.03em;
+}
+
+.ap-level-indicator {
+  font-size: 0.72rem;
+  color: #777777;
+  font-family: monospace, sans-serif;
+  margin-top: 1px;
+}
+
+/* ── Grid Card Container ──────────────────────────────────── */
+.ap-grid-card {
+  width: 100%;
+  background: #111111;
+  border: 1px solid #222222;
+  border-radius: 12px;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.ap-svg {
+  width: 100%;
+  max-height: 56vh;
+  display: block;
+  touch-action: manipulation;
+  overflow: visible;
+}
+
+/* Dot grid markers */
+.ap-dot {
+  fill: #1a1a1a;
+  transition: fill 0.2s ease;
+}
+
+/* ── Arrow Styling ────────────────────────────────────────── */
+.ap-arrow-group {
+  cursor: pointer;
+}
+
+.ap-arrow-hitbox {
+  fill: none;
+  stroke: transparent;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
+
+.ap-arrow-body {
+  fill: none;
+  stroke: #888888;
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: stroke 0.18s ease, filter 0.18s ease;
+}
+
+.ap-arrow-head {
+  fill: #888888;
+  stroke: none;
+  pointer-events: none;
+  transition: fill 0.18s ease, filter 0.18s ease;
+}
+
+/* Hover or Unblocked illuminated state */
+.ap-arrow--unblocked:hover .ap-arrow-body,
+.ap-arrow--hovered.ap-arrow--unblocked .ap-arrow-body {
+  stroke: #eaeaea;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+}
+
+.ap-arrow--unblocked:hover .ap-arrow-head,
+.ap-arrow--hovered.ap-arrow--unblocked .ap-arrow-head {
+  fill: #eaeaea;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+}
+
+.ap-arrow--blocked:hover .ap-arrow-body,
+.ap-arrow--hovered.ap-arrow--blocked .ap-arrow-body {
+  stroke: #a0a0a0;
+}
+
+.ap-arrow--blocked:hover .ap-arrow-head,
+.ap-arrow--hovered.ap-arrow--blocked .ap-arrow-head {
+  fill: #a0a0a0;
+}
+
+/* ── Recoil Keyframes (Blocked Nudge) ──────────────────────── */
+.ap-recoil-up {
+  animation: ap-recoil-up 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.ap-recoil-down {
+  animation: ap-recoil-down 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.ap-recoil-left {
+  animation: ap-recoil-left 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.ap-recoil-right {
+  animation: ap-recoil-right 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes ap-recoil-up {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-3px); }
+  50% { transform: translateY(2px); }
+  75% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes ap-recoil-down {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(3px); }
+  50% { transform: translateY(-2px); }
+  75% { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes ap-recoil-left {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes ap-recoil-right {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  75% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── Flight Escape Animations ─────────────────────────────── */
+.ap-arrow--flying {
+  pointer-events: none;
+}
+
+.ap-arrow-body--flying {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+}
+
+.ap-arrow-head--flying {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+}
+
+.ap-fly-up {
+  animation: ap-fly-up 0.45s cubic-bezier(0.2, 0, 0.1, 1) forwards;
+}
+
+.ap-fly-down {
+  animation: ap-fly-down 0.45s cubic-bezier(0.2, 0, 0.1, 1) forwards;
+}
+
+.ap-fly-left {
+  animation: ap-fly-left 0.45s cubic-bezier(0.2, 0, 0.1, 1) forwards;
+}
+
+.ap-fly-right {
+  animation: ap-fly-right 0.45s cubic-bezier(0.2, 0, 0.1, 1) forwards;
+}
+
+@keyframes ap-fly-up {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-680px); opacity: 0; }
+}
+
+@keyframes ap-fly-down {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(680px); opacity: 0; }
+}
+
+@keyframes ap-fly-left {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-680px); opacity: 0; }
+}
+
+@keyframes ap-fly-right {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(680px); opacity: 0; }
+}
+
+/* Hint text below grid */
+.ap-hint-bar {
+  margin-top: 10px;
+  font-size: 0.72rem;
+  color: #666666;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ── Bottom Action Toolbar ────────────────────────────────── */
+.ap-toolbar {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.ap-btn-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #141414;
+  border: 1px solid #242424;
+  border-radius: 8px;
+  color: #eaeaea;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ap-btn-undo:hover:not(:disabled) {
+  background: #202020;
+  border-color: #383838;
+}
+
+.ap-btn-undo:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ap-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.ap-counter-num {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #eaeaea;
+  font-family: monospace, sans-serif;
+}
+
+.ap-counter-label {
+  font-size: 0.78rem;
+  color: #777777;
+  text-transform: lowercase;
+}
+
+/* ── Sanctuary Modal Backdrop & Dialog ─────────────────────── */
+.ap-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+  animation: ap-fade-in 0.2s ease-out;
+}
+
+.ap-modal-card {
+  background: #121212;
+  border: 1px solid #282828;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+}
+
+.ap-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1c1c1c;
+  border: 1px solid #333333;
+  color: #eaeaea;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px auto;
+}
+
+.ap-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #eaeaea;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ap-modal-desc {
+  font-size: 0.8rem;
+  color: #888888;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.ap-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ap-modal-btn-primary {
+  width: 100%;
+  padding: 10px 0;
+  background: #eaeaea;
+  color: #0a0a0a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ap-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.ap-modal-btn-secondary {
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  color: #888888;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ap-modal-btn-secondary:hover {
+  color: #eaeaea;
+}
+
+@keyframes ap-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 
 
 
