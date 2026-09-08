@@ -1,16 +1,24 @@
-import { editorsPick } from '../data/editorial.js'
+import { getDailyEssay } from '../data/essays.js'
 import { playTap } from '../utils/audio.js'
 
 export function EditorPickScreen() {
+  const essay = getDailyEssay()
+
   function handleBack(e) {
     e.preventDefault()
     playTap()
     window.location.hash = '/'
   }
 
+  function handleCompanion(e) {
+    e.preventDefault()
+    playTap()
+    window.location.hash = `/briefing/${essay.companionGameId}`
+  }
+
   return (
     <div className="ep-page">
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────── */}
       <div className="ep-header">
         <button
           id="ep-back-btn"
@@ -24,24 +32,46 @@ export function EditorPickScreen() {
         <span className="ep-header-spacer" aria-hidden="true" />
       </div>
 
-      {/* Scrollable content */}
+      {/* ── Scrollable body ─────────────────────────────────────── */}
       <div className="ep-body">
-        {/* Feature image card */}
-        <div className="ep-feature-card" aria-hidden="true">
-          <span className="ep-feature-label">FEATURED</span>
+
+        {/* Meta strip: theme badge + read time */}
+        <div className="ep-meta">
+          <span className="ep-theme-badge">{essay.theme}</span>
+          <span className="ep-read-time">{essay.readTime} read</span>
         </div>
 
-        {/* Article */}
-        <h1 className="ep-article-title">{editorsPick.title}</h1>
-        <p className="ep-article-subtitle">{editorsPick.subtitle}</p>
+        {/* Article title */}
+        <h1 className="ep-article-title">{essay.title}</h1>
 
+        {/* Body paragraphs */}
         <div className="ep-article-body">
-          {editorsPick.body.map((paragraph, i) => (
+          {essay.paragraphs.map((paragraph, i) => (
             <p key={i} className="ep-article-paragraph">
               {paragraph}
             </p>
           ))}
         </div>
+
+        {/* Companion game link */}
+        {essay.companionGameId && (
+          <div className="ep-companion">
+            <span className="ep-companion-label">Play the companion game</span>
+            <a
+              id="ep-companion-link"
+              className="ep-companion-link"
+              href={`#/briefing/${essay.companionGameId}`}
+              onClick={handleCompanion}
+              aria-label={`Play ${essay.companionName}`}
+            >
+              <span className="ep-companion-name">{essay.companionName}</span>
+              <span className="ep-companion-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        )}
+
+        {/* Breathing room at the bottom */}
+        <div className="ep-end-space" aria-hidden="true" />
       </div>
     </div>
   )

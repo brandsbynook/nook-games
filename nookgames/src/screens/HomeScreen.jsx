@@ -1,10 +1,12 @@
 import { collections } from '../data/catalogue.js'
-import { editorsPick } from '../data/editorial.js'
+import { getDailyEssay } from '../data/essays.js'
 import { CollectionCard } from '../components/CollectionCard.jsx'
 import { SectionLabel } from '../components/SectionLabel.jsx'
 import { playTap } from '../utils/audio.js'
 
 export function HomeScreen() {
+  const essay = getDailyEssay()
+
   function handleEditorsPick(e) {
     e.preventDefault()
     playTap()
@@ -45,18 +47,20 @@ export function HomeScreen() {
           className="ep-home-card"
           href="#/editors-pick"
           onClick={handleEditorsPick}
-          aria-label={`Read: ${editorsPick.title}`}
+          aria-label={`Read: ${essay.title}`}
         >
           <div className="ep-home-thumb" aria-hidden="true">
-            {/* Mountain/landscape icon placeholder matching reference */}
-            <svg width="28" height="20" viewBox="0 0 28 20" fill="none" aria-hidden="true">
-              <path d="M0 20L8 8l5 7 4-5 11 10H0z" fill="currentColor" opacity="0.5" />
-              <path d="M17 7l11 13H6L17 7z" fill="currentColor" opacity="0.3" />
+            {/* Book / essay glyph */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <line x1="7" y1="8" x2="17" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="7" y1="16" x2="13" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
           <div className="ep-home-text">
-            <span className="ep-home-title">{editorsPick.title}</span>
-            <span className="ep-home-sub">{editorsPick.subtitle}</span>
+            <span className="ep-home-title">{essay.title}</span>
+            <span className="ep-home-sub">{essay.theme} · {essay.readTime}</span>
           </div>
           <span className="ep-home-chevron" aria-hidden="true">›</span>
         </a>
