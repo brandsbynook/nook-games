@@ -159,6 +159,7 @@ export const collections = [
         id: 'knights-tour',
         title: "Knight's Tour",
         category: 'strategy',
+        description: "Traverse every square on the board once and only once using pure knight jumps.",
         quote: 'Every square, visited once.',
         about: "Move a chess knight to visit every square on the board exactly once — a Hamiltonian path problem.",
         bestFor: 'Algorithmic thinking and spatial memory.',
@@ -166,7 +167,7 @@ export const collections = [
         howToPlay: 'Place a knight and move it in L-shapes. Visit every square exactly once.',
         difficulty: 'Hard',
         timeEstimate: '15–40 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'chess',
