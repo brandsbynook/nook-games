@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { isMuted, toggleMute } from '../utils/audio.js'
+import { isMuted, toggleMute, playTap, triggerHaptic } from '../utils/audio.js'
 import { PageHeader } from '../components/PageHeader.jsx'
 import {
   getStoredSettings,
@@ -75,9 +75,13 @@ export function SettingsScreen() {
 
   // Sound Effects: wired to audio.js
   const [soundEnabled, setSoundEnabled] = useState(() => !isMuted())
-  // Music: persisted in localStorage (separate simple key)
-  const [musicEnabled, setMusicEnabled] = useState(() => {
-    try { return localStorage.getItem('nook-music') !== 'false' } catch { return true }
+  // Haptics: persisted in localStorage key 'nook-haptics' (default: true)
+  const [hapticsEnabled, setHapticsEnabled] = useState(() => {
+    try {
+      return localStorage.getItem('nook-haptics') !== 'false'
+    } catch {
+      return true
+    }
   })
 
   // Apply stored settings on first mount (theme + text scale)
@@ -110,13 +114,22 @@ export function SettingsScreen() {
 
   function handleSoundToggle() {
     const newMuted = toggleMute()
-    setSoundEnabled(!newMuted)
+    const enabled = !newMuted
+    setSoundEnabled(enabled)
+    if (enabled) {
+      playTap()
+    }
   }
 
-  function handleMusicToggle() {
-    const next = !musicEnabled
-    setMusicEnabled(next)
-    try { localStorage.setItem('nook-music', String(next)) } catch { }
+  function handleHapticToggle() {
+    const next = !hapticsEnabled
+    setHapticsEnabled(next)
+    try {
+      localStorage.setItem('nook-haptics', String(next))
+    } catch {}
+    if (next) {
+      triggerHaptic(12)
+    }
   }
 
   function handleResetProgress() {
@@ -179,7 +192,6 @@ export function SettingsScreen() {
           <SettingsRow
             id="st-sound-row"
             label="Sound Effects"
-            divided={false}
             trailing={
               <Toggle
                 id="st-sound-toggle"
@@ -190,14 +202,15 @@ export function SettingsScreen() {
             }
           />
           <SettingsRow
-            id="st-music-row"
-            label="Music"
+            id="st-haptics-row"
+            label="Haptics"
+            divided={false}
             trailing={
               <Toggle
-                id="st-music-toggle"
-                checked={musicEnabled}
-                onChange={handleMusicToggle}
-                label="Toggle music"
+                id="st-haptics-toggle"
+                checked={hapticsEnabled}
+                onChange={handleHapticToggle}
+                label="Toggle haptics"
               />
             }
           />

@@ -17,6 +17,18 @@ function getContext() {
 }
 
 /**
+ * Lightweight haptic vibration helper.
+ * Checks localStorage key 'nook-haptics' (default: true).
+ */
+export function triggerHaptic(duration = 8) {
+  try {
+    if (localStorage.getItem('nook-haptics') !== 'false' && navigator.vibrate) {
+      navigator.vibrate(duration)
+    }
+  } catch {}
+}
+
+/**
  * Returns true if the user has enabled the mute setting.
  * Backed by localStorage key 'nook-muted'.
  */
@@ -35,6 +47,7 @@ export function isMuted() {
  */
 export function playTap() {
   if (isMuted()) return
+  triggerHaptic(8)
   try {
     const ctx = getContext()
     const now = ctx.currentTime

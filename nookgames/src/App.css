@@ -21,6 +21,8 @@
   position: relative;
   box-sizing: border-box;
   overflow: hidden;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* ── App Header Bar ─────────────────────────────────────────── */
@@ -10151,6 +10153,8 @@ main > .page-content {
   position: relative;
   box-sizing: border-box;
   overflow: hidden;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .cs-page {
