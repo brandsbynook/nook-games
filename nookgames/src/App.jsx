@@ -18,6 +18,7 @@ import AnagramsScreen from './screens/AnagramsScreen';
 import CrosswordScreen from './screens/CrosswordScreen';
 import OneLineScreen from './screens/OneLineScreen';
 import ArrowPuzzleScreen from './screens/ArrowPuzzleScreen';
+import { ChessScreen } from './screens/ChessScreen.jsx';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -75,11 +76,21 @@ function parseRoute() {
     if (gameId === 'crossword') return { name: 'play-crossword' }
     if (gameId === 'one-line') return { name: 'play-one-line' }
     if (gameId === 'arrow-puzzle') return { name: 'play-arrow-puzzle' }
+    if (gameId === 'chess') return { name: 'play-chess' }
   }
 
   // Direct game route alias or fallback
   if (parts[0] === '2048' || (parts[0] === 'game' && String(parts[1]).toLowerCase() === '2048')) {
     return { name: 'play-2048' }
+  }
+
+  if (
+    path === 'play/chess' ||
+    parts[0] === 'chess' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'chess') ||
+    parts[0] === 'play-chess'
+  ) {
+    return { name: 'play-chess' }
   }
 
   if (
@@ -293,6 +304,10 @@ function App() {
 
   if (route.name === 'play-arrow-puzzle') {
     return <ArrowPuzzleScreen onBack={() => navigate('briefing/arrow-puzzle')} />
+  }
+
+  if (route.name === 'play-chess') {
+    return <ChessScreen onBack={() => navigate('briefing/chess')} />
   }
 
   return (

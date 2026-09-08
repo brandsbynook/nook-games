@@ -172,6 +172,7 @@ export const collections = [
         id: 'chess',
         title: 'Chess',
         category: 'strategy',
+        description: "Classic strategy. Contemplate each move in quiet stillness against the system.",
         quote: 'The board remembers every intention.',
         about: 'A two-player abstract game where you command sixteen pieces to checkmate the opponent\'s king.',
         bestFor: 'Deep strategic thinking and foresight.',
@@ -179,7 +180,7 @@ export const collections = [
         howToPlay: 'Move pieces according to their unique rules. Threaten the opponent\'s king with inevitable capture.',
         difficulty: 'Hard',
         timeEstimate: '15–90 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'go',
