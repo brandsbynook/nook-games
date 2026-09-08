@@ -23,6 +23,7 @@ import { KnightsTourScreen } from './screens/KnightsTourScreen.jsx';
 import { CheckersScreen } from './screens/CheckersScreen.jsx';
 import { ShikakuScreen } from './screens/ShikakuScreen.jsx';
 import { KakuroScreen } from './screens/KakuroScreen.jsx';
+import { SlitherlinkScreen } from './screens/SlitherlinkScreen.jsx';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -73,6 +74,7 @@ function parseRoute() {
     if (gameId === 'lights-out') return { name: 'play-lights-out' }
     if (gameId === 'shikaku') return { name: 'play-shikaku' }
     if (gameId === 'kakuro') return { name: 'play-kakuro' }
+    if (gameId === 'slitherlink') return { name: 'play-slitherlink' }
     if (gameId === 'tower-of-hanoi') return { name: 'play-tower-of-hanoi' }
     if (gameId === '2048') return { name: 'play-2048' }
     if (gameId === 'untangle') return { name: 'play-untangle' }
@@ -108,6 +110,15 @@ function parseRoute() {
     parts[0] === 'play-kakuro'
   ) {
     return { name: 'play-kakuro' }
+  }
+
+  if (
+    path === 'play/slitherlink' ||
+    parts[0] === 'slitherlink' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'slitherlink') ||
+    parts[0] === 'play-slitherlink'
+  ) {
+    return { name: 'play-slitherlink' }
   }
 
   if (
@@ -258,6 +269,10 @@ function Screen({ route }) {
 
   if (route.name === 'play-kakuro') {
     return <KakuroScreen onBack={() => navigate('briefing/kakuro')} />
+  }
+
+  if (route.name === 'play-slitherlink') {
+    return <SlitherlinkScreen onBack={() => navigate('briefing/slitherlink')} />
   }
 
   return <HomeScreen />

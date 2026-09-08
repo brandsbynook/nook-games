@@ -8770,6 +8770,438 @@
   }
 }
 
+/* ==========================================================================
+   Slitherlink Screen (Game #20: Logic Suite - Final Game)
+   ========================================================================== */
+
+.slk-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 460px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px 16px 28px;
+  box-sizing: border-box;
+  background-color: #121212;
+  color: #eaeaea;
+  user-select: none;
+}
+
+/* Header */
+.slk-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.slk-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slk-btn-back:hover {
+  color: #eaeaea;
+  border-color: #444;
+  background: #181818;
+}
+
+.slk-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0;
+  color: #ffffff;
+}
+
+.slk-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slk-btn-icon:hover {
+  color: #eaeaea;
+  border-color: #444;
+  background: #181818;
+}
+
+/* Difficulty Tabs */
+.slk-tabs-container {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.slk-tab-btn {
+  flex: 1;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  padding: 8px 4px;
+  color: #777;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.slk-tab-btn:hover {
+  color: #bbb;
+  border-color: #333;
+}
+
+.slk-tab-btn--active {
+  background: #222222;
+  border-color: #444;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Status Bar */
+.slk-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 12px;
+  min-height: 28px;
+}
+
+.slk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.slk-pill-label {
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+}
+
+.slk-pill-val {
+  color: #eaeaea;
+  font-weight: 600;
+}
+
+.slk-mode-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #888;
+}
+
+.slk-mode-badge--cross {
+  background: #231c18;
+  border-color: #553320;
+  color: #e09f70;
+}
+
+/* Board Outer & SVG Canvas */
+.slk-board-outer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.slk-board-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: min(88vw, 420px);
+  aspect-ratio: 1;
+  background: #161616;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.slk-svg-board {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* SVG Elements */
+.slk-edge-guide {
+  stroke: #222222;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.slk-edge-line {
+  stroke: #ffffff;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  pointer-events: none;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.4));
+  transition: stroke 0.12s ease;
+}
+
+.slk-edge-cross {
+  stroke: #444444;
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.slk-edge-hitbox {
+  stroke: transparent;
+  stroke-width: 26;
+  stroke-linecap: round;
+  cursor: pointer;
+  fill: none;
+}
+
+.slk-edge-hitbox:hover ~ .slk-edge-guide {
+  stroke: #383838;
+}
+
+.slk-dot {
+  fill: #888888;
+  pointer-events: none;
+  transition: fill 0.15s ease, r 0.15s ease;
+}
+
+.slk-dot--violation {
+  fill: #e57373 !important;
+}
+
+.slk-clue-text {
+  font-family: inherit;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+  transition: fill 0.15s ease, opacity 0.15s ease;
+}
+
+.slk-clue--active {
+  fill: #eaeaea;
+}
+
+.slk-clue--satisfied {
+  fill: #444444;
+}
+
+.slk-clue--exceeded {
+  fill: #e57373;
+}
+
+/* Controls & Toolbar */
+.slk-controls {
+  width: 100%;
+  max-width: min(88vw, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slk-toolbar {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.slk-action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.slk-action-btn:hover:not(:disabled) {
+  color: #eaeaea;
+  border-color: #444;
+  background: #202020;
+}
+
+.slk-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.slk-action-btn--active {
+  background: #222222 !important;
+  border-color: #555 !important;
+  color: #ffffff !important;
+}
+
+.slk-action-btn--cross-active {
+  background: #231c18 !important;
+  border-color: #553320 !important;
+  color: #e09f70 !important;
+}
+
+/* Help / Instruction Hint */
+.slk-help-hint {
+  text-align: center;
+  font-size: 0.73rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Calm Victory Modal */
+.slk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  animation: slk-fade-in 0.25s ease-out forwards;
+}
+
+.slk-modal-card {
+  width: 100%;
+  max-width: 360px;
+  background: #161616;
+  border: 1px solid #2e2e2e;
+  border-radius: 12px;
+  padding: 24px;
+  box-sizing: border-box;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+}
+
+.slk-modal-icon {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: #eaeaea;
+}
+
+.slk-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.slk-modal-desc {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #888;
+  margin: 0 0 20px;
+}
+
+.slk-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slk-modal-btn-primary {
+  background: #eaeaea;
+  color: #111111;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.slk-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.slk-modal-btn-secondary {
+  background: #222222;
+  color: #eaeaea;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slk-modal-btn-secondary:hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.slk-modal-btn-tertiary {
+  background: transparent;
+  color: #777;
+  border: none;
+  font-size: 0.78rem;
+  padding: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.slk-modal-btn-tertiary:hover {
+  color: #bbb;
+}
+
+@keyframes slk-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
 
 
 

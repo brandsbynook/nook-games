@@ -56,7 +56,7 @@ export const collections = [
         howToPlay: 'Connect dots to form a single non-crossing loop respecting all cell clues.',
         difficulty: 'Hard',
         timeEstimate: '20–50 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'shikaku',
