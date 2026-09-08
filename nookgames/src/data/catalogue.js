@@ -43,7 +43,7 @@ export const collections = [
         howToPlay: 'Each horizontal and vertical run must sum to its clue number using unique digits 1–9.',
         difficulty: 'Hard',
         timeEstimate: '20–45 min',
-        isPlayable: false,
+        isPlayable: true,
       },
       {
         id: 'slitherlink',
