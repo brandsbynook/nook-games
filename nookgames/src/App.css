@@ -7840,6 +7840,445 @@
   }
 }
 
+/* ==========================================================================
+   Shikaku Screen (Game #18: Logic Suite)
+   ========================================================================== */
+
+.shk-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 460px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px 16px 28px;
+  box-sizing: border-box;
+  background-color: #121212;
+  color: #eaeaea;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Header */
+.shk-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.shk-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shk-btn-back:hover {
+  color: #eaeaea;
+  border-color: #444;
+  background: #181818;
+}
+
+.shk-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0;
+  color: #ffffff;
+}
+
+.shk-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shk-btn-icon:hover {
+  color: #eaeaea;
+  border-color: #444;
+  background: #181818;
+}
+
+/* Difficulty Tabs */
+.shk-tabs-container {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.shk-tab-btn {
+  flex: 1;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  padding: 8px 4px;
+  color: #777;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.shk-tab-btn:hover {
+  color: #bbb;
+  border-color: #333;
+}
+
+.shk-tab-btn--active {
+  background: #222222;
+  border-color: #444;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Status / Counter Bar */
+.shk-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 12px;
+  min-height: 28px;
+}
+
+.shk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.shk-pill-label {
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+}
+
+.shk-pill-val {
+  color: #eaeaea;
+  font-weight: 600;
+}
+
+.shk-feedback-text {
+  font-size: 0.75rem;
+  color: #888;
+  letter-spacing: 0.02em;
+  text-align: right;
+  flex: 1;
+  margin-left: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Board */
+.shk-board-outer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shk-board-grid {
+  position: relative;
+  width: 100%;
+  max-width: min(88vw, 420px);
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-size, 6), 1fr);
+  grid-template-rows: repeat(var(--grid-size, 6), 1fr);
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Cells */
+.shk-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  border-right: 1px solid #262626;
+  border-bottom: 1px solid #262626;
+  box-sizing: border-box;
+  font-family: inherit;
+  cursor: crosshair;
+  transition: background-color 0.12s ease;
+}
+
+.shk-cell--active-corner {
+  background: rgba(255, 255, 255, 0.1) !important;
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: -2px;
+  z-index: 2;
+}
+
+.shk-clue-number {
+  position: relative;
+  font-size: calc(180px / var(--grid-size, 6));
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 3;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.shk-clue--covered {
+  color: #666666 !important;
+  font-weight: 500;
+}
+
+/* Committed Rooms */
+.shk-committed-room {
+  position: absolute;
+  border: 2px solid #eaeaea;
+  background: #222222;
+  border-radius: 6px;
+  box-sizing: border-box;
+  z-index: 4;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shk-committed-room:hover {
+  border-color: #ffffff;
+  background: #282828;
+}
+
+.shk-room--hinted {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+  animation: shk-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes shk-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Active Preview Box */
+.shk-preview-box {
+  position: absolute;
+  border: 1.5px dashed rgba(255, 255, 255, 0.75);
+  background: rgba(58, 58, 58, 0.4);
+  border-radius: 6px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.05s ease-out;
+}
+
+.shk-preview--valid {
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.shk-preview--invalid {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.shk-dimension-pill {
+  background: rgba(18, 18, 18, 0.9);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #eaeaea;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Bottom Toolbar */
+.shk-toolbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  gap: 10px;
+}
+
+.shk-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #181818;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  color: #eaeaea;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shk-action-btn:hover:not(:disabled) {
+  background: #222222;
+  border-color: #383838;
+}
+
+.shk-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.shk-cancel-btn {
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  color: #aaa;
+  border-color: #333;
+}
+
+/* Modal Victory */
+.shk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  animation: shk-fade-in 0.25s ease-out;
+}
+
+.shk-modal-card {
+  background: #181818;
+  border: 1px solid #2e2e2e;
+  border-radius: 12px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+}
+
+.shk-modal-icon {
+  font-size: 2rem;
+  color: #eaeaea;
+  margin-bottom: 8px;
+}
+
+.shk-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.shk-modal-desc {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #888;
+  margin: 0 0 20px;
+}
+
+.shk-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shk-modal-btn-primary {
+  background: #eaeaea;
+  color: #111111;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.shk-modal-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.shk-modal-btn-secondary {
+  background: #222222;
+  color: #eaeaea;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shk-modal-btn-secondary:hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.shk-modal-btn-tertiary {
+  background: transparent;
+  color: #777;
+  border: none;
+  font-size: 0.78rem;
+  padding: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.shk-modal-btn-tertiary:hover {
+  color: #bbb;
+}
+
+@keyframes shk-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
 
 
 

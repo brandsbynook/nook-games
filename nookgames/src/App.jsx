@@ -21,6 +21,7 @@ import ArrowPuzzleScreen from './screens/ArrowPuzzleScreen';
 import { ChessScreen } from './screens/ChessScreen.jsx';
 import { KnightsTourScreen } from './screens/KnightsTourScreen.jsx';
 import { CheckersScreen } from './screens/CheckersScreen.jsx';
+import { ShikakuScreen } from './screens/ShikakuScreen.jsx';
 import { HomeScreen } from './screens/HomeScreen.jsx'
 import { InfoScreen } from './screens/InfoScreen.jsx'
 import { ProgressScreen } from './screens/ProgressScreen.jsx'
@@ -68,7 +69,8 @@ function parseRoute() {
     if (gameId === 'sudoku') return { name: 'play-sudoku' }
     if (gameId === 'word-ladder') return { name: 'play-word-ladder' }
     if (gameId === 'reversi') return { name: 'play-reversi' }
-    if (gameId === 'lights-out' || gameId === 'shikaku') return { name: 'play-lights-out' }
+    if (gameId === 'lights-out') return { name: 'play-lights-out' }
+    if (gameId === 'shikaku') return { name: 'play-shikaku' }
     if (gameId === 'tower-of-hanoi') return { name: 'play-tower-of-hanoi' }
     if (gameId === '2048') return { name: 'play-2048' }
     if (gameId === 'untangle') return { name: 'play-untangle' }
@@ -86,6 +88,15 @@ function parseRoute() {
   // Direct game route alias or fallback
   if (parts[0] === '2048' || (parts[0] === 'game' && String(parts[1]).toLowerCase() === '2048')) {
     return { name: 'play-2048' }
+  }
+
+  if (
+    path === 'play/shikaku' ||
+    parts[0] === 'shikaku' ||
+    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'shikaku') ||
+    parts[0] === 'play-shikaku'
+  ) {
+    return { name: 'play-shikaku' }
   }
 
   if (
@@ -230,6 +241,10 @@ function Screen({ route }) {
     return <ArrowPuzzleScreen onBack={() => navigate('briefing/arrow-puzzle')} />
   }
 
+  if (route.name === 'play-shikaku') {
+    return <ShikakuScreen onBack={() => navigate('briefing/shikaku')} />
+  }
+
   return <HomeScreen />
 }
 
@@ -338,6 +353,10 @@ function App() {
 
   if (route.name === 'play-checkers') {
     return <CheckersScreen onBack={() => navigate('briefing/checkers')} />
+  }
+
+  if (route.name === 'play-shikaku') {
+    return <ShikakuScreen onBack={() => navigate('briefing/shikaku')} />
   }
 
   return (
