@@ -259,7 +259,7 @@ export function CheckersScreen({ onBack }) {
           <Icon name="back" size={20} />
         </button>
 
-        <h1 className="chk-title">CHECKERS</h1>
+        <h1 className="chk-title">Checkers</h1>
 
         <button
           id="chk-reset-btn"

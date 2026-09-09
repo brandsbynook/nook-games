@@ -246,7 +246,7 @@ export function ChessScreen({ onBack }) {
           <Icon name="back" size={20} />
         </button>
 
-        <h1 className="chess-title">CHESS</h1>
+        <h1 className="chess-title">Chess</h1>
 
         <button
           id="chess-reset-btn"

@@ -132,7 +132,7 @@ export function KnightsTourScreen({ onBack }) {
           <Icon name="back" size={20} />
         </button>
 
-        <h1 className="kt-title">KNIGHT&apos;S TOUR</h1>
+        <h1 className="kt-title">Knight&apos;s Tour</h1>
 
         <button
           id="kt-reset-btn"
