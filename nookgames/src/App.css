@@ -4,6 +4,7 @@
 :root {
   --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
   --game-header-height: 48px;
+  --board-size: min(84vw, 350px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -746,10 +747,13 @@
 }
 
 .sdk-body {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: auto 0;
+  flex: 1;
   padding: 12px 16px 20px;
   box-sizing: border-box;
 }
@@ -760,7 +764,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin: auto 0;
+  margin: 0;
 }
 
 .sdk-grid {
@@ -968,7 +972,7 @@
   max-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   background: #000000;
   margin: 0 auto;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
@@ -1076,7 +1080,8 @@
 
 /* ── Middle Section (Scrollable History & Next Input) ── */
 .wl-middle-section {
-  flex: 1;
+  flex: 0 1 auto;
+  max-height: 44vh;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
@@ -1084,7 +1089,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 8px 0;
+  margin: auto 0 0 0;
   padding: 0 4px;
 }
 .wl-middle-section::-webkit-scrollbar { display: none; }
@@ -1093,6 +1098,8 @@
 .wl-bottom-section {
   flex-shrink: 0;
   width: 100%;
+  margin-top: 12px;
+  margin-bottom: auto;
   padding-bottom: 8px;
   display: flex;
   flex-direction: column;
@@ -1358,7 +1365,7 @@
   max-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 20px 24px 20px;
   box-sizing: border-box;
   overflow: hidden;
@@ -1642,7 +1649,7 @@
   max-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 20px 24px 20px;
   box-sizing: border-box;
   overflow: hidden;
@@ -2499,7 +2506,7 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 20px 24px 20px;
   box-sizing: border-box;
   overflow: hidden;
@@ -2881,7 +2888,7 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 20px 24px 20px;
   box-sizing: border-box;
   overflow: hidden;
@@ -3283,7 +3290,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   padding-left: max(16px, env(safe-area-inset-left));
@@ -3707,7 +3714,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   padding-left: max(16px, env(safe-area-inset-left));
@@ -4763,7 +4770,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-top: max(14px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   padding-left: max(12px, env(safe-area-inset-left));
@@ -4925,11 +4932,12 @@
 
 /* ── Discovery Board (Target Words Grouped by Length) ── */
 .ag-discovery-board {
-  flex: 1;
+  flex: 0 1 auto;
+  max-height: 40vh;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 6px 4px;
-  margin: 4px 0;
+  margin: auto 0 8px 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -4961,17 +4969,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 6px 12px;
   background: #111111;
   border: 1px solid #1c1c1c;
   border-radius: 8px;
   font-family: monospace, sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: #444444;
   letter-spacing: 2px;
   min-width: 46px;
-  min-height: 30px;
+  min-height: 36px;
   box-sizing: border-box;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -4996,7 +5004,8 @@
   border: 1px solid #1a1a1a;
   border-radius: 20px;
   padding: 8px 12px 14px;
-  margin-top: 4px;
+  margin-top: 0;
+  margin-bottom: auto;
   flex-shrink: 0;
 }
 
@@ -5279,7 +5288,7 @@
   align-items: center;
   background: #0a0a0a;
   color: #eaeaea;
-  padding: 12px 16px 32px;
+  padding: 0 16px 16px;
   box-sizing: border-box;
   user-select: none;
   overflow-y: auto;
@@ -5379,13 +5388,11 @@
   background: #262626;
   border: 2px solid #262626;
   border-radius: 6px;
-  width: min(84vw, 320px);
-  height: min(84vw, 320px);
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
   overflow: hidden;
   flex-shrink: 0;
-  margin: 0 auto 12px;
+  margin: auto auto 6px auto;
 }
 
 /* Cell Elements */
@@ -5453,7 +5460,7 @@
   max-width: 340px;
   font-size: 0.85rem;
   text-align: center;
-  margin: 12px 0;
+  margin: 6px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5508,7 +5515,7 @@
   border: 1px dashed #333333;
   border-radius: 8px;
   padding: 8px 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -5619,7 +5626,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-top: 0;
+  margin-bottom: auto;
 }
 
 .cw-keyboard-row {
@@ -8459,7 +8467,7 @@
   margin: 0 auto;
   padding: 16px 16px 28px;
   box-sizing: border-box;
-  background-color: #121212;
+  background: #0a0a0a;
   color: #eaeaea;
   user-select: none;
 }
@@ -8599,9 +8607,9 @@
 }
 
 .kkr-mode-badge--pencil {
-  background: #232218;
-  border-color: #554820;
-  color: #d4b86a;
+  background: #222222;
+  border-color: #444444;
+  color: #ffffff;
 }
 
 /* Grid & Board Outer */
@@ -8621,8 +8629,8 @@
   display: grid;
   grid-template-columns: repeat(var(--kkr-grid-size, 4), 1fr);
   grid-template-rows: repeat(var(--kkr-grid-size, 4), 1fr);
-  background: #161616;
-  border: 1px solid #333;
+  background: #0e0e0e;
+  border: 1px solid #222222;
   border-radius: 8px;
   overflow: hidden;
   box-sizing: border-box;
@@ -8633,9 +8641,9 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: #161616;
-  border-right: 1px solid #262626;
-  border-bottom: 1px solid #262626;
+  background: #0e0e0e;
+  border-right: 1px solid #222222;
+  border-bottom: 1px solid #222222;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -8676,7 +8684,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1e1e1e;
+  background: #1c1c1c;
   border-right: 1px solid #2a2a2a;
   border-bottom: 1px solid #2a2a2a;
   box-sizing: border-box;
@@ -8820,9 +8828,9 @@
 }
 
 .kkr-action-btn--active {
-  background: #232218 !important;
-  border-color: #554820 !important;
-  color: #d4b86a !important;
+  background: #222222 !important;
+  border-color: #444444 !important;
+  color: #ffffff !important;
 }
 
 /* Calm Victory Modal */
@@ -10738,6 +10746,7 @@ main > .page-content {
 :root {
   --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
   --game-header-height: 48px;
+  --board-size: min(84vw, 350px);
 }
 
 /* 2. Unified Page Container Top Spacing & Flex Alignment */
@@ -10811,14 +10820,12 @@ main > .page-content {
   position: relative !important;
 }
 
-/* 4. Natural Vertical Centering for Board/Puzzle Wrappers */
-.sdk-grid-wrap,
+/* 4. Natural Vertical Centering for Board/Puzzle Wrappers & Play Units */
 .rev-board-wrap,
 .lo-board-wrap,
 .g2048-board-wrap,
 .unt-board-wrap,
 .ng-board-container,
-.ag-discovery-board,
 .ol-canvas-card,
 .ap-grid-card,
 .chess-board-wrap,
@@ -10831,11 +10838,32 @@ main > .page-content {
 .gmk-board-container,
 .toh-play-area,
 .mm-board-scroll,
-.cw-grid,
-.fp-grid-wrap,
-.wl-middle-section {
+.fp-grid-wrap {
   margin: auto 0 !important;
   margin-top: auto !important;
+  margin-bottom: auto !important;
+}
+
+/* Group boards with controls into compact play units */
+.mm-board-scroll {
+  margin-bottom: 8px !important;
+}
+.mm-dock {
+  margin-bottom: auto !important;
+}
+
+.kkr-board-outer {
+  margin-bottom: 12px !important;
+}
+.kkr-controls {
+  margin-bottom: auto !important;
+}
+
+.slk-board-outer,
+.slk-board-wrapper {
+  margin-bottom: 12px !important;
+}
+.slk-controls {
   margin-bottom: auto !important;
 }
 
@@ -10984,4 +11012,43 @@ main > .page-content {
   text-transform: none !important;
   letter-spacing: 0.02em !important;
 }
+
+/* 8. Standardize Square Board Sizing Across All Screens */
+.sdk-grid,
+.cw-grid,
+.fp-grid,
+.rev-board,
+.lo-board,
+.g2048-board,
+.unt-board-frame,
+.ng-board,
+.ap-svg,
+.chess-board,
+.kt-board,
+.chk-board,
+.shk-board-grid,
+.kkr-board-grid,
+.slk-board-wrapper,
+.gmk-board,
+.ol-svg {
+  width: var(--board-size) !important;
+  max-width: var(--board-size) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+}
+
+/* Non-Square Games Sizing & Alignment */
+.toh-play-area {
+  width: min(88vw, 360px) !important;
+  max-width: min(88vw, 360px) !important;
+  margin: auto 0 !important;
+}
+
+.ag-discovery-board,
+.wl-middle-section,
+.wl-ladder {
+  max-width: min(88vw, 360px) !important;
+  margin: auto auto !important;
+}
+
 
