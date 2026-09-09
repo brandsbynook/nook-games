@@ -145,7 +145,8 @@ export function AnagramsScreen({ onBack } = {}) {
       currentWord,
       puzzle.targetWords,
       foundWords,
-      puzzle.allValidWords
+      puzzle.allValidWords,
+      puzzle.root
     )
 
     if (result.status === 'valid_target' || result.status === 'valid_extra') {
