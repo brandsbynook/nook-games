@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 :root {
   --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
-  --game-header-height: 48px;
+  --game-header-height: 56px;
   --board-size: min(84vw, 350px);
 }
 
@@ -7312,18 +7312,19 @@
 }
 
 .kt-board-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .kt-board {
-  width: min(88vw, 420px);
-  height: min(88vw, 420px);
-  max-width: 420px;
-  max-height: 420px;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1 !important;
+  width: var(--board-size, min(84vw, 350px)) !important;
+  height: var(--board-size, min(84vw, 350px)) !important;
+  max-width: var(--board-size, min(84vw, 350px)) !important;
+  max-height: var(--board-size, min(84vw, 350px)) !important;
+  margin: 0 auto !important;
   display: grid;
   border: 1px solid #282828;
   border-radius: 8px;
@@ -7334,6 +7335,7 @@
 }
 
 .kt-square {
+  aspect-ratio: 1 / 1 !important;
   position: relative;
   display: flex;
   align-items: center;
@@ -10746,7 +10748,7 @@ main > .page-content {
 /* 1. Global Layout Variables */
 :root {
   --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
-  --game-header-height: 48px;
+  --game-header-height: 56px;
   --board-size: min(84vw, 350px);
 }
 
@@ -10807,18 +10809,16 @@ main > .page-content {
 .slk-header,
 .gmk-top-bar,
 .ep-header {
-  height: var(--game-header-height) !important;
-  min-height: var(--game-header-height) !important;
-  max-height: var(--game-header-height) !important;
+  position: relative !important;
+  min-height: 56px !important;
+  height: 56px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+  padding: 0 16px !important;
   box-sizing: border-box !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
   margin-top: 0 !important;
   margin-bottom: 14px !important;
-  position: relative !important;
 }
 
 /* 4. Natural Vertical Centering for Board/Puzzle Wrappers & Play Units */
@@ -10972,6 +10972,7 @@ main > .page-content {
   margin: 0 !important;
   padding: 0 !important;
   height: 100% !important;
+  position: static !important;
 }
 
 /* 7. Standardized Header Titles - Vertically Centered, Natural Title Case & Clean Typography */
@@ -11004,14 +11005,23 @@ main > .page-content {
 .page-header h2,
 .subscreen-header h1,
 .subscreen-header h2 {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
   margin: 0 !important;
-  padding: 0 !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
   line-height: 1.2 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  text-transform: none !important;
-  letter-spacing: 0.02em !important;
 }
 
 /* 8. Standardize Square Board Sizing Across All Screens */
