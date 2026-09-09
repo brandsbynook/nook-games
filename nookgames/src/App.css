@@ -6238,10 +6238,10 @@
 .ap-title {
   font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   color: #eaeaea;
   margin: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .ap-icon-btn {
@@ -6756,8 +6756,8 @@
   font-family: var(--font-ui, sans-serif);
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #ffffff;
   margin: 0;
 }
@@ -7160,8 +7160,8 @@
   font-family: var(--font-ui, sans-serif);
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #ffffff;
   margin: 0;
 }
@@ -7600,8 +7600,8 @@
   font-family: var(--font-ui, sans-serif);
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #ffffff;
   margin: 0;
 }
@@ -10704,7 +10704,7 @@ main > .page-content {
   --game-header-height: 48px;
 }
 
-/* 2. Unified Page Container Top Spacing Across ALL Game Screens */
+/* 2. Unified Page Container Top Spacing & Flex Alignment */
 .chess-page,
 .kt-page,
 .chk-page,
@@ -10731,6 +10731,7 @@ main > .page-content {
 .ep-page {
   padding-top: var(--screen-top-pad) !important;
   margin-top: 0 !important;
+  justify-content: flex-start !important;
 }
 
 /* 3. Standardize Every Header Bar Across ALL Game Screens */
@@ -10770,10 +10771,39 @@ main > .page-content {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   margin-top: 0 !important;
+  margin-bottom: 14px !important;
   position: relative !important;
 }
 
-/* 4. Unified Back Buttons - Perfectly Centered on Exact Horizontal Eye-Line */
+/* 4. Natural Vertical Centering for Board/Puzzle Wrappers */
+.sdk-grid-wrap,
+.rev-board-wrap,
+.lo-board-wrap,
+.g2048-board-wrap,
+.unt-board-wrap,
+.ng-board-container,
+.ag-discovery-board,
+.ol-canvas-card,
+.ap-grid-card,
+.chess-board-wrap,
+.kt-board-wrap,
+.chk-board-wrap,
+.shk-board-outer,
+.kkr-board-outer,
+.slk-board-wrapper,
+.slk-board-outer,
+.gmk-board-container,
+.toh-play-area,
+.mm-board-scroll,
+.cw-grid,
+.fp-grid-wrap,
+.wl-middle-section {
+  margin: auto 0 !important;
+  margin-top: auto !important;
+  margin-bottom: auto !important;
+}
+
+/* 5. Unified Back Buttons - Perfectly Centered on Exact Horizontal Eye-Line */
 .page-header-back,
 .cs-back-btn,
 .bs-back-btn,
@@ -10858,7 +10888,7 @@ main > .page-content {
   flex-shrink: 0 !important;
 }
 
-/* 5. Center Title Wrappers */
+/* 6. Center Title Wrappers */
 .bs-topbar-center,
 .sdk-header-center,
 .wl-header-center,
@@ -10879,7 +10909,7 @@ main > .page-content {
   height: 100% !important;
 }
 
-/* 6. Standardized Header Titles - Vertically Centered with Locked Eye-Line */
+/* 7. Standardized Header Titles - Vertically Centered, Natural Title Case & Clean Typography */
 .page-header-title,
 .cs-header-title,
 .bs-topbar-title,
@@ -10915,5 +10945,7 @@ main > .page-content {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
 }
 
