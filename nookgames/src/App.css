@@ -10961,7 +10961,6 @@ main > .page-content {
 
 /* 6. Center Title Wrappers */
 .bs-topbar-center,
-.sdk-header-center,
 .wl-header-center,
 .lo-header-center,
 .fp-header-center,
@@ -10969,7 +10968,6 @@ main > .page-content {
 .g2048-header-center,
 .unt-header-center,
 .mm-header-center,
-.ng-header-center,
 .ag-header-center,
 .shk-header-center {
   display: flex !important;
@@ -10985,7 +10983,6 @@ main > .page-content {
 .page-header-title,
 .cs-header-title,
 .bs-topbar-title,
-.sdk-header-title,
 .wl-header-title,
 .rev-title,
 .lo-title,
@@ -10994,7 +10991,6 @@ main > .page-content {
 .g2048-title,
 .unt-title,
 .mm-title,
-.ng-title,
 .ag-title,
 .cw-title,
 .ol-title,
@@ -11067,5 +11063,81 @@ main > .page-content {
   max-width: min(88vw, 360px) !important;
   margin: auto auto !important;
 }
+
+/* ── Scoped Sudoku Header & Difficulty Bar ── */
+.sdk-page .sdk-header {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 0 16px !important;
+}
+
+.sdk-page .sdk-header-center {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+.sdk-page .sdk-header-title {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
+}
+
+.sdk-page .sdk-difficulty-bar {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 8px 0 !important;
+}
+
+/* ── Scoped Nonogram Header ── */
+.ng-page .ng-top-bar {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 0 16px !important;
+}
+
+.ng-page .ng-header-center {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  pointer-events: none !important;
+}
+
+.ng-page .ng-title {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
+}
+
 
 
