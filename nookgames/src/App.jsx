@@ -528,6 +528,14 @@ function App() {
     return <ShikakuScreen onBack={() => navigate('briefing/shikaku')} />
   }
 
+  if (route.name === 'play-kakuro') {
+    return <KakuroScreen onBack={() => navigate('briefing/kakuro')} />
+  }
+
+  if (route.name === 'play-slitherlink') {
+    return <SlitherlinkScreen onBack={() => navigate('briefing/slitherlink')} />
+  }
+
   if (route.name === 'play-gomoku') {
     return <GomokuScreen onBack={() => navigate('collection/strategy')} />
   }
