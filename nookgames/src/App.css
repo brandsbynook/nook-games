@@ -1,7 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════
-   NOOK — DESIGN SYSTEM & APPLICATION STYLES
-   Calibrated spatial geometry, dark sanctuary tokens, unhurried flow
+   GLOBAL LAYOUT TOKENS
    ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
+  --game-header-height: 48px;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    APP SHELL — Mobile Viewport & Centered Desktop Frame
@@ -271,8 +274,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
-  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  height: var(--game-header-height);
+  min-height: var(--game-header-height);
+  padding: 0 1rem;
   width: 100%;
   box-sizing: border-box;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -287,10 +291,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   color: #ffffff;
   background: transparent;
   border: none;
@@ -10069,10 +10073,7 @@ html, body {
   padding-bottom: 0;
 }
 
-/* Sub-screens (CategoryScreen, InfoScreen, SettingsScreen) top bar/back button */
-.cs-header,
-.category-header,
-.subscreen-header,
+/* Settings screen header */
 .st-header {
   padding: 0.75rem 1rem 1rem;
   box-sizing: border-box;
@@ -10087,9 +10088,12 @@ html, body {
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
-  padding: 0.75rem 0 1.25rem;
+  height: var(--game-header-height);
+  min-height: var(--game-header-height);
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .page-header-back {
@@ -10687,3 +10691,229 @@ main > .page-content {
   background: rgba(255, 255, 255, 0.05);
   color: #ffffff;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   STANDARDIZED GAME SCREEN LAYOUT & SAFE-AREA ALIGNMENT
+   Calibrated eye-line, uniform safe-area breathing room, and
+   vertically locked headers across all games and subscreens.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Global Layout Variables */
+:root {
+  --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
+  --game-header-height: 48px;
+}
+
+/* 2. Unified Page Container Top Spacing Across ALL Game Screens */
+.chess-page,
+.kt-page,
+.chk-page,
+.ap-page,
+.g2048-page,
+.toh-page,
+.rev-page,
+.lo-page,
+.wl-page,
+.sdk-page,
+.ng-page,
+.ag-page,
+.mm-page,
+.unt-page,
+.cw-container,
+.ol-container,
+.shk-page,
+.kkr-page,
+.slk-page,
+.gmk-page,
+.fp-page,
+.cs-page,
+.bs-page,
+.ep-page {
+  padding-top: var(--screen-top-pad) !important;
+  margin-top: 0 !important;
+}
+
+/* 3. Standardize Every Header Bar Across ALL Game Screens */
+.page-header,
+.subscreen-header,
+.cs-header,
+.bs-topbar,
+.sdk-header,
+.wl-header,
+.rev-top-bar,
+.lo-top-bar,
+.fp-header,
+.toh-top-bar,
+.g2048-top-bar,
+.unt-top-bar,
+.mm-top-bar,
+.ng-top-bar,
+.ag-top-bar,
+.cw-header,
+.ol-header,
+.ap-header,
+.chess-top-bar,
+.kt-top-bar,
+.chk-top-bar,
+.shk-header,
+.kkr-header,
+.slk-header,
+.gmk-top-bar,
+.ep-header {
+  height: var(--game-header-height) !important;
+  min-height: var(--game-header-height) !important;
+  max-height: var(--game-header-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  position: relative !important;
+}
+
+/* 4. Unified Back Buttons - Perfectly Centered on Exact Horizontal Eye-Line */
+.page-header-back,
+.cs-back-btn,
+.bs-back-btn,
+.sdk-back-btn,
+.wl-back-btn,
+.rev-back-btn,
+.lo-back-btn,
+.fp-back-btn,
+.toh-back-btn,
+.g2048-back-btn,
+.unt-back-btn,
+.ap-back-btn,
+.shk-btn-back,
+.kkr-btn-back,
+.slk-btn-back,
+.ep-back-btn,
+#chess-back-btn,
+#chk-back-btn,
+#kt-back-btn,
+#mm-back-btn,
+#ng-back-btn,
+#ag-back-btn,
+#gmk-back-btn,
+#cw-back-btn,
+#ol-back-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+}
+
+/* Square Icon Back Buttons */
+.page-header-back,
+.cs-back-btn,
+.bs-back-btn,
+.sdk-back-btn,
+.wl-back-btn,
+.rev-back-btn,
+.lo-back-btn,
+.fp-back-btn,
+.toh-back-btn,
+.g2048-back-btn,
+.unt-back-btn,
+.ap-back-btn,
+.ep-back-btn,
+#chess-back-btn,
+#chk-back-btn,
+#kt-back-btn,
+#mm-back-btn,
+#ng-back-btn,
+#ag-back-btn,
+#gmk-back-btn,
+#cw-back-btn,
+#ol-back-btn {
+  width: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+}
+
+/* Symmetrical Header Spacers (Guarantees Title Centering on No-Action Screens) */
+.page-header-back-spacer,
+.cs-header-spacer,
+.bs-topbar-spacer,
+.ep-header-spacer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* 5. Center Title Wrappers */
+.bs-topbar-center,
+.sdk-header-center,
+.wl-header-center,
+.lo-header-center,
+.fp-header-center,
+.toh-header-center,
+.g2048-header-center,
+.unt-header-center,
+.mm-header-center,
+.ng-header-center,
+.ag-header-center,
+.shk-header-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+}
+
+/* 6. Standardized Header Titles - Vertically Centered with Locked Eye-Line */
+.page-header-title,
+.cs-header-title,
+.bs-topbar-title,
+.sdk-header-title,
+.wl-header-title,
+.rev-title,
+.lo-title,
+.fp-header-title,
+.toh-title,
+.g2048-title,
+.unt-title,
+.mm-title,
+.ng-title,
+.ag-title,
+.cw-title,
+.ol-title,
+.ap-title,
+.chess-title,
+.kt-title,
+.chk-title,
+.shk-title,
+.kkr-title,
+.slk-title,
+.gmk-title,
+.ep-header-title,
+.page-header h1,
+.page-header h2,
+.subscreen-header h1,
+.subscreen-header h2 {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
