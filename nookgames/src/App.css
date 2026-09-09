@@ -11139,5 +11139,20 @@ main > .page-content {
   font-family: inherit !important;
 }
 
+/* ── Scoped Arrow Puzzle Layout & Toolbar ── */
+.ap-page {
+  box-sizing: border-box;
+  padding-bottom: 24px;
+}
+
+.ap-page .ap-toolbar {
+  position: relative;
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 0 16px;
+  z-index: 5;
+}
+
+
 
 

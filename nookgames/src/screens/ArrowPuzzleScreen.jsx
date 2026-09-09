@@ -221,7 +221,7 @@ export function ArrowPuzzleScreen({ onBack }) {
           <span>Back</span>
         </button>
 
-        <h1 className="ap-title">ARROW PUZZLE</h1>
+        <h1 className="ap-title">Arrow Puzzle</h1>
 
         <button
           type="button"
