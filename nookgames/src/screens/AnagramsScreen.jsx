@@ -237,9 +237,6 @@ export function AnagramsScreen({ onBack } = {}) {
 
         <div className="ag-header-center">
           <h1 className="ag-title">Anagrams</h1>
-          <span className="ag-subtitle">
-            {foundWords.length} of {puzzle.targetWords.length} words found
-          </span>
         </div>
 
         <div className="ag-top-actions">
@@ -263,6 +260,10 @@ export function AnagramsScreen({ onBack } = {}) {
           </button>
         </div>
       </header>
+
+      <div className="ag-status-sub">
+        {foundWords.length} of {puzzle.totalWords ?? puzzle.targetWords.length} words found
+      </div>
 
       {/* ── Segmented Difficulty Selector ───────────────────── */}
       <div className="ag-difficulty-bar" role="tablist" aria-label="Difficulty Mode">

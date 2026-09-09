@@ -204,21 +204,7 @@ export function WordLadderScreen() {
           </button>
 
           <div className="wl-header-center">
-            <span className="wl-header-title">Word Ladder</span>
-            <div className="wl-presets-bar">
-              {WORD_LADDER_PUZZLES.map((p, idx) => (
-                <button
-                  key={p.id}
-                  className={`wl-preset-btn${idx === puzzleIndex ? ' wl-preset-btn--active' : ''}`}
-                  onClick={() => {
-                    playTap()
-                    setPuzzleIndex(idx)
-                  }}
-                >
-                  {p.start} → {p.target}
-                </button>
-              ))}
-            </div>
+            <h1 className="wl-title">Word Ladder</h1>
           </div>
 
           <div className="wl-header-actions">
@@ -232,6 +218,22 @@ export function WordLadderScreen() {
               <Icon name="restart" size={18} />
             </button>
           </div>
+        </div>
+
+        {/* Difficulty / Presets Row */}
+        <div className="wl-presets-bar">
+          {WORD_LADDER_PUZZLES.map((p, idx) => (
+            <button
+              key={p.id}
+              className={`wl-preset-btn${idx === puzzleIndex ? ' wl-preset-btn--active' : ''}`}
+              onClick={() => {
+                playTap()
+                setPuzzleIndex(idx)
+              }}
+            >
+              {p.start} → {p.target}
+            </button>
+          ))}
         </div>
 
         {/* Target Word Goal Banner */}

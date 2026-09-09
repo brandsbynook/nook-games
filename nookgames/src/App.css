@@ -10984,6 +10984,7 @@ main > .page-content {
 .cs-header-title,
 .bs-topbar-title,
 .wl-header-title,
+.wl-title,
 .rev-title,
 .lo-title,
 .fp-header-title,
@@ -11152,6 +11153,23 @@ main > .page-content {
   padding: 0 16px;
   z-index: 5;
 }
+
+/* ── Scoped Sub-Bars for Word Ladder, Tower of Hanoi & Anagrams ── */
+.wl-presets-bar, .toh-presets-bar, .ag-status-sub {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.ag-status-sub {
+  font-size: 13px !important;
+  color: #888888 !important;
+}
+
 
 
 

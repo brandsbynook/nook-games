@@ -152,21 +152,6 @@ export function TowerOfHanoiScreen() {
 
         <div className="toh-header-center">
           <h1 className="toh-title">Tower of Hanoi</h1>
-          <div className="toh-presets-bar" role="radiogroup" aria-label="Disk Count Selector">
-            {DIFFICULTY_PRESETS.map((p) => (
-              <button
-                key={p.disks}
-                id={`toh-preset-${p.disks}`}
-                className={`toh-preset-btn${p.disks === numDisks ? ' toh-preset-btn--active' : ''}`}
-                onClick={() => handlePresetChange(p.disks)}
-                aria-label={`${p.disks} Disks (${p.name})`}
-                aria-checked={p.disks === numDisks}
-                role="radio"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <button
@@ -178,6 +163,22 @@ export function TowerOfHanoiScreen() {
         >
           <Icon name="restart" size={18} />
         </button>
+      </div>
+
+      <div className="toh-presets-bar" role="radiogroup" aria-label="Disk Count Selector">
+        {DIFFICULTY_PRESETS.map((p) => (
+          <button
+            key={p.disks}
+            id={`toh-preset-${p.disks}`}
+            className={`toh-preset-btn${p.disks === numDisks ? ' toh-preset-btn--active' : ''}`}
+            onClick={() => handlePresetChange(p.disks)}
+            aria-label={`${p.disks} Disks (${p.name})`}
+            aria-checked={p.disks === numDisks}
+            role="radio"
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {/* ── Status Header ───────────────────────────────────── */}
