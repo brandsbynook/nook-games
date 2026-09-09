@@ -259,199 +259,228 @@ export function solvePuzzle(puzzle) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   HIGH-FRICTION MAZE SYNTHESIS
-   Generates tightly packed, nested concentric labyrinths where every arrow's path
-   ends in the exact vector heading of its flight direction:
-   - Zero Free Borders: only 1 starting key arrow has a clear ray to edge.
-   - Nested Overlaps: every outer layer traps the inner layer; arrows within
-     each layer form an interlocking ratchet.
-   - Strict Sequential Peeling: exactly 1 clear move at start, unlocking 1–2 per step.
+   REVERSE CONSTRUCTION PUZZLE GENERATOR
+   Mathematically guaranteed to be solvable with zero deadlocks:
+   - Start with an empty board.
+   - Place arrows from the outside in (layer by layer, infilling inward).
+   - Ensure each arrow's forward corridor to the edge is strictly clear when placed.
+   - Every arrow is a clean straight line segment of 2 to 3 cells.
+   - Because each arrow has a clear path to edge relative to arrows placed before it,
+     the reverse of the placement sequence is an absolute guarantee of complete solvability.
    ───────────────────────────────────────────────────────────────────────────── */
 
-export function createTightlyPackedLabyrinth(id, title, N, keyCorner = 0, mergeCorners = 0) {
-  const gridBounds = { rows: N, cols: N };
-  const numLayers = N / 2;
-  const rawArrows = [];
-  let arrowId = 0;
+export function generateReversePuzzle(id, title, rows, cols, targetArrows = 12, seed = 42) {
+  // Deterministic LCG PRNG for reproducible puzzles
+  let s = seed;
+  const rng = () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
+  };
 
-  for (let layer = 0; layer < numLayers; layer++) {
-    const min = layer;
-    const max = N - 1 - layer;
-    const size = max - min + 1;
+  const occupiedSet = new Set();
+  const arrows = [];
+  const gridBounds = { rows, cols };
+  const corridors = [];
+  const maxLayer = Math.floor(Math.min(rows, cols) / 2);
 
-    if (size === 2) {
-      // 2x2 Core: 2 arrows
-      rawArrows.push({
-        id: `${id}-${++arrowId}`,
-        path: [[min, min], [min, max]],
-        head: [min, max],
-      });
-      rawArrows.push({
-        id: `${id}-${++arrowId}`,
-        path: [[max, max], [max, min]],
-        head: [max, min],
-      });
-      continue;
+  const getLayer = (r, c) => Math.min(r, rows - 1 - r, c, cols - 1 - c);
+
+  const isCorridorClear = (headR, headC, dir) => {
+    let currR = headR + dir.dr;
+    let currC = headC + dir.dc;
+    while (currR >= 0 && currR < rows && currC >= 0 && currC < cols) {
+      if (occupiedSet.has(cellKey(currR, currC))) return false;
+      currR += dir.dr;
+      currC += dir.dc;
     }
+    return true;
+  };
 
-    // Build the perimeter loop in clockwise order:
-    const loop = [];
-    for (let c = min; c <= max; c++) loop.push([min, c]);
-    for (let r = min + 1; r <= max; r++) loop.push([r, max]);
-    for (let c = max - 1; c >= min; c--) loop.push([max, c]);
-    for (let r = max - 1; r > min; r--) loop.push([r, min]);
+  const DIR_LIST = [DIRECTIONS.UP, DIRECTIONS.DOWN, DIRECTIONS.LEFT, DIRECTIONS.RIGHT];
 
-    const numArrows = loop.length / 2;
+  // Phase 1: Place arrows from the outside in by perimeter layer
+  for (let currentLayer = 0; currentLayer < maxLayer; currentLayer++) {
+    let layerAttempts = 300;
+    while (arrows.length < targetArrows && layerAttempts-- > 0) {
+      const candidates = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          for (const dir of DIR_LIST) {
+            for (const len of [3, 2]) {
+              let fits = true;
+              const points = [];
+              for (let k = len - 1; k >= 0; k--) {
+                const pr = r - k * dir.dr;
+                const pc = c - k * dir.dc;
+                if (
+                  pr < 0 ||
+                  pr >= rows ||
+                  pc < 0 ||
+                  pc >= cols ||
+                  occupiedSet.has(cellKey(pr, pc))
+                ) {
+                  fits = false;
+                  break;
+                }
+                points.push([pr, pc]);
+              }
+              if (!fits) continue;
 
-    for (let k = 0; k < numArrows; k++) {
-      const p0 = loop[2 * k];     // earlier in loop
-      const p1 = loop[2 * k + 1]; // later in loop
+              const pointLayers = points.map(([pr, pc]) => getLayer(pr, pc));
+              const minL = Math.min(...pointLayers);
+              if (minL < currentLayer || minL > currentLayer) continue;
 
-      let path = [p1, p0];
-      let head = p0;
+              // Ensure forward corridor to the edge is strictly clear
+              if (!isCorridorClear(r, c, dir)) continue;
 
-      if (k === 0) {
-        // Key arrow of this layer:
-        if (layer === 0) {
-          path = [[min, min + 1], [min, min]];
-          head = [min, min];
-        } else {
-          path = [[min + 1, min], [min, min]];
-          head = [min, min];
-        }
-      } else {
-        // Corner arrows bend around the corner so their final segment vector
-        // points strictly along the perimeter loop into the preceding arrow:
-        if (p0[0] === max && p0[1] === max) {
-          // Bottom-Right corner: bends to [max - 1, max] pointing UP into Right edge
-          path = [[max, max - 1], [max, max], [max - 1, max]];
-          head = [max - 1, max];
-        } else if (p0[0] === max && p0[1] === min) {
-          // Bottom-Left corner: bends to [max, min + 1] pointing RIGHT into Bottom edge
-          path = [[max - 1, min], [max, min], [max, min + 1]];
-          head = [max, min + 1];
-        } else if (p0[0] === min && p0[1] === max) {
-          // Top-Right corner: bends to [min, max - 1] pointing LEFT into Top edge
-          path = [[min + 1, max], [min, max], [min, max - 1]];
-          head = [min, max - 1];
+              const head = [r, c];
+              const ptKeys = new Set(points.map(([pr, pc]) => cellKey(pr, pc)));
+
+              let blockedCount = 0;
+              for (const cr of corridors) {
+                if (cr.cells.some(([cR, cC]) => ptKeys.has(cellKey(cR, cC)))) {
+                  blockedCount++;
+                }
+              }
+
+              candidates.push({
+                path: points,
+                points,
+                head,
+                dir: dir.name,
+                dirObj: dir,
+                len,
+                blockedCount,
+              });
+            }
+          }
         }
       }
 
-      rawArrows.push({
-        id: `${id}-${++arrowId}`,
-        path,
-        head,
+      if (candidates.length === 0) break;
+
+      candidates.sort((a, b) => {
+        const scoreA = a.len * 3 + a.blockedCount * 12 + rng() * 4;
+        const scoreB = b.len * 3 + b.blockedCount * 12 + rng() * 4;
+        return scoreB - scoreA;
       });
-    }
-  }
 
-  // Handle mergeCorners to fine-tune arrow counts to exact prompt ranges:
-  let arrows = rawArrows;
-  if (mergeCorners > 0 && N === 6) {
-    const p = rawArrows;
-    const b56 = { id: `${id}-5`, path: [...p[5].path, ...p[4].path], head: p[4].head };
-    const b910 = { id: `${id}-7`, path: [...p[9].path, ...p[8].path], head: p[8].head };
+      const chosen = candidates[0];
+      const arrowId = `${id}-${arrows.length + 1}`;
+      arrows.push({
+        id: arrowId,
+        path: chosen.path,
+        points: chosen.points,
+        head: chosen.head,
+        dir: chosen.dir,
+      });
 
-    if (mergeCorners === 3) {
-      // 15 arrows
-      const b78 = { id: `${id}-6`, path: [...p[7].path, ...p[6].path], head: p[6].head };
-      arrows = [
-        p[0], p[1], p[2], p[3],
-        b56, b78, b910,
-        p[10], p[11], p[12], p[13], p[14], p[15],
-        p[16], p[17]
-      ].map((a, i) => ({ ...a, id: `${id}-${i + 1}` }));
-    } else if (mergeCorners === 2) {
-      // 16 arrows
-      arrows = [
-        p[0], p[1], p[2], p[3],
-        b56, p[6], p[7], b910,
-        p[10], p[11], p[12], p[13], p[14], p[15],
-        p[16], p[17]
-      ].map((a, i) => ({ ...a, id: `${id}-${i + 1}` }));
-    } else if (mergeCorners === 4) {
-      // 14 arrows
-      const b78 = { id: `${id}-6`, path: [...p[7].path, ...p[6].path], head: p[6].head };
-      const b1415 = { id: `${id}-11`, path: [...p[14].path, ...p[13].path], head: p[13].head };
-      arrows = [
-        p[0], p[1], p[2], p[3],
-        b56, b78, b910,
-        p[10], p[11], p[12], b1415, p[15],
-        p[16], p[17]
-      ].map((a, i) => ({ ...a, id: `${id}-${i + 1}` }));
-    }
-  } else if (N === 8 && mergeCorners > 0) {
-    if (mergeCorners === 2) {
-      // 30 arrows on 8x8
-      const p = rawArrows;
-      const merged1 = { id: `${id}-m1`, path: [...p[7].path, ...p[6].path], head: p[6].head };
-      const merged2 = { id: `${id}-m2`, path: [...p[12].path, ...p[11].path], head: p[11].head };
-      arrows = [
-        ...p.slice(0, 6),
-        merged1,
-        ...p.slice(8, 11),
-        merged2,
-        ...p.slice(13)
-      ].map((a, i) => ({ ...a, id: `${id}-${i + 1}` }));
-    }
-  }
-
-  // Assign dir strictly from vector heading:
-  arrows = arrows.map((a) => {
-    const heading = getArrowVectorHeading(a.path);
-    return {
-      ...a,
-      dir: heading.dir,
-    };
-  });
-
-  // Rotate coordinates if keyCorner != 0:
-  if (keyCorner > 0) {
-    arrows = arrows.map((a) => {
-      let curPath = a.path;
-      let curHead = a.head;
-
-      for (let rot = 0; rot < keyCorner; rot++) {
-        curPath = curPath.map(([r, c]) => [c, N - 1 - r]);
-        curHead = [curHead[1], N - 1 - curHead[0]];
+      for (const p of chosen.points) {
+        occupiedSet.add(cellKey(p[0], p[1]));
       }
 
-      const heading = getArrowVectorHeading(curPath);
-      return {
-        ...a,
-        path: curPath,
-        head: curHead,
-        dir: heading.dir,
-      };
+      let currR = chosen.head[0] + chosen.dirObj.dr;
+      let currC = chosen.head[1] + chosen.dirObj.dc;
+      const corridorCells = [];
+      while (currR >= 0 && currR < rows && currC >= 0 && currC < cols) {
+        corridorCells.push([currR, currC]);
+        currR += chosen.dirObj.dr;
+        currC += chosen.dirObj.dc;
+      }
+      corridors.push({ arrowId, cells: corridorCells });
+    }
+  }
+
+  // Phase 2: Infill any remaining open space up to targetArrows
+  let infillAttempts = 350;
+  while (arrows.length < targetArrows && infillAttempts-- > 0) {
+    const candidates = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        for (const dir of DIR_LIST) {
+          for (const len of [3, 2]) {
+            let fits = true;
+            const points = [];
+            for (let k = len - 1; k >= 0; k--) {
+              const pr = r - k * dir.dr;
+              const pc = c - k * dir.dc;
+              if (
+                pr < 0 ||
+                pr >= rows ||
+                pc < 0 ||
+                pc >= cols ||
+                occupiedSet.has(cellKey(pr, pc))
+              ) {
+                fits = false;
+                break;
+              }
+              points.push([pr, pc]);
+            }
+            if (!fits) continue;
+            if (!isCorridorClear(r, c, dir)) continue;
+
+            candidates.push({
+              path: points,
+              points,
+              head: [r, c],
+              dir: dir.name,
+              dirObj: dir,
+              len,
+            });
+          }
+        }
+      }
+    }
+
+    if (candidates.length === 0) break;
+
+    const chosen = candidates[Math.floor(rng() * candidates.length)];
+    const arrowId = `${id}-${arrows.length + 1}`;
+    arrows.push({
+      id: arrowId,
+      path: chosen.path,
+      points: chosen.points,
+      head: chosen.head,
+      dir: chosen.dir,
     });
+    for (const p of chosen.points) {
+      occupiedSet.add(cellKey(p[0], p[1]));
+    }
   }
 
   return { id, title, gridBounds, arrows };
 }
 
+// Backwards-compatible alias for any legacy callers
+export function createTightlyPackedLabyrinth(id, title, N, keyCorner = 0, mergeCorners = 0) {
+  const targetArrows = N === 6 ? 11 : N === 8 ? 18 : 26;
+  const seed = (keyCorner + 1) * 333 + mergeCorners * 77 + N * 13;
+  return generateReversePuzzle(id, title, N, N, targetArrows, seed);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    PUZZLE DEFINITIONS
-   Pre-crafted, fully verified high-friction labyrinths:
-   - Beginner: 14–16 arrows, 6×6 space (interlocking concentric rings)
-   - Intermediate: 28–32 arrows, 8×8 space (dense serpentine S/Z/U shapes)
-   - Expert: 50–65 arrows, 10×10 space (full coverage maze, 15+ perimeter steps)
+   Guaranteed solvable with zero deadlocks:
+   - Beginner: 6×6 board, clean 2-3 cell straight arrows
+   - Intermediate: 8×8 board, clean 2-3 cell straight arrows
+   - Expert: 10×10 board, clean 2-3 cell straight arrows
    ───────────────────────────────────────────────────────────────────────────── */
 
 export const PUZZLE_DATA = {
   beginner: [
-    createTightlyPackedLabyrinth('b1', 'Concentric Spiral', 6, 0, 3), // 15 arrows
-    createTightlyPackedLabyrinth('b2', 'Rotational Knot', 6, 1, 2),   // 16 arrows
-    createTightlyPackedLabyrinth('b3', 'Vortex Chamber', 6, 2, 4),    // 14 arrows
+    generateReversePuzzle('b1', 'Garden Gate', 6, 6, 11, 101),
+    generateReversePuzzle('b2', 'Stone Path', 6, 6, 12, 202),
+    generateReversePuzzle('b3', 'Breeze Courtyard', 6, 6, 11, 303),
   ],
   intermediate: [
-    createTightlyPackedLabyrinth('i1', 'Serpentine Labyrinth', 8, 0, 2), // 30 arrows
-    createTightlyPackedLabyrinth('i2', 'Interlocking Braid', 8, 1, 0),   // 32 arrows
-    createTightlyPackedLabyrinth('i3', 'Orthogonal Weave', 8, 2, 2),     // 30 arrows
+    generateReversePuzzle('i1', 'Bamboo Grove', 8, 8, 18, 404),
+    generateReversePuzzle('i2', 'Quiet Willow', 8, 8, 19, 505),
+    generateReversePuzzle('i3', 'Zen Crossing', 8, 8, 18, 606),
   ],
   expert: [
-    createTightlyPackedLabyrinth('e1', 'Dense Sanctuary Maze', 10, 0, 0),   // 50 arrows
-    createTightlyPackedLabyrinth('e2', 'Grand Cross-Board Maze', 10, 1, 0), // 50 arrows
-    createTightlyPackedLabyrinth('e3', 'Master Labyrinth', 10, 2, 0),       // 50 arrows
+    generateReversePuzzle('e1', 'Dragon Sanctum', 10, 10, 26, 707),
+    generateReversePuzzle('e2', 'Shadow Valley', 10, 10, 27, 808),
+    generateReversePuzzle('e3', 'Celestial Maze', 10, 10, 28, 909),
   ],
 };
 

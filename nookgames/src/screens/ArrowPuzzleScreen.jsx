@@ -338,11 +338,7 @@ export function ArrowPuzzleScreen({ onBack }) {
                   <polygon
                     points={headPts}
                     className="ap-arrow-head"
-                    transform={`rotate(${heading.angle}, ${center.x}, ${center.y})`}
-                    style={{
-                      transformOrigin: `${center.x}px ${center.y}px`,
-                      transform: `rotate(${heading.angle}deg)`,
-                    }}
+                    transform={`rotate(${heading.angle} ${center.x} ${center.y})`}
                   />
                 </g>
               );
@@ -368,11 +364,7 @@ export function ArrowPuzzleScreen({ onBack }) {
                   <polygon
                     points={headPts}
                     className="ap-arrow-head ap-arrow-head--flying"
-                    transform={`rotate(${heading.angle}, ${center.x}, ${center.y})`}
-                    style={{
-                      transformOrigin: `${center.x}px ${center.y}px`,
-                      transform: `rotate(${heading.angle}deg)`,
-                    }}
+                    transform={`rotate(${heading.angle} ${center.x} ${center.y})`}
                   />
                 </g>
               );
