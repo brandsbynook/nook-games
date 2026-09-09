@@ -188,17 +188,6 @@ export function SudokuScreen() {
 
         <div className="sdk-header-center">
           <span className="sdk-header-title">Sudoku</span>
-          <div className="sdk-presets-bar">
-            {SUDOKU_PRESETS.map((p, idx) => (
-              <button
-                key={p.id}
-                className={`sdk-preset-btn${idx === presetIndex ? ' sdk-preset-btn--active' : ''}`}
-                onClick={() => handlePresetChange(idx)}
-              >
-                {p.difficulty}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="sdk-header-actions">
@@ -212,6 +201,18 @@ export function SudokuScreen() {
             <Icon name="restart" size={18} />
           </button>
         </div>
+      </div>
+
+      <div className="sdk-difficulty-bar">
+        {SUDOKU_PRESETS.map((p, idx) => (
+          <button
+            key={p.id}
+            className={`sdk-preset-btn${idx === presetIndex ? ' sdk-preset-btn--active' : ''}`}
+            onClick={() => handlePresetChange(idx)}
+          >
+            {p.difficulty}
+          </button>
+        ))}
       </div>
 
       {/* ── Main Game Content ───────────────────────────────── */}
