@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
 import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
   SLITHERLINK_PUZZLES,
   createEmptyEdges,
@@ -52,12 +53,15 @@ export function SlitherlinkScreen({ onBack }) {
   // Check victory condition
   useEffect(() => {
     if (validation.isWin) {
-      setHasWon(true);
-      playChime();
+      if (!hasWon) {
+        setHasWon(true);
+        playChime();
+        recordGameSession('slitherlink', true);
+      }
     } else {
       setHasWon(false);
     }
-  }, [validation.isWin]);
+  }, [validation.isWin, hasWon]);
 
   // Switch difficulty safely
   const handleDifficultyChange = useCallback((nextDiff) => {
@@ -208,7 +212,7 @@ export function SlitherlinkScreen({ onBack }) {
           <span>Briefing</span>
         </button>
 
-        <h1 className="slk-title">SLITHERLINK</h1>
+        <h1 className="slk-title">Slitherlink</h1>
 
         <button
           id="slk-reset-btn"

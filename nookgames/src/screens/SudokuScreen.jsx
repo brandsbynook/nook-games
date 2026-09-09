@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
 import { SUDOKU_PRESETS, isSudokuComplete } from '../data/sudokuPuzzles.js'
 import { playTap, playChime } from '../utils/audio.js'
+import { recordGameSession } from '../utils/storage.js'
 
 export function SudokuScreen() {
   const [presetIndex, setPresetIndex] = useState(0) // Default: Easy
@@ -83,6 +84,7 @@ export function SudokuScreen() {
           // Check for completion
           if (isSudokuComplete(nextBoard)) {
             setIsSolved(true)
+            recordGameSession('sudoku', true)
             setTimeout(() => {
               playChime()
               setShowToast(true)

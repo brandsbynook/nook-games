@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Icon } from '../icons.jsx';
 import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
   SHIKAKU_PUZZLES,
   getBounds,
@@ -64,12 +65,15 @@ export function ShikakuScreen({ onBack }) {
   // Check win state whenever committed rooms change
   useEffect(() => {
     if (committedRooms.length > 0 && checkWin(puzzle.gridSize, committedRooms)) {
-      setHasWon(true);
-      playChime();
+      if (!hasWon) {
+        setHasWon(true);
+        playChime();
+        recordGameSession('shikaku', true);
+      }
     } else {
       setHasWon(false);
     }
-  }, [committedRooms, puzzle.gridSize]);
+  }, [committedRooms, puzzle.gridSize, hasWon]);
 
   // Commit a valid room
   const commitRoom = useCallback(
@@ -368,7 +372,7 @@ export function ShikakuScreen({ onBack }) {
         </button>
 
         <div className="shk-header-center">
-          <h1 className="shk-title">SHIKAKU</h1>
+          <h1 className="shk-title">Shikaku</h1>
         </div>
 
         <button

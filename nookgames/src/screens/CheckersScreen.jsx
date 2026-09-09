@@ -12,6 +12,7 @@ import {
   BOARD_SIZE,
 } from '../utils/checkersLogic.js'
 import { playTap, playChime } from '../utils/audio.js'
+import { recordGameSession } from '../utils/storage.js'
 
 export function CheckersScreen({ onBack }) {
   const [board, setBoard] = useState(initBoard)
@@ -31,6 +32,13 @@ export function CheckersScreen({ onBack }) {
       if (botTimerRef.current) clearTimeout(botTimerRef.current)
     }
   }, [])
+
+  // Record session on winner
+  useEffect(() => {
+    if (winner) {
+      recordGameSession('checkers', winner === 'player')
+    }
+  }, [winner])
 
   // Piece counts
   const counts = useMemo(() => countPieces(board), [board])

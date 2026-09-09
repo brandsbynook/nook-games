@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
 import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
   KAKURO_PUZZLES,
   cloneGrid,
@@ -34,12 +35,15 @@ export function KakuroScreen({ onBack }) {
   // Check victory condition
   useEffect(() => {
     if (checkWin(grid)) {
-      setHasWon(true);
-      playChime();
+      if (!hasWon) {
+        setHasWon(true);
+        playChime();
+        recordGameSession('kakuro', true);
+      }
     } else {
       setHasWon(false);
     }
-  }, [grid]);
+  }, [grid, hasWon]);
 
   // Navigation back
   const handleBack = useCallback(() => {
@@ -211,7 +215,7 @@ export function KakuroScreen({ onBack }) {
           <span>Briefing</span>
         </button>
 
-        <h1 className="kkr-title">KAKURO</h1>
+        <h1 className="kkr-title">Kakuro</h1>
 
         <button
           id="kkr-reset-btn"

@@ -9,9 +9,6 @@ import {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const THEMES = ['dark', 'oled']
-const THEME_LABELS = { dark: 'Dark', oled: 'OLED Black' }
-
 const TEXT_SIZES = ['medium', 'large']
 const TEXT_LABELS = { medium: 'Normal', large: 'Large' }
 
@@ -100,10 +97,6 @@ export function SettingsScreen() {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  function handleThemeClick() {
-    updateSettings({ theme: cycleNext(THEMES, settings.theme) })
-  }
-
   function handleTextSizeClick() {
     updateSettings({ textSize: cycleNext(TEXT_SIZES, settings.textSize ?? 'medium') })
   }
@@ -141,7 +134,6 @@ export function SettingsScreen() {
 
   // ── Derived display values ────────────────────────────────────────────────
 
-  const themeLabel = THEME_LABELS[settings.theme] ?? 'Dark'
   const textLabel = TEXT_LABELS[settings.textSize ?? 'medium'] ?? 'Normal'
   const breakLabel = BREAK_LABELS[settings.breakInterval ?? 30] ?? '30 min'
 
@@ -154,16 +146,6 @@ export function SettingsScreen() {
       <div className="st-groups">
         {/* APPEARANCE */}
         <SettingsGroup label="APPEARANCE">
-          <SettingsRow
-            id="st-theme-row"
-            label="Theme"
-            onClick={handleThemeClick}
-            trailing={
-              <span className="st-value st-value--chevron">
-                {themeLabel} <span className="st-chevron">›</span>
-              </span>
-            }
-          />
           <SettingsRow
             id="st-textsize-row"
             label="Text Size"

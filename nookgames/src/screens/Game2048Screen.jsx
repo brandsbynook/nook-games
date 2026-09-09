@@ -10,6 +10,7 @@ import {
 } from '../utils/game2048Logic.js'
 import { Tile } from '../components/games/2048/Tile.jsx'
 import { playTap, playChime } from '../utils/audio.js'
+import { recordGameSession } from '../utils/storage.js'
 
 export function Game2048Screen() {
   const [tiles, setTiles] = useState(() => initGameTiles())
@@ -130,8 +131,11 @@ export function Game2048Screen() {
 
       // Check 2048 achievement
       const finalGrid = tilesToGrid(withSpawn)
+      let wonThisTurn = false
       if (!hasWon && hasReached2048(finalGrid)) {
+        wonThisTurn = true
         setHasWon(true)
+        recordGameSession('2048', true)
         setTimeout(() => {
           playChime()
           showToast('Form achieved: 2048', 4000)
@@ -141,6 +145,7 @@ export function Game2048Screen() {
       // Check Game Over
       if (!hasValidMoves(finalGrid)) {
         setIsGameOver(true)
+        recordGameSession('2048', hasWon || wonThisTurn)
         setTimeout(() => {
           showToast('Space filled in quiet stillness.', 0)
         }, 300)
@@ -340,7 +345,8 @@ export function Game2048Screen() {
             style={{
               position: 'absolute',
               inset: 0,
-              padding: 'inherit',
+              padding: '10px',
+              boxSizing: 'border-box',
               pointerEvents: 'none',
             }}
           >

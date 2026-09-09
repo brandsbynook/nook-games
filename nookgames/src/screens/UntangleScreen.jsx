@@ -197,7 +197,6 @@ export function UntangleScreen({ onBack } = {}) {
     if (node) {
       dragStartPos.current = { x: node.x, y: node.y }
     }
-    playTap()
   }
 
   // Pointer move handler (recalculates intersections in real time)

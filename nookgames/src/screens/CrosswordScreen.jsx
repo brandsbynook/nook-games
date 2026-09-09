@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
+import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
   DIFFICULTIES,
   getPuzzle,
@@ -83,6 +85,7 @@ export function CrosswordScreen({ onBack }) {
   // Handle cell selection & direction toggle
   const handleCellClick = (r, c) => {
     if (puzzle.grid[r][c] === '#') return;
+    playTap();
 
     if (selectedCell.r === r && selectedCell.c === c) {
       // Toggle direction
@@ -101,6 +104,8 @@ export function CrosswordScreen({ onBack }) {
   const handleInputChar = useCallback(
     (char) => {
       if (hasWon) return;
+
+      playTap();
 
       if (isScratchpadOpen) {
         setScratchText((prev) => (prev.length >= 15 ? prev : prev + char.toUpperCase()));
@@ -121,6 +126,8 @@ export function CrosswordScreen({ onBack }) {
       // Check win condition
       if (isSolved(newGrid, puzzle)) {
         setHasWon(true);
+        playChime();
+        recordGameSession('crossword', true);
         return;
       }
 
@@ -136,6 +143,8 @@ export function CrosswordScreen({ onBack }) {
   // Handle Backspace
   const handleBackspace = useCallback(() => {
     if (hasWon) return;
+
+    playTap();
 
     if (isScratchpadOpen) {
       setScratchText((prev) => prev.slice(0, -1));
@@ -195,6 +204,8 @@ export function CrosswordScreen({ onBack }) {
 
     if (isSolved(newGrid, puzzle)) {
       setHasWon(true);
+      playChime();
+      recordGameSession('crossword', true);
     }
 
     setScratchText('');
