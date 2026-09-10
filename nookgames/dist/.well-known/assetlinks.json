@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.nook.games",
+        "sha256_cert_fingerprints": ["FA:D1:24:68:AA:98:42:B1:8D:93:AF:FF:A9:CE:FA:11:E6:64:5A:B9:51:58:A7:C7:91:5C:0A:5F:CD:92:33:FC"]
+      }
+    }]
