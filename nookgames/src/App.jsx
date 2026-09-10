@@ -8,7 +8,6 @@ import { FifteenPuzzleScreen } from './screens/FifteenPuzzleScreen.jsx'
 import { SudokuScreen } from './screens/SudokuScreen.jsx'
 import { WordLadderScreen } from './screens/WordLadderScreen.jsx'
 import { ReversiScreen } from './screens/ReversiScreen.jsx'
-import { LightsOutScreen } from './screens/LightsOutScreen.jsx'
 import { TowerOfHanoiScreen } from './screens/TowerOfHanoiScreen.jsx'
 import { Game2048Screen } from './screens/Game2048Screen.jsx'
 import UntangleScreen from './screens/UntangleScreen';
@@ -84,17 +83,9 @@ function MindfulBreakOverlay({ intervalMinutes, onResume }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function FeedbackPrompt({ onClose }) {
-  function handlePositive() {
+  function handleFeedback() {
     markFeedbackResolved()
-    // Open Play Store listing (replace with real URL when published)
-    window.open('https://play.google.com/store/apps/details?id=app.nookgames', '_blank', 'noopener')
-    onClose()
-  }
-
-  function handleNegative() {
-    markFeedbackResolved()
-    window.location.href = 'mailto:feedback@nookgames.app?subject=Nook%20Games%20Feedback'
-    onClose()
+    setTimeout(() => onClose(), 100)
   }
 
   function handleDismiss() {
@@ -106,12 +97,22 @@ function FeedbackPrompt({ onClose }) {
     <div className="fbk-banner" role="dialog" aria-label="Feedback prompt">
       <p className="fbk-question">How is your experience with Nook so far?</p>
       <div className="fbk-actions">
-        <button id="fbk-positive-btn" className="fbk-btn fbk-btn--positive" onClick={handlePositive}>
+        <a
+          id="fbk-positive-btn"
+          className="fbk-btn fbk-btn--positive"
+          href="mailto:brandsbynook@gmail.com?subject=Nook%20Games%20Feedback"
+          onClick={handleFeedback}
+        >
           Quiet &amp; Enjoyable
-        </button>
-        <button id="fbk-negative-btn" className="fbk-btn fbk-btn--negative" onClick={handleNegative}>
+        </a>
+        <a
+          id="fbk-negative-btn"
+          className="fbk-btn fbk-btn--negative"
+          href="mailto:brandsbynook@gmail.com?subject=Nook%20Games%20Feedback"
+          onClick={handleFeedback}
+        >
           Needs Work
-        </button>
+        </a>
         <button id="fbk-dismiss-btn" className="fbk-btn fbk-btn--dismiss" onClick={handleDismiss}>
           Dismiss
         </button>
@@ -171,7 +172,6 @@ function parseRoute() {
     if (gameId === 'sudoku') return { name: 'play-sudoku' }
     if (gameId === 'word-ladder') return { name: 'play-word-ladder' }
     if (gameId === 'reversi') return { name: 'play-reversi' }
-    if (gameId === 'lights-out') return { name: 'play-lights-out' }
     if (gameId === 'shikaku') return { name: 'play-shikaku' }
     if (gameId === 'kakuro') return { name: 'play-kakuro' }
     if (gameId === 'slitherlink') return { name: 'play-slitherlink' }
@@ -470,10 +470,6 @@ function App() {
 
   if (route.name === 'play-reversi') {
     return <ReversiScreen />
-  }
-
-  if (route.name === 'play-lights-out') {
-    return <LightsOutScreen />
   }
 
   if (route.name === 'play-tower-of-hanoi') {
