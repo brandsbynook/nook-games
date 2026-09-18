@@ -34,6 +34,8 @@ import {
   markFeedbackResolved,
   markFeedbackDismissed,
 } from './utils/storage.js'
+import { ThemeProvider } from './context/ThemeContext.jsx'
+import { AtmosphereModal } from './components/AtmosphereModal.jsx'
 import './App.css'
 
 // ═══════════════════════════════════════════════════════════════════
@@ -392,7 +394,7 @@ function Screen({ route }) {
   return <HomeScreen />
 }
 
-function App() {
+function AppContent() {
   const [route, setRoute] = useState(parseRoute)
 
   // ── Mindful break state ──────────────────────────────────────────
@@ -557,4 +559,11 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+      <AtmosphereModal />
+    </ThemeProvider>
+  )
+}
