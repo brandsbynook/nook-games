@@ -152,27 +152,31 @@ export function ArrowPuzzleScreen({ onBack }) {
     }
   };
 
-  const cellSize = 38;
-  const padding = 22;
+  // Dynamic cell size so large grids (14×14) still fit cleanly
+  const BASE_CELL = 32;
+  const cellSize  = BASE_CELL;
+  const padding   = 14;
   const { rows, cols } = puzzle.gridBounds;
-  const viewBoxWidth = cols * cellSize + 2 * padding;
-  const viewBoxHeight = rows * cellSize + 2 * padding;
+  const viewBoxWidth   = cols * cellSize + 2 * padding;
+  const viewBoxHeight  = rows * cellSize + 2 * padding;
 
   const getCellCenter = (r, c) => ({
     x: padding + c * cellSize + cellSize / 2,
     y: padding + r * cellSize + cellSize / 2,
   });
 
+  // Build SVG path data from compressed waypoints.
+  // Stop slightly short of the last point so the arrowhead doesn't overlap the line.
   const getPathData = (path) => {
     if (!path || path.length === 0) return '';
     const start = getCellCenter(path[0][0], path[0][1]);
     let d = `M ${start.x} ${start.y}`;
     for (let i = 1; i < path.length; i++) {
-      const pt = getCellCenter(path[i][0], path[i][1]);
+      const pt   = getCellCenter(path[i][0], path[i][1]);
       if (i === path.length - 1 && path.length >= 2) {
         const prev = getCellCenter(path[i - 1][0], path[i - 1][1]);
-        const dx = Math.sign(pt.x - prev.x);
-        const dy = Math.sign(pt.y - prev.y);
+        const dx   = Math.sign(pt.x - prev.x);
+        const dy   = Math.sign(pt.y - prev.y);
         d += ` L ${pt.x - dx * 3} ${pt.y - dy * 3}`;
       } else {
         d += ` L ${pt.x} ${pt.y}`;
@@ -181,9 +185,10 @@ export function ArrowPuzzleScreen({ onBack }) {
     return d;
   };
 
-  const getCanonicalHeadPoints = (center) => {
-    const size = 9;
-    return `${center.x},${center.y} ${center.x - size},${center.y - size * 0.55} ${center.x - size},${center.y + size * 0.55}`;
+  // Arrowhead polygon — a small, sharp triangle at the head cell
+  const getHeadPoints = (center) => {
+    const s = 8;
+    return `${center.x},${center.y} ${center.x - s},${center.y - s * 0.5} ${center.x - s},${center.y + s * 0.5}`;
   };
 
   return (
@@ -194,9 +199,9 @@ export function ArrowPuzzleScreen({ onBack }) {
         currentTier={difficulty}
         onSelectTier={handleDifficultyChange}
         tiers={[
-          { id: 'gentle', label: 'Gentle', subtitle: '5×5' },
-          { id: 'standard', label: 'Standard', subtitle: '6×6' },
-          { id: 'deep', label: 'Deep', subtitle: '7×7' },
+          { id: 'gentle',   label: 'Gentle',   subtitle: '10×10' },
+          { id: 'standard', label: 'Standard',  subtitle: '12×12' },
+          { id: 'deep',     label: 'Deep',      subtitle: '14×14' },
         ]}
       />
 
@@ -231,51 +236,48 @@ export function ArrowPuzzleScreen({ onBack }) {
           className="ap-svg"
           preserveAspectRatio="xMidYMid meet"
         >
-          <g className="ap-grid-dots">
-            {Array.from({ length: rows }).map((_, r) =>
-              Array.from({ length: cols }).map((__, c) => {
-                const center = getCellCenter(r, c);
-                return (
-                  <circle
-                    key={`dot-${r}-${c}`}
-                    cx={center.x}
-                    cy={center.y}
-                    r={1.4}
-                    className="ap-dot"
-                  />
-                );
-              })
-            )}
-          </g>
-
+          {/* ── Static arrows layer ── */}
           <g className="ap-arrows-layer">
             {remainingArrows.map((arrow) => {
-              const points = arrow.points || arrow.path;
-              const heading = getArrowVectorHeading(points);
-              const head = points[points.length - 1];
-              const center = getCellCenter(head[0], head[1]);
-              const pathD = getPathData(points);
-              const headPts = getCanonicalHeadPoints(center);
+              const points     = arrow.points || arrow.path;
+              const heading    = getArrowVectorHeading(points);
+              const head       = points[points.length - 1];
+              const center     = getCellCenter(head[0], head[1]);
+              const pathD      = getPathData(points);
+              const headPts    = getHeadPoints(center);
               const isUnblocked = availableArrowIds.has(arrow.id);
               const isRecoiling = recoilingArrowId === arrow.id;
-              const isHovered = hoveredArrowId === arrow.id;
+              const isHovered   = hoveredArrowId   === arrow.id;
 
               return (
                 <g
                   key={arrow.id}
-                  className={`ap-arrow-group ${isUnblocked ? 'ap-arrow--unblocked' : 'ap-arrow--blocked'
-                    } ${isRecoiling ? `ap-recoil-${heading.dir.toLowerCase()}` : ''} ${isHovered ? 'ap-arrow--hovered' : ''
-                    }`}
+                  className={[
+                    'ap-arrow-group',
+                    isUnblocked ? 'ap-arrow--unblocked' : 'ap-arrow--blocked',
+                    isRecoiling ? `ap-recoil-${heading.dir.toLowerCase()}` : '',
+                    isHovered   ? 'ap-arrow--hovered' : '',
+                  ].filter(Boolean).join(' ')}
                   onClick={() => handleArrowClick(arrow)}
                   onMouseEnter={() => setHoveredArrowId(arrow.id)}
                   onMouseLeave={() => setHoveredArrowId(null)}
                 >
+                  {/* Wide invisible hitbox for easy touch/click */}
                   <path
                     d={pathD}
                     className="ap-arrow-hitbox"
-                    strokeWidth={cellSize * 0.75}
+                    strokeWidth={17}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
                   />
-                  <path d={pathD} className="ap-arrow-body" />
+                  {/* Visible conduit line */}
+                  <path
+                    d={pathD}
+                    className="ap-arrow-body"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                  {/* Arrowhead */}
                   <polygon
                     points={headPts}
                     className="ap-arrow-head"
@@ -286,21 +288,27 @@ export function ArrowPuzzleScreen({ onBack }) {
             })}
           </g>
 
+          {/* ── Flying-away arrows layer ── */}
           <g className="ap-flying-layer">
             {flyingArrows.map((arrow) => {
-              const points = arrow.points || arrow.path;
+              const points  = arrow.points || arrow.path;
               const heading = getArrowVectorHeading(points);
-              const head = points[points.length - 1];
-              const center = getCellCenter(head[0], head[1]);
-              const pathD = getPathData(points);
-              const headPts = getCanonicalHeadPoints(center);
+              const head    = points[points.length - 1];
+              const center  = getCellCenter(head[0], head[1]);
+              const pathD   = getPathData(points);
+              const headPts = getHeadPoints(center);
 
               return (
                 <g
                   key={`flying-${arrow.id}`}
                   className={`ap-arrow-group ap-arrow--flying ap-fly-${heading.dir.toLowerCase()}`}
                 >
-                  <path d={pathD} className="ap-arrow-body ap-arrow-body--flying" />
+                  <path
+                    d={pathD}
+                    className="ap-arrow-body ap-arrow-body--flying"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
                   <polygon
                     points={headPts}
                     className="ap-arrow-head ap-arrow-head--flying"
