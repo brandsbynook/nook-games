@@ -322,3 +322,36 @@ export function getNextHint(gridClues, currentEdges, solutionEdges) {
 
   return null;
 }
+
+/**
+ * Applies random horizontal/vertical reflections to a Slitherlink puzzle,
+ * preserving exact loop topology, edge connections, and clue counts.
+ */
+export function getTransformedSlitherlink(puzzle) {
+  if (!puzzle) return puzzle;
+  let clues = puzzle.clues.map((row) => [...row]);
+  let hEdges = puzzle.solution.hEdges.map((row) => [...row]);
+  let vEdges = puzzle.solution.vEdges.map((row) => [...row]);
+
+  if (Math.random() < 0.5) {
+    clues = clues.map((row) => [...row].reverse());
+    hEdges = hEdges.map((row) => [...row].reverse());
+    vEdges = vEdges.map((row) => [...row].reverse());
+  }
+
+  if (Math.random() < 0.5) {
+    clues = [...clues].reverse();
+    hEdges = [...hEdges].reverse();
+    vEdges = [...vEdges].reverse();
+  }
+
+  return {
+    ...puzzle,
+    clues,
+    solution: {
+      hEdges,
+      vEdges,
+    },
+  };
+}
+

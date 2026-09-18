@@ -4,6 +4,7 @@ import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
   SHIKAKU_PUZZLES,
+  getTransformedShikaku,
   getBounds,
   calcArea,
   validateRoom,
@@ -14,7 +15,7 @@ import {
 
 export function ShikakuScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('easy');
-  const puzzle = useMemo(() => SHIKAKU_PUZZLES[difficulty] || SHIKAKU_PUZZLES.easy, [difficulty]);
+  const [puzzle, setPuzzle] = useState(() => getTransformedShikaku(SHIKAKU_PUZZLES.easy));
 
   // Committed rooms: array of { id, r1, r2, c1, c2, val, clue }
   const [committedRooms, setCommittedRooms] = useState([]);
@@ -45,6 +46,7 @@ export function ShikakuScreen({ onBack }) {
 
   // Reset when difficulty changes
   useEffect(() => {
+    setPuzzle(getTransformedShikaku(SHIKAKU_PUZZLES[difficulty] || SHIKAKU_PUZZLES.easy));
     setCommittedRooms([]);
     setHistory([]);
     setCorner1(null);
@@ -54,6 +56,19 @@ export function ShikakuScreen({ onBack }) {
     setHintedRoomId(null);
     setErrorMsg('');
     if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+  }, [difficulty]);
+
+  const handleReset = useCallback(() => {
+    playTap();
+    setPuzzle(getTransformedShikaku(SHIKAKU_PUZZLES[difficulty] || SHIKAKU_PUZZLES.easy));
+    setCommittedRooms([]);
+    setHistory([]);
+    setCorner1(null);
+    setCorner2(null);
+    setIsPointerDown(false);
+    setHasWon(false);
+    setHintedRoomId(null);
+    setErrorMsg('');
   }, [difficulty]);
 
   useEffect(() => {
@@ -122,17 +137,6 @@ export function ShikakuScreen({ onBack }) {
     setCorner2(null);
   }, [history, hasWon]);
 
-  // Reset current puzzle
-  const handleReset = useCallback(() => {
-    playTap();
-    setCommittedRooms([]);
-    setHistory([]);
-    setCorner1(null);
-    setCorner2(null);
-    setIsPointerDown(false);
-    setHasWon(false);
-    setErrorMsg('');
-  }, []);
 
   // Hint
   const handleHint = useCallback(() => {

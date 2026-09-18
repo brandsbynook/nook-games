@@ -342,21 +342,34 @@ export function createEmptyGrid(size) {
 }
 
 /**
- * Loads a puzzle with pre-computed clues.
+ * Loads a puzzle with pre-computed clues, optionally applying symmetry reflections
+ * (horizontal / vertical flip) to generate fresh solvable variations.
  *
  * @param {string} tier 'beginner' | 'intermediate' | 'expert'
  * @param {number} puzzleIndex index within tier
+ * @param {{ transform?: boolean }} options
  * @returns {object} puzzle data with rowClues, colClues, etc.
  */
-export function loadPuzzle(tier = 'beginner', puzzleIndex = 0) {
+export function loadPuzzle(tier = 'beginner', puzzleIndex = 0, { transform = true } = {}) {
   const tierPuzzles = PUZZLES[tier] || PUZZLES.beginner
   const safeIndex = Math.max(0, Math.min(puzzleIndex, tierPuzzles.length - 1))
   const puzzle = tierPuzzles[safeIndex]
 
-  const { rowClues, colClues } = generatePuzzleClues(puzzle.solution)
+  let solution = puzzle.solution.map((row) => [...row])
+  if (transform) {
+    if (Math.random() < 0.5) {
+      solution = solution.map((row) => [...row].reverse())
+    }
+    if (Math.random() < 0.5) {
+      solution = [...solution].reverse()
+    }
+  }
+
+  const { rowClues, colClues } = generatePuzzleClues(solution)
 
   return {
     ...puzzle,
+    solution,
     tier,
     index: safeIndex,
     totalInTier: tierPuzzles.length,

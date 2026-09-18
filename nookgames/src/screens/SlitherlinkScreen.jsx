@@ -4,6 +4,7 @@ import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
   SLITHERLINK_PUZZLES,
+  getTransformedSlitherlink,
   createEmptyEdges,
   cloneEdges,
   validateSlitherlink,
@@ -13,10 +14,7 @@ import {
 
 export function SlitherlinkScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('intro');
-  const puzzle = useMemo(
-    () => SLITHERLINK_PUZZLES[difficulty] || SLITHERLINK_PUZZLES.intro,
-    [difficulty]
-  );
+  const [puzzle, setPuzzle] = useState(() => getTransformedSlitherlink(SLITHERLINK_PUZZLES.intro));
 
   const [edges, setEdges] = useState(() => createEmptyEdges(puzzle.size));
   const [history, setHistory] = useState([]);
@@ -66,8 +64,9 @@ export function SlitherlinkScreen({ onBack }) {
   // Switch difficulty safely
   const handleDifficultyChange = useCallback((nextDiff) => {
     playTap();
-    const nextPuzzle = SLITHERLINK_PUZZLES[nextDiff] || SLITHERLINK_PUZZLES.intro;
+    const nextPuzzle = getTransformedSlitherlink(SLITHERLINK_PUZZLES[nextDiff] || SLITHERLINK_PUZZLES.intro);
     setDifficulty(nextDiff);
+    setPuzzle(nextPuzzle);
     setEdges(createEmptyEdges(nextPuzzle.size));
     setHistory([]);
     setHasWon(false);
@@ -136,13 +135,16 @@ export function SlitherlinkScreen({ onBack }) {
     setEdges(prev);
   }, [history, hasWon]);
 
-  // Reset
+
+  // Reset with fresh reflection transform
   const handleReset = useCallback(() => {
     playTap();
-    setEdges(createEmptyEdges(puzzle.size));
+    const newPuzzle = getTransformedSlitherlink(SLITHERLINK_PUZZLES[difficulty] || SLITHERLINK_PUZZLES.intro);
+    setPuzzle(newPuzzle);
+    setEdges(createEmptyEdges(newPuzzle.size));
     setHistory([]);
     setHasWon(false);
-  }, [puzzle.size]);
+  }, [difficulty]);
 
   // Hint
   const handleHint = useCallback(() => {

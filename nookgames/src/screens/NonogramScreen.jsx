@@ -3,6 +3,7 @@ import { Icon } from '../icons.jsx'
 import {
   CELL_STATES,
   DIFFICULTY_TIERS,
+  PUZZLES,
   loadPuzzle,
   isPuzzleSolved,
   checkDeductiveErrors,
@@ -12,14 +13,17 @@ import {
 import { playTap, playChime } from '../utils/audio.js'
 
 export function NonogramScreen({ onBack } = {}) {
+  const initialIndex = useRef(
+    Math.floor(Math.random() * (PUZZLES?.beginner?.length || 1))
+  )
   const [tier, setTier] = useState('beginner') // 'beginner' | 'intermediate' | 'expert'
-  const [puzzleIndex, setPuzzleIndex] = useState(0)
+  const [puzzleIndex, setPuzzleIndex] = useState(initialIndex.current)
   const [toolMode, setToolMode] = useState('fill') // 'fill' | 'cross'
   
   // Current active puzzle definition
-  const [puzzle, setPuzzle] = useState(() => loadPuzzle('beginner', 0))
+  const [puzzle, setPuzzle] = useState(() => loadPuzzle('beginner', initialIndex.current))
   // Current board state (size x size)
-  const [grid, setGrid] = useState(() => createEmptyGrid(5))
+  const [grid, setGrid] = useState(() => createEmptyGrid(puzzle.size))
   // Game completion state
   const [isSolved, setIsSolved] = useState(false)
   // Deductive check message
@@ -48,8 +52,10 @@ export function NonogramScreen({ onBack } = {}) {
     if (newTier === tier) return
     playTap()
     setTier(newTier)
-    setPuzzleIndex(0)
-    initPuzzle(newTier, 0)
+    const count = PUZZLES[newTier]?.length || 1
+    const randIdx = Math.floor(Math.random() * count)
+    setPuzzleIndex(randIdx)
+    initPuzzle(newTier, randIdx)
   }
 
   // Handle previous/next puzzle navigation

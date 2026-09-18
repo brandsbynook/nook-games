@@ -81,11 +81,105 @@ export const SUDOKU_PRESETS = [
       2, 5, 6, 1, 8, 4, 9, 7, 3,
       1, 7, 9, 3, 2, 6, 8, 4, 5,
       8, 4, 5, 2, 1, 9, 3, 6, 7,
-      9, 1, 3, 7, 6, 5, 8, 2, 4,
-      6, 2, 7, 4, 3, 8, 1, 9, 0,
+      9, 1, 3, 7, 6, 8, 5, 2, 4,
+      6, 2, 7, 4, 3, 5, 1, 9, 8,
     ],
   },
 ]
+
+/**
+ * Transforms a Sudoku preset into an isomorphic, fresh layout:
+ * - Digit relabelling (random permutation of numbers 1–9)
+ * - Symmetries: horizontal flip, vertical flip, diagonal transposition
+ * - Row swaps within 3×3 blocks
+ * - Column swaps within 3×3 blocks
+ */
+export function generateTransformedPreset(preset) {
+  let initial = [...preset.initial]
+  let solution = [...preset.solution]
+
+  // 1. Permute digits 1-9
+  const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+  for (let i = digits.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[digits[i], digits[j]] = [digits[j], digits[i]]
+  }
+  const mapDigit = (val) => (val === 0 ? 0 : digits[val - 1])
+  initial = initial.map(mapDigit)
+  solution = solution.map(mapDigit)
+
+  // 2. Convert to 9x9 grid
+  let initGrid = []
+  let solGrid = []
+  for (let r = 0; r < 9; r++) {
+    initGrid.push(initial.slice(r * 9, r * 9 + 9))
+    solGrid.push(solution.slice(r * 9, r * 9 + 9))
+  }
+
+  // 3. Row swapping within blocks (rows 0..2, 3..5, 6..8)
+  for (let block = 0; block < 3; block++) {
+    const indices = [0, 1, 2]
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[indices[i], indices[j]] = [indices[j], indices[i]]
+    }
+    const base = block * 3
+    const subInit = [initGrid[base + indices[0]], initGrid[base + indices[1]], initGrid[base + indices[2]]]
+    const subSol = [solGrid[base + indices[0]], solGrid[base + indices[1]], solGrid[base + indices[2]]]
+    initGrid[base] = subInit[0]
+    initGrid[base + 1] = subInit[1]
+    initGrid[base + 2] = subInit[2]
+    solGrid[base] = subSol[0]
+    solGrid[base + 1] = subSol[1]
+    solGrid[base + 2] = subSol[2]
+  }
+
+  // 4. Column swapping within blocks (cols 0..2, 3..5, 6..8)
+  for (let block = 0; block < 3; block++) {
+    const indices = [0, 1, 2]
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[indices[i], indices[j]] = [indices[j], indices[i]]
+    }
+    const base = block * 3
+    for (let r = 0; r < 9; r++) {
+      const origInit = [initGrid[r][base], initGrid[r][base + 1], initGrid[r][base + 2]]
+      const origSol = [solGrid[r][base], solGrid[r][base + 1], solGrid[r][base + 2]]
+      initGrid[r][base] = origInit[indices[0]]
+      initGrid[r][base + 1] = origInit[indices[1]]
+      initGrid[r][base + 2] = origInit[indices[2]]
+      solGrid[r][base] = origSol[indices[0]]
+      solGrid[r][base + 1] = origSol[indices[1]]
+      solGrid[r][base + 2] = origSol[indices[2]]
+    }
+  }
+
+  // 5. Random reflections / transpositions
+  if (Math.random() < 0.5) {
+    initGrid = initGrid.map((row) => [...row].reverse())
+    solGrid = solGrid.map((row) => [...row].reverse())
+  }
+  if (Math.random() < 0.5) {
+    initGrid = [...initGrid].reverse()
+    solGrid = [...solGrid].reverse()
+  }
+  if (Math.random() < 0.5) {
+    const transInit = []
+    const transSol = []
+    for (let c = 0; c < 9; c++) {
+      transInit.push(initGrid.map((row) => row[c]))
+      transSol.push(solGrid.map((row) => row[c]))
+    }
+    initGrid = transInit
+    solGrid = transSol
+  }
+
+  return {
+    ...preset,
+    initial: initGrid.flat(),
+    solution: solGrid.flat(),
+  }
+}
 
 // Fallback solution checker that works mathematically for any 9x9 Sudoku board
 export function isSudokuComplete(grid) {

@@ -14,7 +14,7 @@ import {
 
 export function ArrowPuzzleScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('beginner');
-  const [levelIndex, setLevelIndex] = useState(0);
+  const [levelIndex, setLevelIndex] = useState(() => Math.floor(Math.random() * getPuzzleCount('beginner')));
 
   // Active puzzle from logic
   const puzzle = useMemo(() => getPuzzle(difficulty, levelIndex), [difficulty, levelIndex]);
@@ -73,7 +73,8 @@ export function ArrowPuzzleScreen({ onBack }) {
     if (newDiff === difficulty) return;
     playTap();
     setDifficulty(newDiff);
-    setLevelIndex(0);
+    const count = getPuzzleCount(newDiff);
+    setLevelIndex(Math.floor(Math.random() * count));
   };
 
   const handlePrevLevel = () => {

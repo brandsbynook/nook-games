@@ -14,7 +14,7 @@ import {
 
 export function OneLineScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('beginner');
-  const [puzzleIndex, setPuzzleIndex] = useState(0);
+  const [puzzleIndex, setPuzzleIndex] = useState(() => Math.floor(Math.random() * getPuzzleCount('beginner')));
   const [currentPath, setCurrentPath] = useState([]);
   const [visitedEdges, setVisitedEdges] = useState(() => new Set());
   const [hasWon, setHasWon] = useState(false);
@@ -34,8 +34,10 @@ export function OneLineScreen({ onBack }) {
 
   const handleDifficultyChange = (newDiff) => {
     if (newDiff === difficulty) return;
+    playTap();
     setDifficulty(newDiff);
-    setPuzzleIndex(0);
+    const count = getPuzzleCount(newDiff);
+    setPuzzleIndex(Math.floor(Math.random() * count));
   };
 
   const handlePrevLevel = () => {

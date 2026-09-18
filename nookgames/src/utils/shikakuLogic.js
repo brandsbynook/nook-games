@@ -251,3 +251,65 @@ export function getNextHintRoom(solution = [], rooms = []) {
   }
   return null;
 }
+
+/**
+ * Applies a random dihedral symmetry (rotations + reflections) to a Shikaku puzzle,
+ * preserving exact area, non-overlapping tessellation, and clue coverage.
+ */
+export function getTransformedShikaku(puzzle) {
+  if (!puzzle) return puzzle;
+  const N = puzzle.gridSize;
+  const flipH = Math.random() < 0.5;
+  const flipV = Math.random() < 0.5;
+  const rot = Math.floor(Math.random() * 4); // 0, 90, 180, 270 deg
+
+  function transformPt(r, c) {
+    let tr = r;
+    let tc = c;
+    if (flipH) tc = N - 1 - tc;
+    if (flipV) tr = N - 1 - tr;
+    for (let k = 0; k < rot; k++) {
+      const nr = tc;
+      const nc = N - 1 - tr;
+      tr = nr;
+      tc = nc;
+    }
+    return { r: tr, c: tc };
+  }
+
+  function transformRoom(room) {
+    const corners = [
+      transformPt(room.r1, room.c1),
+      transformPt(room.r1, room.c2),
+      transformPt(room.r2, room.c1),
+      transformPt(room.r2, room.c2),
+    ];
+    const minR = Math.min(...corners.map((pt) => pt.r));
+    const maxR = Math.max(...corners.map((pt) => pt.r));
+    const minC = Math.min(...corners.map((pt) => pt.c));
+    const maxC = Math.max(...corners.map((pt) => pt.c));
+    const cluePt = transformPt(room.clue.r, room.clue.c);
+    return {
+      id: room.id,
+      r1: minR,
+      r2: maxR,
+      c1: minC,
+      c2: maxC,
+      val: room.val,
+      clue: { r: cluePt.r, c: cluePt.c, val: room.clue.val },
+    };
+  }
+
+  const newClues = puzzle.clues.map((c) => {
+    const pt = transformPt(c.r, c.c);
+    return { r: pt.r, c: pt.c, val: c.val };
+  });
+  const newSolution = puzzle.solution.map(transformRoom);
+
+  return {
+    ...puzzle,
+    clues: newClues,
+    solution: newSolution,
+  };
+}
+

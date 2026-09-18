@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Icon } from '../icons.jsx'
 import {
   DIFFICULTY_TIERS,
+  ANAGRAM_PUZZLES,
   generatePuzzle,
   validateGuess,
   shuffleLetters,
@@ -9,14 +10,17 @@ import {
 import { playTap, playChime } from '../utils/audio.js'
 
 export function AnagramsScreen({ onBack } = {}) {
+  const initialIndex = useRef(
+    Math.floor(Math.random() * (ANAGRAM_PUZZLES?.beginner?.length || 1))
+  )
   const [tier, setTier] = useState('beginner') // 'beginner' | 'intermediate' | 'master'
-  const [puzzleIndex, setPuzzleIndex] = useState(0)
+  const [puzzleIndex, setPuzzleIndex] = useState(initialIndex.current)
 
   // Current puzzle data
-  const [puzzle, setPuzzle] = useState(() => generatePuzzle('beginner', 0))
+  const [puzzle, setPuzzle] = useState(() => generatePuzzle('beginner', initialIndex.current))
   // Dock letter arrangement (array of { id: string, char: string })
   const [dockLetters, setDockLetters] = useState(() =>
-    generatePuzzle('beginner', 0).scrambledLetters.map((char, idx) => ({
+    generatePuzzle('beginner', initialIndex.current).scrambledLetters.map((char, idx) => ({
       id: `${char}-${idx}`,
       char,
     }))
@@ -49,8 +53,10 @@ export function AnagramsScreen({ onBack } = {}) {
     if (newTier === tier) return
     playTap()
     setTier(newTier)
-    setPuzzleIndex(0)
-    initPuzzle(newTier, 0)
+    const count = ANAGRAM_PUZZLES[newTier]?.length || 1
+    const randIdx = Math.floor(Math.random() * count)
+    setPuzzleIndex(randIdx)
+    initPuzzle(newTier, randIdx)
   }
 
   const handlePrevPuzzle = () => {

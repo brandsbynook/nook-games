@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
-import { SUDOKU_PRESETS, isSudokuComplete } from '../data/sudokuPuzzles.js'
+import { SUDOKU_PRESETS, generateTransformedPreset, isSudokuComplete } from '../data/sudokuPuzzles.js'
 import { playTap, playChime } from '../utils/audio.js'
 import { recordGameSession } from '../utils/storage.js'
 
 export function SudokuScreen() {
-  const [presetIndex, setPresetIndex] = useState(0) // Default: Easy
-  const activePreset = SUDOKU_PRESETS[presetIndex]
+  const initialIndex = useRef(Math.floor(Math.random() * SUDOKU_PRESETS.length))
+  const [presetIndex, setPresetIndex] = useState(initialIndex.current)
+  const [activePreset, setActivePreset] = useState(() => generateTransformedPreset(SUDOKU_PRESETS[initialIndex.current]))
 
   // Board state: array of 81 numbers (0 = empty)
   const [board, setBoard] = useState(() => [...activePreset.initial])
@@ -118,20 +119,17 @@ export function SudokuScreen() {
     })
   }, [selectedIndex, isSolved, activePreset.initial])
 
-  // Restart current puzzle
+  // Restart current puzzle with fresh isomorphic transformation
   function handleRestart() {
     playTap()
-    setBoard([...activePreset.initial])
-    setNotes(Array.from({ length: 81 }, () => new Set()))
-    setSelectedIndex(null)
-    setIsSolved(false)
-    setShowToast(false)
+    setActivePreset(generateTransformedPreset(SUDOKU_PRESETS[presetIndex]))
   }
 
-  // Switch difficulty preset
+  // Switch difficulty preset with fresh isomorphic transformation
   function handlePresetChange(nextIdx) {
     playTap()
     setPresetIndex(nextIdx)
+    setActivePreset(generateTransformedPreset(SUDOKU_PRESETS[nextIdx]))
   }
 
   // Physical keyboard listener

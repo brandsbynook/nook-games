@@ -15,7 +15,7 @@ const QWERTY_ROWS = [
 ]
 
 export function WordLadderScreen() {
-  const [puzzleIndex, setPuzzleIndex] = useState(0)
+  const [puzzleIndex, setPuzzleIndex] = useState(() => Math.floor(Math.random() * WORD_LADDER_PUZZLES.length))
   const puzzle = WORD_LADDER_PUZZLES[puzzleIndex]
 
   // Ladder history array: starts with puzzle.start
