@@ -1,5 +1,9 @@
 /**
- * reversiLogic.js — Core 8x8 Reversi game engine & calm AI companion
+ * reversiLogic.js — Core 8x8 Reversi game engine & multi-tiered AI companion
+ * Tiers:
+ *  - Gentle: Depth 1, basic positional evaluation
+ *  - Standard: Depth 2, corner/edge weighting with minimax
+ *  - Deep: Depth 4, mobility and stability analysis with alpha-beta minimax
  */
 
 export const BOARD_SIZE = 8
@@ -10,7 +14,7 @@ export const DIRECTIONS = [
   [1, -1],  [1, 0],  [1, 1],
 ]
 
-// Positional strategy weights for calm, deliberate AI companion
+// Positional strategy weights for 8x8 Reversi board
 export const POSITION_WEIGHTS = [
   [120, -20,  20,   5,   5,  20, -20, 120],
   [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
@@ -20,6 +24,10 @@ export const POSITION_WEIGHTS = [
   [ 20,  -5,  15,   3,   3,  15,  -5,  20],
   [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
   [120, -20,  20,   5,   5,  20, -20, 120],
+]
+
+const CORNERS = [
+  [0, 0], [0, 7], [7, 0], [7, 7],
 ]
 
 /**
@@ -35,6 +43,13 @@ export function createInitialBoard() {
   board[4][3] = 'B'
   board[4][4] = 'W'
   return board
+}
+
+/**
+ * Clones the 8x8 board state
+ */
+export function cloneBoard(board) {
+  return board.map((row) => [...row])
 }
 
 /**
@@ -123,49 +138,168 @@ export function countStones(board) {
 }
 
 /**
- * AI move selector: scores moves by board position weights, corner preference, and mobility
+ * Evaluates board state from the perspective of aiPlayer
+ */
+export function evaluateBoard(board, aiPlayer, difficulty = 'standard') {
+  const opponent = aiPlayer === 'W' ? 'B' : 'W'
+  let aiScore = 0
+  let oppScore = 0
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const piece = board[r][c]
+      if (piece === aiPlayer) {
+        aiScore += POSITION_WEIGHTS[r][c]
+      } else if (piece === opponent) {
+        oppScore += POSITION_WEIGHTS[r][c]
+      }
+    }
+  }
+
+  let totalScore = aiScore - oppScore
+
+  // Corner weighting
+  let cornerScore = 0
+  for (const [cr, cc] of CORNERS) {
+    if (board[cr][cc] === aiPlayer) cornerScore += 120
+    else if (board[cr][cc] === opponent) cornerScore -= 120
+  }
+  totalScore += cornerScore
+
+  // Deep tier: incorporate mobility and stability analysis
+  if (difficulty === 'deep') {
+    const aiMoves = getValidMoves(board, aiPlayer).length
+    const oppMoves = getValidMoves(board, opponent).length
+    if (aiMoves + oppMoves > 0) {
+      totalScore += 16 * (aiMoves - oppMoves)
+    }
+
+    // Stability: count stable corner-connected edge discs
+    let stabilityBonus = 0
+    const cornerRays = [
+      { cr: 0, cc: 0, dirs: [[0, 1], [1, 0]] },
+      { cr: 0, cc: 7, dirs: [[0, -1], [1, 0]] },
+      { cr: 7, cc: 0, dirs: [[0, 1], [-1, 0]] },
+      { cr: 7, cc: 7, dirs: [[0, -1], [-1, 0]] },
+    ]
+
+    for (const { cr, cc, dirs } of cornerRays) {
+      const cornerPiece = board[cr][cc]
+      if (cornerPiece) {
+        const mult = cornerPiece === aiPlayer ? 1 : -1
+        for (const [dr, dc] of dirs) {
+          let r = cr + dr
+          let c = cc + dc
+          while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === cornerPiece) {
+            stabilityBonus += 20 * mult
+            r += dr
+            c += dc
+          }
+        }
+      }
+    }
+    totalScore += stabilityBonus
+  }
+
+  return totalScore
+}
+
+/**
+ * Minimax algorithm with Alpha-Beta pruning
+ */
+function minimax(board, depth, alpha, beta, isMaximizing, aiPlayer, difficulty) {
+  const opponent = aiPlayer === 'W' ? 'B' : 'W'
+  const currentPlayer = isMaximizing ? aiPlayer : opponent
+  const moves = getValidMoves(board, currentPlayer)
+
+  if (moves.length === 0) {
+    const oppMoves = getValidMoves(board, isMaximizing ? opponent : aiPlayer)
+    if (oppMoves.length === 0 || depth === 0) {
+      const { white, dark } = countStones(board)
+      const aiStones = aiPlayer === 'W' ? white : dark
+      const oppStones = opponent === 'W' ? white : dark
+      if (moves.length === 0 && oppMoves.length === 0) {
+        return (aiStones - oppStones) * 1000
+      }
+      return evaluateBoard(board, aiPlayer, difficulty)
+    }
+    // Turn passes to other player
+    return minimax(board, depth - 1, alpha, beta, !isMaximizing, aiPlayer, difficulty)
+  }
+
+  if (depth === 0) {
+    return evaluateBoard(board, aiPlayer, difficulty)
+  }
+
+  if (isMaximizing) {
+    let maxEval = -Infinity
+    for (const move of moves) {
+      const outcome = applyMove(board, move.row, move.col, aiPlayer)
+      if (!outcome) continue
+      const evaluation = minimax(outcome.nextBoard, depth - 1, alpha, beta, false, aiPlayer, difficulty)
+      maxEval = Math.max(maxEval, evaluation)
+      alpha = Math.max(alpha, evaluation)
+      if (beta <= alpha) break
+    }
+    return maxEval
+  } else {
+    let minEval = Infinity
+    for (const move of moves) {
+      const outcome = applyMove(board, move.row, move.col, opponent)
+      if (!outcome) continue
+      const evaluation = minimax(outcome.nextBoard, depth - 1, alpha, beta, true, aiPlayer, difficulty)
+      minEval = Math.min(minEval, evaluation)
+      beta = Math.min(beta, evaluation)
+      if (beta <= alpha) break
+    }
+    return minEval
+  }
+}
+
+/**
+ * AI move selector:
+ *  - Gentle: Depth 1, basic positional evaluation
+ *  - Standard: Depth 2, corner/edge weighting with minimax
+ *  - Deep: Depth 4, mobility and stability analysis with alpha-beta minimax
  */
 export function getBestAiMove(board, aiPlayer = 'B', difficulty = 'standard') {
   const validMoves = getValidMoves(board, aiPlayer)
   if (validMoves.length === 0) return null
 
-  // Level 1: Gentle — random legal move
+  // Tier 1: Gentle — depth 1 basic positional evaluation
   if (difficulty === 'gentle') {
-    return validMoves[Math.floor(Math.random() * validMoves.length)]
-  }
-
-  let bestMove = validMoves[0]
-  let bestScore = -Infinity
-  const opponent = aiPlayer === 'W' ? 'B' : 'W'
-
-  for (const move of validMoves) {
-    let score = POSITION_WEIGHTS[move.row][move.col]
-    score += move.flips.length * 2
-
-    // Prioritize corners
-    if (
-      (move.row === 0 || move.row === 7) &&
-      (move.col === 0 || move.col === 7)
-    ) {
-      score += 100
-    }
-
-    // Level 3: Deep — minimize opponent mobility
-    if (difficulty === 'deep') {
-      const outcome = applyMove(board, move.row, move.col, aiPlayer)
-      if (outcome) {
-        const oppMoves = getValidMoves(outcome.nextBoard, opponent)
-        score -= oppMoves.length * 8 // Restrict opponent's mobility
+    let bestScore = -Infinity
+    let bestMove = validMoves[0]
+    for (const move of validMoves) {
+      let score = POSITION_WEIGHTS[move.row][move.col] + move.flips.length * 2
+      score += (Math.random() * 4 - 2)
+      if (score > bestScore) {
+        bestScore = score
+        bestMove = move
       }
     }
+    return bestMove
+  }
 
-    // Small jitter to break ties naturally
-    score += Math.random() * 4 - 2
+  // Tier 2: Standard (depth 2) or Tier 3: Deep (depth 4)
+  const maxDepth = difficulty === 'deep' ? 4 : 2
+  let bestScore = -Infinity
+  let bestMove = validMoves[0]
+  let alpha = -Infinity
+  const beta = Infinity
 
-    if (score > bestScore) {
-      bestScore = score
+  for (const move of validMoves) {
+    const outcome = applyMove(board, move.row, move.col, aiPlayer)
+    if (!outcome) continue
+
+    const score = minimax(outcome.nextBoard, maxDepth - 1, alpha, beta, false, aiPlayer, difficulty)
+    const jitteredScore = score + (Math.random() * 0.4 - 0.2)
+
+    if (jitteredScore > bestScore) {
+      bestScore = jitteredScore
       bestMove = move
     }
+    alpha = Math.max(alpha, score)
   }
 
   return bestMove

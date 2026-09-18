@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import {
   DIFFICULTY_PRESETS,
   generatePlanarGraph,
@@ -215,7 +216,7 @@ export function UntangleScreen({ onBack } = {}) {
   }, [getSvgCoordinates])
 
   // Pointer up handler
-  const handlePointerUp = useCallback((e) => {
+  const handlePointerUp = useCallback(() => {
     if (activeNodeIdRef.current === null) return
     const draggedId = activeNodeIdRef.current
     activeNodeIdRef.current = null
@@ -388,18 +389,6 @@ export function UntangleScreen({ onBack } = {}) {
 
         <div className="unt-header-center">
           <h1 className="unt-title">Untangle</h1>
-          <div className="unt-presets-bar">
-            {DIFFICULTY_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                className={`unt-preset-btn${p.id === difficulty ? ' unt-preset-btn--active' : ''}`}
-                onClick={() => handleDifficultyChange(p.id)}
-                disabled={isAnimating}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <button
@@ -413,6 +402,13 @@ export function UntangleScreen({ onBack } = {}) {
           <Icon name="restart" size={18} />
         </button>
       </div>
+
+      {/* ── Standard Difficulty Tabs ─────────────────────────── */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={handleDifficultyChange}
+        tiers={DIFFICULTY_PRESETS}
+      />
 
       {/* ── Status & Info Header ─────────────────────────────── */}
       <div className="unt-status-card">

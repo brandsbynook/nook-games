@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Icon } from '../icons.jsx'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -17,8 +16,15 @@ import { recordGameSession } from '../utils/storage.js'
 
 export function Game2048Screen({ onBack }) {
   const [difficulty, setDifficulty] = useState('standard')
+
+  // Board dimensions & targets across tiers:
+  // Gentle: 5x5, target 1024 (spacious, low-pressure flow)
+  // Standard: 4x4, target 2048 (classic balance)
+  // Deep: 4x4, target 4096 (high-density precision)
+  const gridSize = difficulty === 'gentle' ? 5 : 4
   const targetGoal = difficulty === 'gentle' ? 1024 : difficulty === 'deep' ? 4096 : 2048
-  const [tiles, setTiles] = useState(() => initGameTiles())
+
+  const [tiles, setTiles] = useState(() => initGameTiles(gridSize))
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(() => {
     try {
@@ -36,8 +42,6 @@ export function Game2048Screen({ onBack }) {
   const touchStartRef = useRef(null)
   const cleanupTimeoutRef = useRef(null)
 
-  const grid = tilesToGrid(tiles)
-
   useEffect(() => {
     return () => {
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
@@ -53,17 +57,23 @@ export function Game2048Screen({ onBack }) {
     }
   }, [])
 
-  const handleRestart = useCallback(() => {
+  const handleRestart = useCallback((size = gridSize) => {
     playTap()
     if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
-    const newTiles = initGameTiles()
+    const newTiles = initGameTiles(size)
     setTiles(newTiles)
     setScore(0)
     setHistory([])
     setHasWon(false)
     setIsGameOver(false)
     setToastMessage(null)
-  }, [])
+  }, [gridSize])
+
+  const handleTierChange = useCallback((tierId) => {
+    setDifficulty(tierId)
+    const newSize = tierId === 'gentle' ? 5 : 4
+    handleRestart(newSize)
+  }, [handleRestart])
 
   const handleUndo = useCallback(() => {
     if (history.length === 0) return
@@ -89,7 +99,7 @@ export function Game2048Screen({ onBack }) {
     (direction) => {
       if (isGameOver) return
 
-      const { nextTiles, scoreGained, changed } = moveTiles(tiles, direction)
+      const { nextTiles, scoreGained, changed } = moveTiles(tiles, direction, gridSize)
       if (!changed) return
 
       playTap()
@@ -110,7 +120,7 @@ export function Game2048Screen({ onBack }) {
         }
       }
 
-      const { nextTiles: withSpawn } = spawnRandomTileInTiles(nextTiles)
+      const { nextTiles: withSpawn } = spawnRandomTileInTiles(nextTiles, gridSize)
       setTiles(withSpawn)
 
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
@@ -122,9 +132,9 @@ export function Game2048Screen({ onBack }) {
         )
       }, 190)
 
-      const finalGrid = tilesToGrid(withSpawn)
+      const finalGrid = tilesToGrid(withSpawn, gridSize)
       let wonThisTurn = false
-      if (!hasWon && hasReached2048(finalGrid, targetGoal)) {
+      if (!hasWon && hasReached2048(finalGrid, targetGoal, gridSize)) {
         wonThisTurn = true
         setHasWon(true)
         recordGameSession('2048', true)
@@ -134,7 +144,7 @@ export function Game2048Screen({ onBack }) {
         }, 200)
       }
 
-      if (!hasValidMoves(finalGrid)) {
+      if (!hasValidMoves(finalGrid, gridSize)) {
         setIsGameOver(true)
         recordGameSession('2048', hasWon || wonThisTurn)
         setTimeout(() => {
@@ -142,7 +152,7 @@ export function Game2048Screen({ onBack }) {
         }, 300)
       }
     },
-    [tiles, score, bestScore, isGameOver, hasWon, showToast, targetGoal]
+    [tiles, score, bestScore, isGameOver, hasWon, showToast, targetGoal, gridSize]
   )
 
   useEffect(() => {
@@ -237,7 +247,7 @@ export function Game2048Screen({ onBack }) {
     if (typeof onBack === 'function') {
       onBack()
     } else {
-      window.location.hash = ''
+      window.location.hash = '#/briefing/2048'
     }
   }
 
@@ -247,14 +257,11 @@ export function Game2048Screen({ onBack }) {
 
       <DifficultyTabs
         currentTier={difficulty}
-        onSelectTier={(diff) => {
-          setDifficulty(diff)
-          handleRestart()
-        }}
+        onSelectTier={handleTierChange}
         tiers={[
-          { id: 'gentle', label: 'Gentle', subtitle: '1024' },
-          { id: 'standard', label: 'Standard', subtitle: '2048' },
-          { id: 'deep', label: 'Deep', subtitle: '4096' },
+          { id: 'gentle', label: 'Gentle', subtitle: '5×5 · 1024' },
+          { id: 'standard', label: 'Standard', subtitle: '4×4 · 2048' },
+          { id: 'deep', label: 'Deep', subtitle: '4×4 · 4096' },
         ]}
       />
 
@@ -282,16 +289,22 @@ export function Game2048Screen({ onBack }) {
         <div
           ref={boardRef}
           className="g2048-board"
-          style={{ position: 'relative', aspectRatio: '1' }}
+          style={{
+            position: 'relative',
+            aspectRatio: '1',
+            gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+            gridTemplateRows: `repeat(${gridSize}, 1fr)`,
+            '--grid-size': gridSize,
+          }}
           role="grid"
-          aria-label="2048 4x4 Board"
+          aria-label={`2048 ${gridSize}x${gridSize} Board`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
         >
-          {Array.from({ length: 4 }).map((_, r) =>
-            Array.from({ length: 4 }).map((__, c) => (
+          {Array.from({ length: gridSize }).map((_, r) =>
+            Array.from({ length: gridSize }).map((__, c) => (
               <div
                 key={`bg-cell-${r}-${c}`}
                 className="g2048-slot g2048-slot--empty"
@@ -312,14 +325,14 @@ export function Game2048Screen({ onBack }) {
             }}
           >
             {tiles.map((tile) => (
-              <Tile key={tile.id} tile={tile} />
+              <Tile key={tile.id} tile={tile} size={gridSize} />
             ))}
           </div>
         </div>
       </div>
 
       <GameFooterActions
-        onReset={handleRestart}
+        onReset={() => handleRestart(gridSize)}
         onUndo={handleUndo}
         canUndo={history.length > 0}
         resetLabel="Reset"

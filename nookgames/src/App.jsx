@@ -471,7 +471,7 @@ function AppContent() {
   }
 
   if (route.name === 'play-reversi') {
-    return <ReversiScreen />
+    return <ReversiScreen onBack={() => navigate('briefing/reversi')} />
   }
 
   if (route.name === 'play-tower-of-hanoi') {
@@ -479,7 +479,7 @@ function AppContent() {
   }
 
   if (route.name === 'play-2048') {
-    return <Game2048Screen />
+    return <Game2048Screen onBack={() => navigate('briefing/2048')} />
   }
 
   if (route.name === 'play-untangle') {

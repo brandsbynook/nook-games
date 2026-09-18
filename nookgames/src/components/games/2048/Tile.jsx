@@ -9,6 +9,7 @@ import React from 'react'
  */
 export function Tile({
   tile,
+  size = 4,
   val: propVal,
   r: propR,
   c: propC,
@@ -38,11 +39,12 @@ export function Tile({
       style={{
         '--r': r,
         '--c': c,
+        '--grid-size': size,
         position: 'absolute',
         top: '10px',
         left: '10px',
-        width: 'calc((100% - 20px - 3 * var(--gap, 10px)) / 4)',
-        height: 'calc((100% - 20px - 3 * var(--gap, 10px)) / 4)',
+        width: `calc((100% - 20px - (${size} - 1) * var(--gap, 10px)) / ${size})`,
+        height: `calc((100% - 20px - (${size} - 1) * var(--gap, 10px)) / ${size})`,
         transform:
           'translate(calc(var(--c) * (100% + var(--gap, 10px))), calc(var(--r) * (100% + var(--gap, 10px))))',
         transition: 'transform 150ms ease-in-out',

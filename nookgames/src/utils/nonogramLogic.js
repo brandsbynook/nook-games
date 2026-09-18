@@ -144,9 +144,9 @@ export const PUZZLES = {
       size: 5,
       solution: [
         [0, 0, 1, 0, 0],
-        [0, 1, 0, 1, 0],
-        [1, 0, 0, 0, 1],
-        [0, 1, 0, 1, 0],
+        [0, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 0],
         [0, 0, 1, 0, 0],
       ],
     },
@@ -303,8 +303,8 @@ export const PUZZLES = {
         [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
         [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0],
-        [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       ],
     },
     {
@@ -329,7 +329,38 @@ export const PUZZLES = {
         [0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0],
       ],
     },
+    {
+      id: 'exp-crown',
+      title: 'Royal Crown',
+      size: 15,
+      solution: [
+        [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0],
+        [0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      ],
+    },
   ],
+}
+
+// Compute & assign ground-truth rowClues and colClues for every puzzle
+for (const tierList of Object.values(PUZZLES)) {
+  for (const p of tierList) {
+    const { rowClues, colClues } = generatePuzzleClues(p.solution)
+    p.rowClues = rowClues
+    p.colClues = colClues
+  }
 }
 
 /**
@@ -350,7 +381,7 @@ export function createEmptyGrid(size) {
  * @param {{ transform?: boolean }} options
  * @returns {object} puzzle data with rowClues, colClues, etc.
  */
-export function loadPuzzle(tier = 'beginner', puzzleIndex = 0, { transform = true } = {}) {
+export function loadPuzzle(tier = 'beginner', puzzleIndex = 0, { transform = false } = {}) {
   const tierPuzzles = PUZZLES[tier] || PUZZLES.beginner
   const safeIndex = Math.max(0, Math.min(puzzleIndex, tierPuzzles.length - 1))
   const puzzle = tierPuzzles[safeIndex]

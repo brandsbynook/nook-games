@@ -1,21 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   createInitialBoard,
+  cloneBoard,
   getValidMoves,
   applyMove,
   countStones,
   getBestAiMove,
-  BOARD_SIZE,
 } from '../utils/reversiLogic.js'
 import { playTap, playChime } from '../utils/audio.js'
+import { recordGameSession } from '../utils/storage.js'
 
-export function ReversiScreen() {
+export function ReversiScreen({ onBack }) {
+  const [difficulty, setDifficulty] = useState('standard')
   const [board, setBoard] = useState(createInitialBoard)
   const [turn, setTurn] = useState('W') // 'W' = Player, 'B' = AI Companion
   const [isAiThinking, setIsAiThinking] = useState(false)
   const [lastMove, setLastMove] = useState(null)
   const [recentlyFlipped, setRecentlyFlipped] = useState([])
+  const [history, setHistory] = useState([])
   const [statusMessage, setStatusMessage] = useState('')
   const [isGameOver, setIsGameOver] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -36,15 +41,20 @@ export function ReversiScreen() {
     }, duration)
   }, [])
 
-  // Handle back to Briefing
-  function handleBack(e) {
-    e.preventDefault()
+  // Handle back to Briefing or parent
+  const handleBack = (e) => {
+    if (e?.preventDefault) e.preventDefault()
     playTap()
-    window.location.hash = '/briefing/reversi'
+    if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
+    if (typeof onBack === 'function') {
+      onBack()
+    } else {
+      window.location.hash = '#/briefing/reversi'
+    }
   }
 
   // Handle restart
-  function handleRestart() {
+  const handleRestart = useCallback(() => {
     playTap()
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
     setBoard(createInitialBoard())
@@ -52,10 +62,29 @@ export function ReversiScreen() {
     setIsAiThinking(false)
     setLastMove(null)
     setRecentlyFlipped([])
+    setHistory([])
     setStatusMessage('')
     setIsGameOver(false)
     setShowToast(false)
-  }
+  }, [])
+
+  // Handle Undo
+  const handleUndo = useCallback(() => {
+    if (history.length === 0 || isAiThinking) return
+    playTap()
+    if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
+
+    const lastState = history[history.length - 1]
+    setHistory((prev) => prev.slice(0, -1))
+    setBoard(lastState.board)
+    setTurn(lastState.turn)
+    setLastMove(lastState.lastMove)
+    setRecentlyFlipped(lastState.recentlyFlipped)
+    setIsAiThinking(false)
+    setIsGameOver(false)
+    setStatusMessage('')
+    setShowToast(false)
+  }, [history, isAiThinking])
 
   // End game handler
   const checkGameOver = useCallback(
@@ -66,6 +95,9 @@ export function ReversiScreen() {
       if (whiteMoves.length === 0 && darkMoves.length === 0) {
         setIsGameOver(true)
         const finalCounts = countStones(currentBoard)
+        const playerWon = finalCounts.white > finalCounts.dark
+        recordGameSession('reversi', playerWon)
+
         let endMsg = `Balance achieved. White: ${finalCounts.white} — Dark: ${finalCounts.dark}`
         if (finalCounts.white > finalCounts.dark) {
           endMsg = `Territory resolved in quiet harmony. White: ${finalCounts.white} — Dark: ${finalCounts.dark}`
@@ -83,6 +115,8 @@ export function ReversiScreen() {
     },
     [triggerToast]
   )
+
+  const executeAiTurnRef = useRef(null)
 
   // AI turn execution
   const executeAiTurn = useCallback(
@@ -106,7 +140,7 @@ export function ReversiScreen() {
           return
         }
 
-        const bestMove = getBestAiMove(currentBoard, 'B')
+        const bestMove = getBestAiMove(currentBoard, 'B', difficulty)
         if (bestMove) {
           const result = applyMove(currentBoard, bestMove.row, bestMove.col, 'B')
           if (result) {
@@ -122,17 +156,21 @@ export function ReversiScreen() {
               if (whiteMoves.length === 0) {
                 triggerToast('White has no valid moves. Passing back to Companion.')
                 // AI gets another turn
-                executeAiTurn(result.nextBoard)
+                executeAiTurnRef.current?.(result.nextBoard)
               } else {
                 setTurn('W')
               }
             }
           }
         }
-      }, 650)
+      }, 550)
     },
-    [checkGameOver, triggerToast]
+    [checkGameOver, difficulty, triggerToast]
   )
+
+  useEffect(() => {
+    executeAiTurnRef.current = executeAiTurn
+  }, [executeAiTurn])
 
   // Clean up AI timer on unmount
   useEffect(() => {
@@ -145,6 +183,17 @@ export function ReversiScreen() {
   function handleCellClick(row, col) {
     if (turn !== 'W' || isAiThinking || isGameOver) return
     if (!validMoveMap.has(`${row},${col}`)) return
+
+    // Save snapshot before player's move for undo
+    setHistory((prev) => [
+      ...prev.slice(-30),
+      {
+        board: cloneBoard(board),
+        turn: 'W',
+        lastMove,
+        recentlyFlipped,
+      },
+    ])
 
     const result = applyMove(board, row, col, 'W')
     if (!result) return
@@ -163,30 +212,23 @@ export function ReversiScreen() {
   }
 
   return (
-    <div className="rev-page">
-      {/* ── Top Bar ─────────────────────────────────────────── */}
-      <div className="rev-top-bar">
-        <button
-          id="rev-back-btn"
-          className="rev-back-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+    <div className="rev-page game-screen-container">
+      {/* ── Standard Game Header ─────────────────────────────── */}
+      <GameHeader title="Reversi" onBack={handleBack} />
 
-        <h1 className="rev-title">Reversi</h1>
-
-        <button
-          id="rev-restart-btn"
-          className="rev-restart-btn"
-          onClick={handleRestart}
-          aria-label="Restart Game"
-          title="Restart"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </div>
+      {/* ── Standard Difficulty Tabs ─────────────────────────── */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(tier) => {
+          setDifficulty(tier)
+          handleRestart()
+        }}
+        tiers={[
+          { id: 'gentle', label: 'Gentle' },
+          { id: 'standard', label: 'Standard' },
+          { id: 'deep', label: 'Deep' },
+        ]}
+      />
 
       {/* ── Score & Turn Header ──────────────────────────────── */}
       <div className="rev-status-card">
@@ -251,7 +293,15 @@ export function ReversiScreen() {
         </div>
       </div>
 
-      {/* ── Bottom Contemplation Footer ─────────────────────── */}
+      {/* ── Footer Actions & Contemplation Quote ─────────────── */}
+      <GameFooterActions
+        onReset={handleRestart}
+        onUndo={handleUndo}
+        canUndo={history.length > 0 && !isAiThinking}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
+
       <div className="rev-footer">
         <span className="rev-footer-quote">
           {isGameOver
@@ -271,3 +321,5 @@ export function ReversiScreen() {
     </div>
   )
 }
+
+export default ReversiScreen
