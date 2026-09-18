@@ -36,16 +36,44 @@ export const UNICODE_PIECES = {
   },
 };
 
-/**
- * Creates a new Chess instance.
- */
+// Piece-Square positional bonus tables
+const PST_PAWN = [
+  [0,  0,  0,  0,  0,  0,  0,  0],
+  [50, 50, 50, 50, 50, 50, 50, 50],
+  [10, 10, 20, 30, 30, 20, 10, 10],
+  [5,  5, 10, 25, 25, 10,  5,  5],
+  [0,  0,  0, 20, 20,  0,  0,  0],
+  [5, -5,-10,  0,  0,-10, -5,  5],
+  [5, 10, 10,-20,-20, 10, 10,  5],
+  [0,  0,  0,  0,  0,  0,  0,  0]
+];
+
+const PST_KNIGHT = [
+  [-50,-40,-30,-30,-30,-30,-40,-50],
+  [-40,-20,  0,  0,  0,  0,-20,-40],
+  [-30,  0, 10, 15, 15, 10,  0,-30],
+  [-30,  5, 15, 20, 20, 15,  5,-30],
+  [-30,  0, 15, 20, 20, 15,  0,-30],
+  [-30,  5, 10, 15, 15, 10,  5,-30],
+  [-40,-20,  0,  5,  5,  0,-20,-40],
+  [-50,-40,-30,-30,-30,-30,-40,-50]
+];
+
+const PST_BISHOP = [
+  [-20,-10,-10,-10,-10,-10,-10,-20],
+  [-10,  0,  0,  0,  0,  0,  0,-10],
+  [-10,  0,  5, 10, 10,  5,  0,-10],
+  [-10,  5,  5, 10, 10,  5,  5,-10],
+  [-10,  0, 10, 10, 10, 10,  0,-10],
+  [-10, 10, 10, 10, 10, 10, 10,-10],
+  [-10,  5,  0,  0,  0,  0,  5,-10],
+  [-20,-10,-10,-10,-10,-10,-10,-20]
+];
+
 export function createGame(fen) {
   return fen ? new Chess(fen) : new Chess();
 }
 
-/**
- * Returns an array of valid target square notations (e.g. ['e3', 'e4']) for a given square.
- */
 export function getValidMoves(gameInstance, square) {
   if (!gameInstance || !square) return [];
   try {
@@ -56,10 +84,6 @@ export function getValidMoves(gameInstance, square) {
   }
 }
 
-/**
- * Executes a move on the gameInstance: { from, to, promotion = 'q' }.
- * Returns { success, isCheck, isCheckmate, isDraw, inCheck, isGameOver, move }
- */
 export function makeMove(gameInstance, move) {
   if (!gameInstance || !move) {
     return { success: false, isCheck: false, isCheckmate: false, isDraw: false, inCheck: false, isGameOver: false, move: null };
@@ -94,12 +118,6 @@ export function makeMove(gameInstance, move) {
   }
 }
 
-/**
- * Evaluates board position for a given bot color.
- */
-/**
- * Evaluates board position for a given bot color with positional heuristics.
- */
 export function evaluateBoard(game, botColor) {
   if (game.isCheckmate()) {
     return game.turn() === botColor ? -100000 : 100000;
@@ -108,38 +126,27 @@ export function evaluateBoard(game, botColor) {
 
   let score = 0;
   const board = game.board();
-  const isBlack = botColor === 'b';
 
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const piece = board[r][c];
       if (!piece) continue;
-      const val = PIECE_VALUES[piece.type] || 0;
-      const square = String.fromCharCode(97 + c) + (8 - r);
+
+      let val = PIECE_VALUES[piece.type] || 0;
       let posBonus = 0;
 
-      // Center control
-      if (CENTER_SQUARES.has(square)) posBonus += 35;
-      else if (EXTENDED_CENTER.has(square)) posBonus += 15;
-      else if (square[0] === 'd' || square[0] === 'e') posBonus += 10;
+      const pRank = piece.color === 'w' ? r : 7 - r;
 
-      // Development bonus for minor pieces (knights, bishops)
-      if (piece.type === 'n' || piece.type === 'b') {
-        const homeRank = piece.color === 'b' ? 0 : 7;
-        if (r !== homeRank) posBonus += 20;
-      }
+      if (piece.type === 'p') posBonus += PST_PAWN[pRank][c];
+      else if (piece.type === 'n') posBonus += PST_KNIGHT[pRank][c];
+      else if (piece.type === 'b') posBonus += PST_BISHOP[pRank][c];
 
-      // King safety in early/mid game
-      if (piece.type === 'k') {
-        if (piece.color === 'b') {
-          if (r === 0 && (c === 6 || c === 2)) posBonus += 25; // Castled positions
-        } else {
-          if (r === 7 && (c === 6 || c === 2)) posBonus += 25;
-        }
-      }
+      const square = String.fromCharCode(97 + c) + (8 - r);
+      if (CENTER_SQUARES.has(square)) posBonus += 25;
+      else if (EXTENDED_CENTER.has(square)) posBonus += 10;
 
       if (piece.color === botColor) {
-        score += val + posBonus;
+        score += (val + posBonus);
       } else {
         score -= (val + posBonus);
       }
@@ -148,168 +155,103 @@ export function evaluateBoard(game, botColor) {
   return score;
 }
 
-/**
- * Casual Bot:
- * Plays valid random moves with a 40% bias toward free captures or pawn advances.
- */
-function getCasualMove(gameInstance) {
-  const moves = gameInstance.moves({ verbose: true });
-  if (moves.length === 0) return null;
-
-  // 40% bias toward free captures or pawn advances
-  const biasedMoves = moves.filter((m) => m.captured || m.piece === 'p');
-  if (Math.random() < 0.4 && biasedMoves.length > 0) {
-    const chosen = biasedMoves[Math.floor(Math.random() * biasedMoves.length)];
-    return { from: chosen.from, to: chosen.to, promotion: 'q' };
-  }
-
-  const chosen = moves[Math.floor(Math.random() * moves.length)];
-  return { from: chosen.from, to: chosen.to, promotion: 'q' };
+function orderMoves(moves) {
+  return moves.sort((a, b) => {
+    let scoreA = 0;
+    let scoreB = 0;
+    if (a.captured) scoreA += (PIECE_VALUES[a.captured] || 100) * 10 - (PIECE_VALUES[a.piece] || 100);
+    if (b.captured) scoreB += (PIECE_VALUES[b.captured] || 100) * 10 - (PIECE_VALUES[b.piece] || 100);
+    if (CENTER_SQUARES.has(a.to)) scoreA += 30;
+    if (CENTER_SQUARES.has(b.to)) scoreB += 30;
+    return scoreB - scoreA;
+  });
 }
 
-/**
- * Standard Bot:
- * 1-ply evaluation with capture weighting, piece-square tables (controlling center files d/e),
- * and basic blunder checks so it avoids sacrificing pieces for free.
- */
-function getStandardMove(gameInstance) {
-  const moves = gameInstance.moves({ verbose: true });
+function minimax(gameInstance, depth, alpha, beta, isMaximizing, botColor) {
+  if (depth === 0 || gameInstance.isGameOver()) {
+    return evaluateBoard(gameInstance, botColor);
+  }
+
+  const moves = orderMoves(gameInstance.moves({ verbose: true }));
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (const move of moves) {
+      gameInstance.move(move);
+      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, false, botColor);
+      gameInstance.undo();
+      maxEval = Math.max(maxEval, evalScore);
+      alpha = Math.max(alpha, evalScore);
+      if (beta <= alpha) break;
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (const move of moves) {
+      gameInstance.move(move);
+      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, true, botColor);
+      gameInstance.undo();
+      minEval = Math.min(minEval, evalScore);
+      beta = Math.min(beta, evalScore);
+      if (beta <= alpha) break;
+    }
+    return minEval;
+  }
+}
+
+function getBestMoveAtDepth(gameInstance, depth, botColor, jitter = 0) {
+  const moves = orderMoves(gameInstance.moves({ verbose: true }));
   if (moves.length === 0) return null;
 
   let bestMove = null;
   let bestScore = -Infinity;
+  let alpha = -Infinity;
+  const beta = Infinity;
 
   for (const move of moves) {
-    let score = 0;
-
-    // Capture weighting
-    if (move.captured) {
-      score += (PIECE_VALUES[move.captured] || 0) * 1.25;
-    }
-
-    // Controlling center files d and e & center squares
-    if (CENTER_SQUARES.has(move.to)) {
-      score += 45;
-    } else if (move.to[0] === 'd' || move.to[0] === 'e') {
-      score += 25;
-    } else if (EXTENDED_CENTER.has(move.to)) {
-      score += 15;
-    }
-
-    // Developing knights and bishops
-    if (move.piece === 'n' || move.piece === 'b') {
-      if (move.from.endsWith('8') || move.from.endsWith('1')) {
-        score += 25;
-      }
-    }
-
-    // Basic blunder check: simulate move and check if opponent can immediately capture piece
     gameInstance.move(move);
-
-    if (gameInstance.isCheckmate()) {
-      score += 100000;
-    } else if (gameInstance.inCheck()) {
-      score += 25;
-    } else {
-      const oppReplies = gameInstance.moves({ verbose: true });
-      // If an opponent reply captures the piece on move.to
-      const directAttacker = oppReplies.find((om) => om.to === move.to);
-      if (directAttacker) {
-        // Penalty for losing the piece
-        score -= (PIECE_VALUES[move.piece] || 100);
-      }
-    }
-
+    let score = minimax(gameInstance, depth - 1, alpha, beta, false, botColor);
     gameInstance.undo();
 
-    // Natural jitter
-    score += (Math.random() * 8 - 4);
+    if (jitter > 0) {
+      score += (Math.random() * jitter * 2 - jitter);
+    }
 
     if (score > bestScore) {
       bestScore = score;
       bestMove = move;
     }
+    alpha = Math.max(alpha, bestScore);
   }
 
   return bestMove ? { from: bestMove.from, to: bestMove.to, promotion: 'q' } : null;
 }
 
-/**
- * Master Bot:
- * 2-ply minimax evaluation with alpha-beta pruning.
- * Prioritizes king safety, piece development, and tactical trades.
- */
-function getMasterMove(gameInstance) {
+function getCasualMove(gameInstance) {
   const moves = gameInstance.moves({ verbose: true });
   if (moves.length === 0) return null;
 
-  const botColor = gameInstance.turn();
-  let bestMove = null;
-  let bestScore = -Infinity;
-
-  // Move ordering: captures and center moves first to maximize alpha-beta cutoffs
-  moves.sort((a, b) => {
-    const scoreA = (a.captured ? PIECE_VALUES[a.captured] : 0) + (CENTER_SQUARES.has(a.to) ? 30 : 0);
-    const scoreB = (b.captured ? PIECE_VALUES[b.captured] : 0) + (CENTER_SQUARES.has(b.to) ? 30 : 0);
-    return scoreB - scoreA + (Math.random() * 4 - 2);
-  });
-
-  for (const move of moves) {
-    gameInstance.move(move);
-
-    let moveScore;
-    if (gameInstance.isCheckmate()) {
-      moveScore = 100000;
-    } else if (gameInstance.isDraw()) {
-      moveScore = -150;
-    } else {
-      const oppMoves = gameInstance.moves({ verbose: true });
-      if (oppMoves.length === 0) {
-        moveScore = 0;
-      } else {
-        // Opponent minimizes bot's score
-        oppMoves.sort((a, b) => (b.captured ? 1 : 0) - (a.captured ? 1 : 0));
-        let worstOppReply = Infinity;
-
-        for (const oppMove of oppMoves) {
-          gameInstance.move(oppMove);
-          const evalScore = evaluateBoard(gameInstance, botColor);
-          gameInstance.undo();
-
-          if (evalScore < worstOppReply) {
-            worstOppReply = evalScore;
-          }
-          if (worstOppReply <= bestScore) {
-            break; // Beta cutoff
-          }
-        }
-        moveScore = worstOppReply;
-      }
-    }
-
-    gameInstance.undo();
-
-    if (moveScore > bestScore) {
-      bestScore = moveScore;
-      bestMove = move;
-    }
+  if (Math.random() < 0.5) {
+    return getBestMoveAtDepth(gameInstance, 1, gameInstance.turn(), 15);
   }
 
-  return bestMove ? { from: bestMove.from, to: bestMove.to, promotion: 'q' } : null;
+  const captures = moves.filter((m) => m.captured);
+  const pool = captures.length > 0 && Math.random() < 0.5 ? captures : moves;
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  return { from: chosen.from, to: chosen.to, promotion: 'q' };
 }
 
-/**
- * Selects a bot move based on difficulty: 'casual', 'standard', or 'master'.
- */
 export function getBotMove(gameInstance, difficulty = 'standard') {
   if (!gameInstance || gameInstance.isGameOver()) return null;
 
   const diff = String(difficulty).toLowerCase();
+  const botColor = gameInstance.turn();
+
   if (diff === 'casual') {
     return getCasualMove(gameInstance);
   } else if (diff === 'master') {
-    return getMasterMove(gameInstance);
+    return getBestMoveAtDepth(gameInstance, 4, botColor, 0);
   } else {
-    return getStandardMove(gameInstance);
+    return getBestMoveAtDepth(gameInstance, 3, botColor, 8);
   }
 }
