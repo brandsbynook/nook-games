@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">nook - offline games &amp; puzzles</string>
+    <string name="title_activity_main">nook - offline games &amp; puzzles</string>
+    <string name="package_name">app.nook.games</string>
+    <string name="custom_url_scheme">app.nook.games</string>
+</resources>
