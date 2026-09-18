@@ -10908,6 +10908,160 @@ main > .page-content {
   color: #888888 !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   UNIFORM SURFACE BACKGROUND (#0e0e11) ACROSS ALL 20 GAME SCREENS
+   ═══════════════════════════════════════════════════════════════════ */
+.ap-page,
+.g2048-page,
+.toh-page,
+.rev-page,
+.wl-page,
+.sdk-page,
+.ng-page,
+.ag-page,
+.mm-page,
+.unt-page,
+.cw-container,
+.ol-container,
+.shk-page,
+.kkr-page,
+.slk-page,
+.gmk-page,
+.fp-page,
+.cs-page,
+.chess-page,
+.kt-page,
+.chk-page,
+.game-screen-container {
+  background-color: #0e0e11 !important;
+  background: #0e0e11 !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STANDARDIZED 3-TIER DIFFICULTY PILL / TAB BAR
+   ═══════════════════════════════════════════════════════════════════ */
+.game-diff-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  background: #15151a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 9999px !important;
+  padding: 4px !important;
+  margin: 0 auto 16px auto !important;
+  width: fit-content !important;
+  max-width: calc(100% - 32px) !important;
+  box-sizing: border-box !important;
+}
+
+.game-diff-tab {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 9999px !important;
+  padding: 6px 16px !important;
+  color: #8a8a93 !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  transition: all 0.18s ease !important;
+  white-space: nowrap !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.game-diff-tab:hover {
+  color: #e0e0e6 !important;
+}
+
+.game-diff-tab--active {
+  background: #23232b !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+.game-diff-tab-label {
+  display: inline-block !important;
+}
+
+.game-diff-tab-sub {
+  font-size: 10px !important;
+  opacity: 0.65 !important;
+  margin-left: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STANDARDIZED ACTION TRIGGERS & FOOTERS
+   ═══════════════════════════════════════════════════════════════════ */
+.game-footer-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 12px 16px !important;
+  margin-top: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.game-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  background: #17171d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  color: #e2e2e8 !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.game-action-btn:hover:not(:disabled) {
+  background: #22222a !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.game-action-btn:active:not(:disabled) {
+  transform: scale(0.97) !important;
+}
+
+.game-action-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+.game-action-btn svg {
+  stroke-width: 2 !important;
+}
+
+.game-header-actions-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 40px;
+}
+
 
 
 

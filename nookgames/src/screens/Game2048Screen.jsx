@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   initGameTiles,
   moveTiles,
@@ -13,6 +16,8 @@ import { playTap, playChime } from '../utils/audio.js'
 import { recordGameSession } from '../utils/storage.js'
 
 export function Game2048Screen() {
+  const [difficulty, setDifficulty] = useState('standard')
+  const targetGoal = difficulty === 'gentle' ? 1024 : difficulty === 'deep' ? 4096 : 2048
   const [tiles, setTiles] = useState(() => initGameTiles())
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(() => {
@@ -129,10 +134,10 @@ export function Game2048Screen() {
         )
       }, 190)
 
-      // Check 2048 achievement
+      // Check target goal achievement
       const finalGrid = tilesToGrid(withSpawn)
       let wonThisTurn = false
-      if (!hasWon && hasReached2048(finalGrid)) {
+      if (!hasWon && hasReached2048(finalGrid, targetGoal)) {
         wonThisTurn = true
         setHasWon(true)
         recordGameSession('2048', true)
@@ -253,45 +258,23 @@ export function Game2048Screen() {
   }
 
   return (
-    <div className="g2048-page">
+    <div className="g2048-page game-screen-container">
       {/* ── Top Bar ── */}
-      <div className="g2048-top-bar">
-        <button
-          id="g2048-back-btn"
-          className="g2048-back-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+      <GameHeader title="2048" onBack={handleBack} />
 
-        <div className="g2048-header-center">
-          <h1 className="g2048-title">2048</h1>
-        </div>
-
-        <div className="g2048-top-actions">
-          {history.length > 0 && (
-            <button
-              id="g2048-undo-btn"
-              className="g2048-action-btn"
-              onClick={handleUndo}
-              aria-label="Undo Last Move"
-              title="Undo"
-            >
-              <Icon name="undo" size={17} />
-            </button>
-          )}
-          <button
-            id="g2048-restart-btn"
-            className="g2048-action-btn"
-            onClick={handleRestart}
-            aria-label="Restart Game"
-            title="Restart"
-          >
-            <Icon name="restart" size={17} />
-          </button>
-        </div>
-      </div>
+      {/* ── Difficulty Tabs ── */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(diff) => {
+          setDifficulty(diff)
+          handleRestart()
+        }}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: '1024' },
+          { id: 'standard', label: 'Standard', subtitle: '2048' },
+          { id: 'deep', label: 'Deep', subtitle: '4096' },
+        ]}
+      />
 
       {/* ── Score Row ── */}
       <div className="g2048-status-card">
@@ -358,17 +341,13 @@ export function Game2048Screen() {
       </div>
 
       {/* ── Footer ── */}
-      <div className="g2048-footer">
-        {isGameOver ? (
-          <button className="g2048-next-btn" onClick={handleRestart}>
-            Play Again
-          </button>
-        ) : (
-          <span className="g2048-footer-quote">
-            Swipe to slide and merge
-          </span>
-        )}
-      </div>
+      <GameFooterActions
+        onReset={handleRestart}
+        onUndo={handleUndo}
+        canUndo={history.length > 0}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
 
       {/* ── Toast Notification ── */}
       <div

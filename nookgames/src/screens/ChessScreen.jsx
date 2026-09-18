@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   createGame,
   getValidMoves,
@@ -234,45 +237,20 @@ export function ChessScreen({ onBack }) {
   }
 
   return (
-    <div className="chess-page">
+    <div className="chess-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <header className="chess-top-bar">
-        <button
-          id="chess-back-btn"
-          className="chess-icon-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-
-        <h1 className="chess-title">Chess</h1>
-
-        <button
-          id="chess-reset-btn"
-          className="chess-icon-btn"
-          onClick={handleReset}
-          aria-label="Reset Game"
-          title="Reset Game"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </header>
+      <GameHeader title="Chess" onBack={handleBack} />
 
       {/* ── Difficulty Selector ─────────────────────────────── */}
-      <div className="chess-difficulty-bar" role="group" aria-label="Difficulty Level">
-        {['casual', 'standard', 'master'].map((level) => (
-          <button
-            key={level}
-            id={`chess-diff-${level}`}
-            className={`chess-diff-btn ${difficulty === level ? 'chess-diff-btn--active' : ''}`}
-            onClick={() => handleDifficultyChange(level)}
-            aria-pressed={difficulty === level}
-          >
-            {level.charAt(0).toUpperCase() + level.slice(1)}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(level) => handleDifficultyChange(level)}
+        tiers={[
+          { id: 'casual', label: 'Gentle', subtitle: 'Casual' },
+          { id: 'standard', label: 'Standard', subtitle: 'Balanced' },
+          { id: 'master', label: 'Deep', subtitle: 'Master' },
+        ]}
+      />
 
       {/* ── Status Bar ──────────────────────────────────────── */}
       <div className="chess-status-bar">
@@ -375,19 +353,14 @@ export function ChessScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── Controls: Undo Button ────────────────────────────── */}
-      <div className="chess-controls">
-        <button
-          id="chess-undo-btn"
-          className="chess-undo-btn"
-          onClick={handleUndo}
-          disabled={isBotThinking || historyCount === 0}
-          aria-label="Undo Move"
-        >
-          <Icon name="back" size={14} />
-          <span>Undo Move</span>
-        </button>
-      </div>
+      {/* ── Controls: Reset & Undo Actions ─────────────────── */}
+      <GameFooterActions
+        onReset={handleReset}
+        onUndo={handleUndo}
+        canUndo={!isBotThinking && historyCount > 0}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
 
       {/* ── Footer / Sanctuary Tagline ───────────────────────── */}
       <footer className="chess-footer">

@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -201,54 +204,20 @@ export function KakuroScreen({ onBack }) {
   }, [handleNumberInput, handleClear, handleUndo, hasWon, selectedCell, puzzle.size, grid]);
 
   return (
-    <div className="kkr-page">
+    <div className="kkr-page game-screen-container">
       {/* ── Header ───────────────────────────────────────────── */}
-      <header className="kkr-header">
-        <button
-          id="kkr-back-btn"
-          type="button"
-          className="kkr-btn-back"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={14} />
-          <span>Briefing</span>
-        </button>
-
-        <h1 className="kkr-title">Kakuro</h1>
-
-        <button
-          id="kkr-reset-btn"
-          type="button"
-          className="kkr-btn-icon"
-          onClick={handleReset}
-          aria-label="Reset Board"
-        >
-          <Icon name="refresh" size={16} />
-        </button>
-      </header>
+      <GameHeader title="Kakuro" onBack={handleBack} />
 
       {/* ── Difficulty Tabs ─────────────────────────────────── */}
-      <div className="kkr-tabs-container">
-        {[
-          { id: 'intro', label: 'Intro (4×4)' },
-          { id: 'classic', label: 'Classic (6×6)' },
-          { id: 'expert', label: 'Expert (8×8)' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            id={`kkr-tab-${tab.id}`}
-            type="button"
-            className={`kkr-tab-btn${difficulty === tab.id ? ' kkr-tab-btn--active' : ''}`}
-            onClick={() => {
-              playTap();
-              setDifficulty(tab.id);
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(diff) => setDifficulty(diff)}
+        tiers={[
+          { id: 'intro', label: 'Gentle', subtitle: '4×4' },
+          { id: 'classic', label: 'Standard', subtitle: '6×6' },
+          { id: 'expert', label: 'Deep', subtitle: '8×8' },
+        ]}
+      />
 
       {/* ── Status Bar ──────────────────────────────────────── */}
       <div className="kkr-status-bar">
@@ -366,45 +335,30 @@ export function KakuroScreen({ onBack }) {
         </div>
 
         {/* Action Toolbar */}
-        <div className="kkr-toolbar">
-          <button
-            id="kkr-undo-btn"
-            type="button"
-            className="kkr-action-btn"
-            onClick={handleUndo}
-            disabled={history.length === 0 || hasWon}
-            aria-label="Undo"
-          >
-            <Icon name="undo" size={14} />
-            <span>Undo</span>
-          </button>
-
+        <GameFooterActions
+          onReset={handleReset}
+          onUndo={handleUndo}
+          onHint={handleHint}
+          canUndo={history.length > 0 && !hasWon}
+          canHint={!hasWon}
+          resetLabel="Reset"
+          undoLabel="Undo"
+          hintLabel="Hint"
+        >
           <button
             id="kkr-pencil-btn"
             type="button"
-            className={`kkr-action-btn${pencilMode ? ' kkr-action-btn--active' : ''}`}
+            className={`game-action-btn${pencilMode ? ' game-action-btn--active' : ''}`}
             onClick={() => {
               playTap();
               setPencilMode((prev) => !prev);
             }}
             aria-label="Toggle Pencil Mode"
           >
-            <Icon name="pencil" size={14} />
+            <Icon name="pencil" size={16} />
             <span>{pencilMode ? 'Notes On' : 'Notes Off'}</span>
           </button>
-
-          <button
-            id="kkr-hint-btn"
-            type="button"
-            className="kkr-action-btn"
-            onClick={handleHint}
-            disabled={hasWon}
-            aria-label="Hint"
-          >
-            <Icon name="info" size={14} />
-            <span>Hint</span>
-          </button>
-        </div>
+        </GameFooterActions>
       </div>
 
       {/* ── Calm Victory Modal ───────────────────────────────── */}

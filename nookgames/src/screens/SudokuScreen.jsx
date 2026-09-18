@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import { SUDOKU_PRESETS, generateTransformedPreset, isSudokuComplete } from '../data/sudokuPuzzles.js'
 import { playTap, playChime } from '../utils/audio.js'
 import { recordGameSession } from '../utils/storage.js'
@@ -172,46 +175,20 @@ export function SudokuScreen() {
   const selectedValue = selectedIndex !== null ? board[selectedIndex] : null
 
   return (
-    <div className="sdk-page">
+    <div className="sdk-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <div className="sdk-header">
-        <button
-          id="sdk-back-btn"
-          className="sdk-back-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+      <GameHeader title="Sudoku" onBack={handleBack} />
 
-        <div className="sdk-header-center">
-          <span className="sdk-header-title">Sudoku</span>
-        </div>
-
-        <div className="sdk-header-actions">
-          <button
-            id="sdk-restart-btn"
-            className="sdk-action-btn"
-            onClick={handleRestart}
-            aria-label="Restart puzzle"
-            title="Restart"
-          >
-            <Icon name="restart" size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div className="sdk-difficulty-bar">
-        {SUDOKU_PRESETS.map((p, idx) => (
-          <button
-            key={p.id}
-            className={`sdk-preset-btn${idx === presetIndex ? ' sdk-preset-btn--active' : ''}`}
-            onClick={() => handlePresetChange(idx)}
-          >
-            {p.difficulty}
-          </button>
-        ))}
-      </div>
+      {/* ── Difficulty Selector ─────────────────────────────── */}
+      <DifficultyTabs
+        currentTier={presetIndex}
+        onSelectTier={(_, idx) => handlePresetChange(idx)}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: 'Easy' },
+          { id: 'standard', label: 'Standard', subtitle: 'Peaceful' },
+          { id: 'deep', label: 'Deep', subtitle: 'Moderate' },
+        ]}
+      />
 
       {/* ── Main Game Content ───────────────────────────────── */}
       <div className="sdk-body">
@@ -288,11 +265,11 @@ export function SudokuScreen() {
 
         {/* ── Keypad & Controls ───────────────────────────────── */}
         <div className="sdk-controls">
-          {/* Action Row: Pencil Mode Toggle & Erase */}
-          <div className="sdk-action-row">
+          <GameFooterActions onReset={handleRestart} resetLabel="Reset">
             <button
               id="sdk-pencil-btn"
-              className={`sdk-mode-btn${pencilMode ? ' sdk-mode-btn--active' : ''}`}
+              type="button"
+              className={`game-action-btn${pencilMode ? ' game-action-btn--active' : ''}`}
               onClick={() => {
                 playTap()
                 setPencilMode((prev) => !prev)
@@ -305,14 +282,15 @@ export function SudokuScreen() {
 
             <button
               id="sdk-erase-btn"
-              className="sdk-mode-btn"
+              type="button"
+              className="game-action-btn"
               onClick={handleErase}
               aria-label="Erase cell"
             >
               <Icon name="erase" size={16} />
               <span>Erase</span>
             </button>
-          </div>
+          </GameFooterActions>
 
           {/* Number Pad (1 through 9) */}
           <div className="sdk-keypad">

@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -319,50 +322,20 @@ export function CrosswordScreen({ onBack }) {
   ];
 
   return (
-    <div className="cw-container">
+    <div className="cw-container game-screen-container">
       {/* ── 1. Header Bar ──────────────────────────────────── */}
-      <header className="cw-header">
-        <button
-          onClick={handleBack}
-          className="cw-icon-btn"
-          aria-label="Back"
-          title="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-        <h1 className="cw-title">Crossword</h1>
-        <div className="cw-header-actions">
-          <button
-            onClick={() => setIsScratchpadOpen((prev) => !prev)}
-            className={`cw-icon-btn ${isScratchpadOpen ? 'active' : ''}`}
-            aria-label="Toggle Rough Work Scratchpad"
-            title="Rough Work / Scratchpad"
-          >
-            <Icon name="pencil" size={18} />
-          </button>
-          <button
-            onClick={handleReset}
-            className="cw-icon-btn"
-            aria-label="Reset Puzzle"
-            title="Reset"
-          >
-            <Icon name="restart" size={18} />
-          </button>
-        </div>
-      </header>
+      <GameHeader title="Crossword" onBack={handleBack} />
 
       {/* ── 2. Unified Dark Pill Difficulty Selector ─────────── */}
-      <div className="cw-difficulty-selector">
-        {Object.values(DIFFICULTIES).map((tier) => (
-          <button
-            key={tier.id}
-            onClick={() => handleDifficultyChange(tier.id)}
-            className={`cw-diff-btn ${difficulty === tier.id ? 'active' : ''}`}
-          >
-            {tier.label}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(tierId) => handleDifficultyChange(tierId)}
+        tiers={[
+          { id: 'beginner', label: 'Gentle', subtitle: '5×5' },
+          { id: 'intermediate', label: 'Standard', subtitle: '6×6' },
+          { id: 'master', label: 'Deep', subtitle: '7×7' },
+        ]}
+      />
 
       {/* ── 3. Crossword 2D Grid ────────────────────────────── */}
       <div
@@ -522,6 +495,27 @@ export function CrosswordScreen({ onBack }) {
           </div>
         ))}
       </div>
+
+      <GameFooterActions onReset={handleReset} resetLabel="Reset">
+        <button
+          type="button"
+          className={`game-action-btn ${isScratchpadOpen ? 'game-action-btn--active' : ''}`}
+          onClick={() => setIsScratchpadOpen((prev) => !prev)}
+          aria-label="Notes / Scratchpad"
+        >
+          <Icon name="pencil" size={16} />
+          <span>Notes</span>
+        </button>
+        <button
+          type="button"
+          className="game-action-btn"
+          onClick={handleClearActiveWord}
+          aria-label="Clear Word"
+        >
+          <Icon name="erase" size={16} />
+          <span>Clear</span>
+        </button>
+      </GameFooterActions>
 
       {/* ── 6. Full Clues List Section ──────────────────────── */}
       <div className="cw-clues-section">

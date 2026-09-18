@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   BOARD_SIZE,
   STAR_POINTS,
@@ -14,6 +17,7 @@ import { recordGameSession, setLastActiveGame } from '../utils/storage.js'
 
 export function GomokuScreen({ onBack }) {
   const [board, setBoard] = useState(createEmptyBoard)
+  const [difficulty, setDifficulty] = useState('standard')
   const [turn, setTurn] = useState('B') // 'B' (Player - Black) | 'W' (System - White)
   const [history, setHistory] = useState([]) // array of { board, lastMove, turn }
   const [lastMove, setLastMove] = useState(null) // { r, c }
@@ -64,7 +68,7 @@ export function GomokuScreen({ onBack }) {
     setIsBotThinking(true)
 
     botTimerRef.current = setTimeout(() => {
-      const move = getBotMove(currentBoard)
+      const move = getBotMove(currentBoard, difficulty)
       if (!move) {
         setWinner('draw')
         recordGameSession('gomoku', false)
@@ -97,7 +101,7 @@ export function GomokuScreen({ onBack }) {
         setIsBotThinking(false)
       }
     }, 420)
-  }, [])
+  }, [difficulty])
 
   // Handle player stone placement
   const handleCellClick = useCallback((r, c) => {
@@ -175,25 +179,23 @@ export function GomokuScreen({ onBack }) {
   }, [board])
 
   return (
-    <div className="gmk-page">
+    <div className="gmk-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <header className="gmk-top-bar">
-        <button
-          id="gmk-back-btn"
-          className="gmk-icon-btn"
-          onClick={handleBack}
-          aria-label="Back to Strategy"
-        >
-          <Icon name="back" size={20} />
-        </button>
+      <GameHeader title="Gomoku" onBack={handleBack} />
 
-        <h1 className="gmk-title">Gomoku</h1>
-
-        <div className="gmk-move-badge" title="Total stones placed">
-          <span className="gmk-move-badge-label">Move</span>
-          <span className="gmk-move-badge-val">{Math.floor(moveCount / 2) + 1}</span>
-        </div>
-      </header>
+      {/* ── Difficulty Tabs ─────────────────────────────────── */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(diff) => {
+          setDifficulty(diff)
+          restartGame()
+        }}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: 'Casual' },
+          { id: 'standard', label: 'Standard', subtitle: 'Tactical' },
+          { id: 'deep', label: 'Deep', subtitle: 'Master' },
+        ]}
+      />
 
       {/* ── Status Indicator ─────────────────────────────────── */}
       <div className="gmk-status-bar">
@@ -299,28 +301,14 @@ export function GomokuScreen({ onBack }) {
       </main>
 
       {/* ── Control Actions ─────────────────────────────────── */}
-      <footer className="gmk-controls">
-        <button
-          id="gmk-undo-btn"
-          className="gmk-action-btn"
-          onClick={handleUndo}
-          disabled={history.length === 0 || isBotThinking}
-          aria-label="Undo last move"
-        >
-          <Icon name="undo" size={16} />
-          <span>Undo</span>
-        </button>
-
-        <button
-          id="gmk-restart-btn"
-          className="gmk-action-btn"
-          onClick={restartGame}
-          aria-label="Restart game"
-        >
-          <Icon name="restart" size={16} />
-          <span>Restart</span>
-        </button>
-      </footer>
+      {/* ── Control Actions ─────────────────────────────────── */}
+      <GameFooterActions
+        onReset={restartGame}
+        onUndo={handleUndo}
+        canUndo={history.length > 0 && !isBotThinking}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
 
       {/* ── Victory / Defeat Modal ──────────────────────────── */}
       {winner && (

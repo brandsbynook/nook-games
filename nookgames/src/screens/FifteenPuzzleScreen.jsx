@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import { playTap, playChime } from '../utils/audio.js'
 
-// ── Puzzle helpers ───────────────────────────────────────────────────────────
+// ── Puzzle helpers for dynamic N×N grids ────────────────────────────────────
 
-const GOAL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0]
+function getGoal(size) {
+  const arr = []
+  for (let i = 1; i < size * size; i++) arr.push(i)
+  arr.push(0)
+  return arr
+}
 
 /** Count inversions among non-zero tiles */
 function countInversions(tiles) {
@@ -18,31 +25,29 @@ function countInversions(tiles) {
   return inversions
 }
 
-/** Row of the blank tile from the bottom (1-indexed) */
-function blankRowFromBottom(tiles) {
-  const blankIdx = tiles.indexOf(0)
-  return 4 - Math.floor(blankIdx / 4)
-}
-
-/** Returns true if the puzzle state is solvable */
-function isSolvable(tiles) {
+/** Returns true if the puzzle state is solvable for given grid size */
+function isSolvable(tiles, size) {
   const inv = countInversions(tiles)
-  const bRow = blankRowFromBottom(tiles)
-  // 4×4: solvable iff (inversions even AND blank on odd row from bottom)
-  //                 OR (inversions odd  AND blank on even row from bottom)
+  if (size % 2 === 1) {
+    // Odd dimensions (3×3, 5×5): solvable iff number of inversions is even
+    return inv % 2 === 0
+  }
+  // Even dimensions (4×4): solvable iff inversion parity matches blank row from bottom
+  const blankIdx = tiles.indexOf(0)
+  const bRow = size - Math.floor(blankIdx / size)
   return (inv % 2 === 0 && bRow % 2 === 1) || (inv % 2 === 1 && bRow % 2 === 0)
 }
 
 /** Fisher-Yates shuffle guaranteed to produce a solvable state */
-function generateSolvable() {
-  const tiles = [...GOAL]
-  // Shuffle until solvable and not already solved
+function generateSolvable(size) {
+  const goal = getGoal(size)
+  const tiles = [...goal]
   do {
     for (let i = tiles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[tiles[i], tiles[j]] = [tiles[j], tiles[i]]
     }
-  } while (!isSolvable(tiles) || tiles.join(',') === GOAL.join(','))
+  } while (!isSolvable(tiles, size) || tiles.join(',') === goal.join(','))
   return tiles
 }
 
@@ -52,11 +57,11 @@ function blankIndex(tiles) {
 }
 
 /** Returns true if tile at `idx` is adjacent to the blank */
-function isAdjacentToBlank(idx, blankIdx) {
-  const row = Math.floor(idx / 4)
-  const col = idx % 4
-  const bRow = Math.floor(blankIdx / 4)
-  const bCol = blankIdx % 4
+function isAdjacentToBlank(idx, blankIdx, size) {
+  const row = Math.floor(idx / size)
+  const col = idx % size
+  const bRow = Math.floor(blankIdx / size)
+  const bCol = blankIdx % size
   return (
     (Math.abs(row - bRow) === 1 && col === bCol) ||
     (Math.abs(col - bCol) === 1 && row === bRow)
@@ -64,29 +69,41 @@ function isAdjacentToBlank(idx, blankIdx) {
 }
 
 /** Check if current state matches goal */
-function isSolved(tiles) {
-  return tiles.every((t, i) => t === GOAL[i])
+function checkIsSolved(tiles, size) {
+  const goal = getGoal(size)
+  return tiles.every((t, i) => t === goal[i])
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function FifteenPuzzleScreen() {
-  const [tiles, setTiles] = useState(() => generateSolvable())
+  const [difficulty, setDifficulty] = useState('standard')
+  const size = difficulty === 'gentle' ? 3 : difficulty === 'deep' ? 5 : 4
+
+  const [tiles, setTiles] = useState(() => generateSolvable(4))
   const [solved, setSolved] = useState(false)
   const [showToast, setShowToast] = useState(false)
-  // Track which tile index was last moved for slide animation
   const [lastMoved, setLastMoved] = useState(null)
 
   function handleBack(e) {
-    e.preventDefault()
+    e?.preventDefault?.()
     playTap()
     window.location.hash = '/briefing/15-puzzle'
+  }
+
+  const handleDifficultyChange = (diff) => {
+    setDifficulty(diff)
+    const newSize = diff === 'gentle' ? 3 : diff === 'deep' ? 5 : 4
+    setTiles(generateSolvable(newSize))
+    setSolved(false)
+    setShowToast(false)
+    setLastMoved(null)
   }
 
   function handleTap(idx) {
     if (solved) return
     const blank = blankIndex(tiles)
-    if (!isAdjacentToBlank(idx, blank)) return
+    if (!isAdjacentToBlank(idx, blank, size)) return
 
     playTap()
     setLastMoved(idx)
@@ -96,7 +113,7 @@ export function FifteenPuzzleScreen() {
     next[idx] = 0
     setTiles(next)
 
-    if (isSolved(next)) {
+    if (checkIsSolved(next, size)) {
       setSolved(true)
       setTimeout(() => {
         playChime()
@@ -107,11 +124,11 @@ export function FifteenPuzzleScreen() {
 
   const handleShuffle = useCallback(() => {
     playTap()
-    setTiles(generateSolvable())
+    setTiles(generateSolvable(size))
     setSolved(false)
     setShowToast(false)
     setLastMoved(null)
-  }, [])
+  }, [size])
 
   // Dismiss toast after 3.5 s
   useEffect(() => {
@@ -123,41 +140,35 @@ export function FifteenPuzzleScreen() {
   const blank = blankIndex(tiles)
 
   return (
-    <div className="fp-page">
-      {/* Header */}
-      <div className="fp-header">
-        <button
-          id="fp-back-btn"
-          className="fp-back-btn"
-          onClick={handleBack}
-          aria-label="Back to briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-        <div className="fp-header-center">
-          <span className="fp-header-title">15 Puzzle</span>
-        </div>
-        <button
-          id="fp-shuffle-btn"
-          className="fp-shuffle-btn"
-          onClick={handleShuffle}
-          aria-label="Shuffle puzzle"
-          title="New game"
-        >
-          ↻
-        </button>
-      </div>
+    <div className="fp-page game-screen-container">
+      {/* Top Header */}
+      <GameHeader title="15 Puzzle" onBack={handleBack} />
+
+      {/* Difficulty Tabs */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={handleDifficultyChange}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: '3×3' },
+          { id: 'standard', label: 'Standard', subtitle: '4×4' },
+          { id: 'deep', label: 'Deep', subtitle: '5×5' },
+        ]}
+      />
 
       {/* Grid */}
       <div className="fp-grid-wrap">
         <div
           className="fp-grid"
           role="grid"
-          aria-label="15 Puzzle grid"
+          aria-label={`${size}x${size} Sliding Puzzle grid`}
+          style={{
+            gridTemplateColumns: `repeat(${size}, 1fr)`,
+            gridTemplateRows: `repeat(${size}, 1fr)`,
+          }}
         >
           {tiles.map((tile, idx) => {
             const isBlank = tile === 0
-            const isMovable = !isBlank && isAdjacentToBlank(idx, blank)
+            const isMovable = !isBlank && isAdjacentToBlank(idx, blank, size)
             return (
               <button
                 key={`cell-${idx}`}
@@ -166,6 +177,9 @@ export function FifteenPuzzleScreen() {
                 aria-label={isBlank ? 'Empty space' : `Tile ${tile}`}
                 disabled={isBlank || solved}
                 tabIndex={isMovable ? 0 : -1}
+                style={{
+                  fontSize: size === 5 ? '15px' : size === 4 ? '18px' : '22px',
+                }}
               >
                 {isBlank ? null : tile}
               </button>
@@ -173,6 +187,14 @@ export function FifteenPuzzleScreen() {
           })}
         </div>
       </div>
+
+      {/* Footer Controls */}
+      <GameFooterActions
+        onReset={handleShuffle}
+        onNewGame={handleShuffle}
+        resetLabel="Shuffle"
+        newGameLabel="New Game"
+      />
 
       {/* Completion toast */}
       <div

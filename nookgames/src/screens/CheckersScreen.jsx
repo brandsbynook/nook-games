@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   initBoard,
   cloneBoard,
@@ -16,6 +19,7 @@ import { recordGameSession } from '../utils/storage.js'
 
 export function CheckersScreen({ onBack }) {
   const [board, setBoard] = useState(initBoard)
+  const [difficulty, setDifficulty] = useState('standard')
   const [turn, setTurn] = useState('white') // 'white' | 'black'
   const [selectedPos, setSelectedPos] = useState(null) // { r, c } | null
   const [multiJumpPiece, setMultiJumpPiece] = useState(null) // { r, c } | null
@@ -106,7 +110,7 @@ export function CheckersScreen({ onBack }) {
 
       botTimerRef.current = setTimeout(() => {
         let activeBoard = cloneBoard(currentBoard)
-        let botMove = getBotMove(activeBoard)
+        let botMove = getBotMove(activeBoard, difficulty)
 
         if (!botMove) {
           // Bot has no moves
@@ -142,7 +146,7 @@ export function CheckersScreen({ onBack }) {
         setLastMove({ from: lastFrom, to: lastTo })
         setIsBotThinking(false)
 
-        // Check if player is defeated
+        // Check if white player won/lost after bot move
         const winCheck = checkWinner(activeBoard)
         if (winCheck) {
           setWinner(winCheck)
@@ -152,9 +156,9 @@ export function CheckersScreen({ onBack }) {
         } else {
           setTurn('white')
         }
-      }, 400)
+      }, 350)
     },
-    []
+    [difficulty]
   )
 
   // Handle square clicks
@@ -247,30 +251,23 @@ export function CheckersScreen({ onBack }) {
   }
 
   return (
-    <div className="chk-page">
+    <div className="chk-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <header className="chk-top-bar">
-        <button
-          id="chk-back-btn"
-          className="chk-icon-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+      <GameHeader title="Checkers" onBack={handleBack} />
 
-        <h1 className="chk-title">Checkers</h1>
-
-        <button
-          id="chk-reset-btn"
-          className="chk-icon-btn"
-          onClick={handleReset}
-          aria-label="Restart Game"
-          title="Restart Game"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </header>
+      {/* ── Difficulty Tabs ─────────────────────────────────── */}
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(diff) => {
+          setDifficulty(diff)
+          handleReset()
+        }}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: 'Casual' },
+          { id: 'standard', label: 'Standard', subtitle: 'Tactical' },
+          { id: 'deep', label: 'Deep', subtitle: 'Master' },
+        ]}
+      />
 
       {/* ── Status Bar & Piece Count Pills ──────────────────── */}
       <div className="chk-status-bar">
@@ -377,19 +374,14 @@ export function CheckersScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── Undo Controls ───────────────────────────────────── */}
-      <div className="chk-controls">
-        <button
-          id="chk-undo-btn"
-          className="chk-action-btn"
-          onClick={handleUndo}
-          disabled={isBotThinking || history.length === 0}
-          aria-label="Undo Move"
-        >
-          <Icon name="back" size={14} />
-          <span>Undo Move</span>
-        </button>
-      </div>
+      {/* ── Action Controls ─────────────────────────────────── */}
+      <GameFooterActions
+        onReset={handleReset}
+        onUndo={handleUndo}
+        canUndo={!isBotThinking && history.length > 0}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
 
       {/* ── Game Over Modal ─────────────────────────────────── */}
       {winner && (

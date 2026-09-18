@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Icon } from '../icons.jsx';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import {
   DIFFICULTIES,
@@ -209,45 +212,20 @@ export function ArrowPuzzleScreen({ onBack }) {
   };
 
   return (
-    <div className="ap-page">
+    <div className="ap-page game-screen-container">
       {/* ── 1. Top Header ───────────────────────────────────── */}
-      <header className="ap-header">
-        <button
-          type="button"
-          className="ap-back-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={18} />
-          <span>Back</span>
-        </button>
-
-        <h1 className="ap-title">Arrow Puzzle</h1>
-
-        <button
-          type="button"
-          className="ap-icon-btn"
-          onClick={handleReset}
-          aria-label="Reset Puzzle"
-          title="Reset"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </header>
+      <GameHeader title="Arrow Puzzle" onBack={handleBack} />
 
       {/* ── 2. Difficulty Tabs ──────────────────────────────── */}
-      <div className="ap-difficulty-tabs">
-        {DIFFICULTIES.map((diff) => (
-          <button
-            key={diff}
-            type="button"
-            className={`ap-diff-tab ${difficulty === diff ? 'ap-diff-tab--active' : ''}`}
-            onClick={() => handleDifficultyChange(diff)}
-          >
-            {diff.charAt(0).toUpperCase() + diff.slice(1)}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(diff) => handleDifficultyChange(diff)}
+        tiers={[
+          { id: 'beginner', label: 'Gentle', subtitle: '4×4' },
+          { id: 'intermediate', label: 'Standard', subtitle: '5×5' },
+          { id: 'expert', label: 'Deep', subtitle: '6×6' },
+        ]}
+      />
 
       {/* ── 3. Level Switcher ───────────────────────────────── */}
       <div className="ap-level-bar">
@@ -382,23 +360,18 @@ export function ArrowPuzzleScreen({ onBack }) {
       </div>
 
       {/* ── 5. Action Toolbar ───────────────────────────────── */}
-      <footer className="ap-toolbar">
-        <button
-          type="button"
-          className="ap-btn-undo"
-          onClick={handleUndo}
-          disabled={history.length === 0 || hasWon}
-          aria-label="Undo Move"
-        >
-          <Icon name="undo" size={16} />
-          <span>Undo</span>
-        </button>
-
-        <div className="ap-counter">
+      <GameFooterActions
+        onReset={handleReset}
+        onUndo={handleUndo}
+        canUndo={history.length > 0 && !hasWon}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      >
+        <div className="ap-counter" style={{ margin: '0 4px' }}>
           <span className="ap-counter-num">{remainingArrows.length}</span>
-          <span className="ap-counter-label">remaining</span>
+          <span className="ap-counter-label">left</span>
         </div>
-      </footer>
+      </GameFooterActions>
 
       {/* ── 6. Quiet Solve Overlay ───────────────────────────── */}
       {hasWon && (

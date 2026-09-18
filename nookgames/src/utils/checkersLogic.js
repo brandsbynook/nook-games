@@ -237,7 +237,7 @@ export function checkWinner(board) {
  * Evaluates legal moves for Black (System).
  * Prioritizes captures/multi-captures, king creation, central control, and safe advances.
  */
-export function getBotMove(board) {
+export function getBotMove(board, difficulty = 'standard') {
   const isCapturing = hasAnyCaptures(board, 'black');
   const candidateMoves = [];
 
@@ -261,6 +261,12 @@ export function getBotMove(board) {
   }
 
   if (candidateMoves.length === 0) return null;
+
+  // Level 1: Gentle — random pick with high jitter
+  if (difficulty === 'gentle') {
+    const randomMove = candidateMoves[Math.floor(Math.random() * candidateMoves.length)];
+    return { from: randomMove.from, to: randomMove.to };
+  }
 
   let bestMove = null;
   let bestScore = -Infinity;
@@ -293,7 +299,7 @@ export function getBotMove(board) {
       score -= 20;
     }
 
-    // 6. Blunder check: simulate move and check if opponent can immediately capture piece
+    // 6. Blunder check / opponent response simulation
     const { nextBoard } = applyMove(board, move.from, move.to);
     const oppHasCapture = hasAnyCaptures(nextBoard, 'white');
     if (oppHasCapture) {
@@ -314,8 +320,18 @@ export function getBotMove(board) {
       }
     }
 
+    // Level 3: Deep — lookahead evaluation on material balance
+    if (difficulty === 'deep') {
+      const countsAfter = countPieces(nextBoard);
+      const materialAdvantage =
+        (countsAfter.blackPieces + countsAfter.blackKings * 1.5) -
+        (countsAfter.whitePieces + countsAfter.whiteKings * 1.5);
+      score += materialAdvantage * 30;
+      if (countsAfter.whitePieces === 0) score += 500;
+    }
+
     // Subtle random jitter
-    score += Math.random() * 8 - 4;
+    score += Math.random() * 6 - 3;
 
     if (score > bestScore) {
       bestScore = score;

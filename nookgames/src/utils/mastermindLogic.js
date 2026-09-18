@@ -18,39 +18,37 @@ export const SYMBOLS = MASTERMIND_SYMBOLS
 export const SANCTUARY_COLORS = MASTERMIND_SYMBOLS // Backward compatibility
 
 export const DIFFICULTY_PRESETS = {
-  normal: {
-    id: 'normal',
-    label: 'Normal',
+  gentle: {
+    id: 'gentle',
+    label: 'Gentle',
     slots: 4,
     paletteSize: 6,
     maxAttempts: 10,
     allowDuplicates: false,
   },
-  hard: {
-    id: 'hard',
-    label: 'Hard',
+  standard: {
+    id: 'standard',
+    label: 'Standard',
     slots: 4,
     paletteSize: 6,
     maxAttempts: 8,
     allowDuplicates: true,
   },
-  master: {
-    id: 'master',
-    label: 'Master',
+  deep: {
+    id: 'deep',
+    label: 'Deep',
     slots: 5,
     paletteSize: 8,
     maxAttempts: 8,
     allowDuplicates: true,
   },
-  pro: {
-    id: 'pro',
-    label: 'Pro',
-    slots: 4,
-    paletteSize: 6,
-    maxAttempts: 5,
-    allowDuplicates: true,
-  },
 }
+
+// Backward compatibility mappings
+DIFFICULTY_PRESETS.normal = DIFFICULTY_PRESETS.gentle
+DIFFICULTY_PRESETS.hard = DIFFICULTY_PRESETS.standard
+DIFFICULTY_PRESETS.master = DIFFICULTY_PRESETS.deep
+DIFFICULTY_PRESETS.pro = DIFFICULTY_PRESETS.deep
 
 // Fallback constant for slot count
 export const CODE_LENGTH = 4

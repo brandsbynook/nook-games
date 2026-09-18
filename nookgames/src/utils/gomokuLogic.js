@@ -217,9 +217,12 @@ export function evaluateMove(board, r, c, color) {
  * - Blocks player's winning lines and open 3s/4s
  * - Builds harmonious connected structures with central weighting
  */
-export function getBotMove(board) {
+export function getBotMove(board, difficulty = 'standard') {
   let bestScore = -Infinity;
   let bestMoves = [];
+
+  // Gentle difficulty candidate collection
+  const gentleCandidates = [];
 
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -250,14 +253,20 @@ export function getBotMove(board) {
         // AI makes 4
         moveScore = 400000;
       } else {
-        // Balanced tactical evaluation (defensive weight 1.25 to neutralize player's first-move advantage)
-        moveScore = attack + defense * 1.25;
+        const defWeight = difficulty === 'deep' ? 1.6 : difficulty === 'gentle' ? 0.7 : 1.25;
+        moveScore = attack + defense * defWeight;
       }
 
-      // Proximity to center bonus (encourages active play rather than corner drifting)
+      // Proximity to center bonus
       const centerDist = Math.abs(r - 5) + Math.abs(c - 5);
       const centerBonus = (10 - centerDist) * 2;
       moveScore += centerBonus;
+
+      if (difficulty === 'gentle') {
+        if (moveScore > 20) {
+          gentleCandidates.push({ r, c, moveScore });
+        }
+      }
 
       if (moveScore > bestScore) {
         bestScore = moveScore;
@@ -266,6 +275,13 @@ export function getBotMove(board) {
         bestMoves.push({ r, c });
       }
     }
+  }
+
+  if (difficulty === 'gentle' && gentleCandidates.length > 0 && bestScore < 1000000) {
+    // Pick randomly among top moderate moves for gentle play
+    gentleCandidates.sort((a, b) => b.moveScore - a.moveScore);
+    const topN = gentleCandidates.slice(0, 5);
+    return topN[Math.floor(Math.random() * topN.length)];
   }
 
   if (bestMoves.length === 0) return null;

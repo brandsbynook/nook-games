@@ -125,12 +125,18 @@ export function countStones(board) {
 /**
  * AI move selector: scores moves by board position weights, corner preference, and mobility
  */
-export function getBestAiMove(board, aiPlayer = 'B') {
+export function getBestAiMove(board, aiPlayer = 'B', difficulty = 'standard') {
   const validMoves = getValidMoves(board, aiPlayer)
   if (validMoves.length === 0) return null
 
+  // Level 1: Gentle — random legal move
+  if (difficulty === 'gentle') {
+    return validMoves[Math.floor(Math.random() * validMoves.length)]
+  }
+
   let bestMove = validMoves[0]
   let bestScore = -Infinity
+  const opponent = aiPlayer === 'W' ? 'B' : 'W'
 
   for (const move of validMoves) {
     let score = POSITION_WEIGHTS[move.row][move.col]
@@ -143,6 +149,18 @@ export function getBestAiMove(board, aiPlayer = 'B') {
     ) {
       score += 100
     }
+
+    // Level 3: Deep — minimize opponent mobility
+    if (difficulty === 'deep') {
+      const outcome = applyMove(board, move.row, move.col, aiPlayer)
+      if (outcome) {
+        const oppMoves = getValidMoves(outcome.nextBoard, opponent)
+        score -= oppMoves.length * 8 // Restrict opponent's mobility
+      }
+    }
+
+    // Small jitter to break ties naturally
+    score += Math.random() * 4 - 2
 
     if (score > bestScore) {
       bestScore = score

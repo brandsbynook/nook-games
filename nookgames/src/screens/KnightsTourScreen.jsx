@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   BOARD_TIERS,
   getKnightMoves,
@@ -120,50 +123,20 @@ export function KnightsTourScreen({ onBack }) {
   }
 
   return (
-    <div className="kt-page">
+    <div className="kt-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <header className="kt-top-bar">
-        <button
-          id="kt-back-btn"
-          className="kt-icon-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-
-        <h1 className="kt-title">Knight&apos;s Tour</h1>
-
-        <button
-          id="kt-reset-btn"
-          className="kt-icon-btn"
-          onClick={handleReset}
-          aria-label="Restart Game"
-          title="Restart Game"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </header>
+      <GameHeader title="Knight's Tour" onBack={handleBack} />
 
       {/* ── Tier / Size Selector ────────────────────────────── */}
-      <div className="kt-tier-bar" role="group" aria-label="Board Size">
-        {Object.keys(BOARD_TIERS).map((key) => {
-          const t = BOARD_TIERS[key]
-          const isActive = tierKey === key
-          return (
-            <button
-              key={key}
-              id={`kt-tier-${key}`}
-              className={`kt-tier-btn ${isActive ? 'kt-tier-btn--active' : ''}`}
-              onClick={() => handleTierChange(key)}
-              aria-pressed={isActive}
-            >
-              <span className="kt-tier-name">{t.name}</span>
-              <span className="kt-tier-size">{t.label}</span>
-            </button>
-          )
-        })}
-      </div>
+      <DifficultyTabs
+        currentTier={tierKey}
+        onSelectTier={(key) => handleTierChange(key)}
+        tiers={[
+          { id: '5x5', label: 'Gentle', subtitle: '5×5' },
+          { id: '6x6', label: 'Standard', subtitle: '6×6' },
+          { id: '8x8', label: 'Deep', subtitle: '8×8' },
+        ]}
+      />
 
       {/* ── Status Pill ─────────────────────────────────────── */}
       <div className="kt-status-bar">
@@ -257,29 +230,16 @@ export function KnightsTourScreen({ onBack }) {
       </div>
 
       {/* ── Action Controls (Undo & Hint) ────────────────────── */}
-      <div className="kt-controls">
-        <button
-          id="kt-undo-btn"
-          className="kt-action-btn"
-          onClick={handleUndo}
-          disabled={history.length === 0}
-          aria-label="Undo Move"
-        >
-          <Icon name="back" size={14} />
-          <span>Undo</span>
-        </button>
-
-        <button
-          id="kt-hint-btn"
-          className="kt-action-btn"
-          onClick={handleHint}
-          disabled={history.length === 0 || gameStatus !== 'playing'}
-          aria-label="Show Hint"
-        >
-          <Icon name="info" size={14} />
-          <span>Hint</span>
-        </button>
-      </div>
+      <GameFooterActions
+        onReset={handleReset}
+        onUndo={handleUndo}
+        onHint={handleHint}
+        canUndo={history.length > 0}
+        canHint={history.length > 0 && gameStatus === 'playing'}
+        resetLabel="Reset"
+        undoLabel="Undo"
+        hintLabel="Hint"
+      />
 
       {/* ── End-of-Game Banners ─────────────────────────────── */}
       {gameStatus === 'won' && (

@@ -175,12 +175,12 @@ export function hasValidMoves(grid) {
 }
 
 /**
- * Checks if the board contains a tile with value >= 2048.
+ * Checks if the board contains a tile with value >= target (default 2048).
  */
-export function hasReached2048(grid) {
+export function hasReached2048(grid, target = 2048) {
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
-      if (grid[r][c] >= 2048) return true
+      if (grid[r][c] >= target) return true
     }
   }
   return false

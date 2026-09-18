@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   DIFFICULTY_TIERS,
   ANAGRAM_PUZZLES,
@@ -228,63 +231,27 @@ export function AnagramsScreen({ onBack } = {}) {
     .join('')
 
   return (
-    <div className="ag-page">
+    <div className="ag-page game-screen-container">
       {/* ── Top Header Bar ──────────────────────────────────── */}
-      <header className="ag-top-bar">
-        <button
-          id="ag-back-btn"
-          className="ag-action-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-          title="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-
-        <div className="ag-header-center">
-          <h1 className="ag-title">Anagrams</h1>
-        </div>
-
-        <div className="ag-top-actions">
-          <button
-            id="ag-shuffle-btn"
-            className="ag-action-btn"
-            onClick={handleShuffle}
-            aria-label="Shuffle letters"
-            title="Shuffle"
-          >
-            <Icon name="restart" size={17} />
-          </button>
-          <button
-            id="ag-reset-btn"
-            className="ag-action-btn"
-            onClick={handleReset}
-            aria-label="Reset puzzle"
-            title="Restart"
-          >
-            <Icon name="undo" size={17} />
-          </button>
-        </div>
-      </header>
+      <GameHeader
+        title="Anagrams"
+        onBack={handleBack}
+      />
 
       <div className="ag-status-sub">
         {foundWords.length} of {puzzle.totalWords ?? puzzle.targetWords.length} words found
       </div>
 
       {/* ── Segmented Difficulty Selector ───────────────────── */}
-      <div className="ag-difficulty-bar" role="tablist" aria-label="Difficulty Mode">
-        {Object.values(DIFFICULTY_TIERS).map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={t.id === tier}
-            className={`ag-diff-btn${t.id === tier ? ' ag-diff-btn--active' : ''}`}
-            onClick={() => handleTierChange(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={tier}
+        onSelectTier={(tierId) => handleTierChange(tierId)}
+        tiers={[
+          { id: 'beginner', label: 'Gentle', subtitle: '5-letter' },
+          { id: 'intermediate', label: 'Standard', subtitle: '6-letter' },
+          { id: 'master', label: 'Deep', subtitle: '7-letter' },
+        ]}
+      />
 
       {/* ── Puzzle Navigator ─────────────────────────────────── */}
       <div className="ag-puzzle-nav">
@@ -441,6 +408,19 @@ export function AnagramsScreen({ onBack } = {}) {
                 )
               })}
             </div>
+
+            <GameFooterActions onReset={handleReset} resetLabel="Reset">
+              <button
+                id="ag-shuffle-btn"
+                type="button"
+                className="game-action-btn"
+                onClick={handleShuffle}
+                aria-label="Shuffle letters"
+              >
+                <Icon name="sparkles" size={16} />
+                <span>Shuffle</span>
+              </button>
+            </GameFooterActions>
           </>
         )}
       </footer>

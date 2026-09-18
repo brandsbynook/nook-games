@@ -1,5 +1,8 @@
 import { useState, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
+import { GameHeader } from '../components/GameHeader.jsx'
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   DIFFICULTIES,
   DIFFICULTY_PRESETS,
@@ -86,9 +89,9 @@ function SymbolIcon({ id, size = 18, strokeWidth = 1.8 }) {
 }
 
 export function MastermindScreen({ onBack } = {}) {
-  const [difficulty, setDifficulty] = useState('hard') // Default tier: Hard
+  const [difficulty, setDifficulty] = useState('standard') // Default tier: Standard
   const activePresets = DIFFICULTIES || DIFFICULTY_PRESETS
-  const difficultyConfig = activePresets[difficulty] || activePresets.hard
+  const difficultyConfig = activePresets[difficulty] || activePresets.standard
   const currentPreset = difficultyConfig
   const slotsCount = difficultyConfig.slots || CODE_LENGTH
 
@@ -219,60 +222,20 @@ export function MastermindScreen({ onBack } = {}) {
   const activePalette = getPalette(difficultyConfig.paletteSize)
 
   return (
-    <div className="mm-page">
+    <div className="mm-page game-screen-container">
       {/* ── Top Header Bar ──────────────────────────────────── */}
-      <header className="mm-top-bar">
-        <button
-          id="mm-back-btn"
-          className="mm-action-btn"
-          onClick={handleBack}
-          aria-label="Back to Briefing"
-          title="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
-
-        <div className="mm-header-center">
-          <h1 className="mm-title">Mastermind</h1>
-        </div>
-
-        <div className="mm-top-actions">
-          <button
-            id="mm-hint-btn"
-            className="mm-action-btn mm-hint-btn"
-            onClick={handleHint}
-            disabled={isGameOver}
-            aria-label="Get a hint"
-            title="Deductive Hint"
-          >
-            <Icon name="pencil" size={16} />
-          </button>
-          <button
-            id="mm-restart-btn"
-            className="mm-action-btn"
-            onClick={() => startNewGame(difficulty)}
-            aria-label="Restart Game"
-            title="Restart"
-          >
-            <Icon name="restart" size={18} />
-          </button>
-        </div>
-      </header>
+      <GameHeader title="Mastermind" onBack={handleBack} />
 
       {/* ── Segmented Difficulty Selector ───────────────────── */}
-      <div className="mm-difficulty-bar" role="tablist" aria-label="Difficulty Mode">
-        {Object.values(DIFFICULTIES || DIFFICULTY_PRESETS).map((p) => (
-          <button
-            key={p.id}
-            role="tab"
-            aria-selected={p.id === difficulty}
-            className={`mm-diff-btn${p.id === difficulty ? ' mm-diff-btn--active' : ''}`}
-            onClick={() => handleDifficultyChange(p.id)}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(tierId) => handleDifficultyChange(tierId)}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: '4 slots' },
+          { id: 'standard', label: 'Standard', subtitle: '4 slots' },
+          { id: 'deep', label: 'Deep', subtitle: '5 slots' },
+        ]}
+      />
 
       {/* ── Secret Code Mystery Banner ───────────────────────── */}
       <div className="mm-secret-banner">
