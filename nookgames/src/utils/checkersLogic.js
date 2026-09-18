@@ -1,15 +1,13 @@
 /**
  * checkersLogic.js - Standard Solo Draughts / Checkers vs System
+ * Calibrated AI scaling:
+ * - Gentle: Random legal move with basic survival instinct
+ * - Standard: 1-ply tactical evaluation (captures, promotion, blunder checking)
+ * - Deep: 2-ply Minimax lookahead with material and positional evaluation
  */
 
 export const BOARD_SIZE = 8;
 
-/**
- * Initializes the 8x8 checkers board.
- * Pieces placed only on dark squares where (r + c) % 2 === 1.
- * Black: rows 0, 1, 2
- * White: rows 5, 6, 7
- */
 export function initBoard() {
   const board = [];
   for (let r = 0; r < BOARD_SIZE; r++) {
@@ -29,16 +27,10 @@ export function initBoard() {
   return board;
 }
 
-/**
- * Clones a 2D board matrix.
- */
 export function cloneBoard(board) {
   return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
 }
 
-/**
- * Returns available regular diagonal steps and jump captures for piece at (r, c).
- */
 export function getValidMoves(board, r, c) {
   if (!board || r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) {
     return { steps: [], captures: [] };
@@ -50,26 +42,23 @@ export function getValidMoves(board, r, c) {
   const steps = [];
   const captures = [];
 
-  // Determine diagonal directions
   const dirs = [];
   if (piece.isKing) {
     dirs.push([-1, -1], [-1, 1], [1, -1], [1, 1]);
   } else if (piece.player === 'white') {
-    dirs.push([-1, -1], [-1, 1]); // Moving up
+    dirs.push([-1, -1], [-1, 1]);
   } else {
-    dirs.push([1, -1], [1, 1]); // Moving down
+    dirs.push([1, -1], [1, 1]);
   }
 
   for (const [dr, dc] of dirs) {
     const nr = r + dr;
     const nc = c + dc;
 
-    // 1. Regular 1-square diagonal step
     if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
       if (board[nr][nc] === null) {
         steps.push({ r: nr, c: nc });
       } else if (board[nr][nc].player !== piece.player) {
-        // 2. Jump capture over enemy piece
         const landR = r + 2 * dr;
         const landC = c + 2 * dc;
         if (
@@ -93,9 +82,6 @@ export function getValidMoves(board, r, c) {
   return { steps, captures };
 }
 
-/**
- * Checks if the player has any mandatory jump opportunities on the board.
- */
 export function hasAnyCaptures(board, player) {
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -109,10 +95,31 @@ export function hasAnyCaptures(board, player) {
   return false;
 }
 
-/**
- * Returns all playable destination moves for a piece at (r, c), respecting
- * mandatory capture rules.
- */
+export function getAllLegalMoves(board, player) {
+  const mustCapture = hasAnyCaptures(board, player);
+  const moves = [];
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const piece = board[r][c];
+      if (piece && piece.player === player) {
+        const { steps, captures } = getValidMoves(board, r, c);
+        const activeTargets = mustCapture ? captures : steps;
+        for (const target of activeTargets) {
+          moves.push({
+            from: { r, c },
+            to: { r: target.r, c: target.c },
+            isCapture: mustCapture,
+            piece,
+          });
+        }
+      }
+    }
+  }
+
+  return moves;
+}
+
 export function getLegalMovesForPiece(board, r, c) {
   const piece = board[r][c];
   if (!piece) return { steps: [], captures: [] };
@@ -127,10 +134,6 @@ export function getLegalMovesForPiece(board, r, c) {
   return { steps, captures: [] };
 }
 
-/**
- * Applies a move from (from.r, from.c) to (to.r, to.c).
- * Handles jump removal, kinging, and detects if multi-jump is available.
- */
 export function applyMove(board, from, to) {
   const nextBoard = cloneBoard(board);
   const piece = nextBoard[from.r][from.c];
@@ -148,7 +151,6 @@ export function applyMove(board, from, to) {
     nextBoard[midR][midC] = null;
   }
 
-  // Kinging check
   let isKinged = false;
   if (!piece.isKing) {
     if (piece.player === 'white' && to.r === 0) {
@@ -162,7 +164,6 @@ export function applyMove(board, from, to) {
 
   nextBoard[to.r][to.c] = piece;
 
-  // Multi-jump check: if jumped and wasn't just crowned King on this step
   let canMultiJump = false;
   if (isJump && !isKinged) {
     const { captures } = getValidMoves(nextBoard, to.r, to.c);
@@ -174,9 +175,6 @@ export function applyMove(board, from, to) {
   return { nextBoard, captured, isKinged, canMultiJump };
 }
 
-/**
- * Counts pieces on the board.
- */
 export function countPieces(board) {
   let white = 0;
   let black = 0;
@@ -201,15 +199,11 @@ export function countPieces(board) {
   return { white, black, whiteKings, blackKings };
 }
 
-/**
- * Checks winner: 'player' | 'bot' | null
- */
 export function checkWinner(board) {
   const counts = countPieces(board);
   if (counts.white === 0) return 'bot';
   if (counts.black === 0) return 'player';
 
-  // Check mobility
   let whiteHasMove = false;
   let blackHasMove = false;
 
@@ -232,112 +226,98 @@ export function checkWinner(board) {
   return null;
 }
 
-/**
- * Intelligent Bot Move:
- * Evaluates legal moves for Black (System).
- * Prioritizes captures/multi-captures, king creation, central control, and safe advances.
- */
-export function getBotMove(board, difficulty = 'standard') {
-  const isCapturing = hasAnyCaptures(board, 'black');
-  const candidateMoves = [];
+function evaluateBoardStatic(board) {
+  const counts = countPieces(board);
+  let score = (counts.black * 100 + counts.blackKings * 175) -
+    (counts.white * 100 + counts.whiteKings * 175);
 
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
-      const piece = board[r][c];
-      if (piece && piece.player === 'black') {
-        const { steps, captures } = getValidMoves(board, r, c);
-        const movesToConsider = isCapturing ? captures : steps;
-
-        for (const target of movesToConsider) {
-          candidateMoves.push({
-            from: { r, c },
-            to: { r: target.r, c: target.c },
-            isCapture: isCapturing,
-            piece,
-          });
-        }
+      const p = board[r][c];
+      if (!p) continue;
+      if (p.player === 'black') {
+        if (!p.isKing) score += r * 4;
+        if (c >= 2 && c <= 5) score += 6;
+        if (r === 0) score += 10;
+      } else {
+        if (!p.isKing) score -= (7 - r) * 4;
+        if (c >= 2 && c <= 5) score -= 6;
+        if (r === 7) score -= 10;
       }
     }
   }
+  return score;
+}
 
-  if (candidateMoves.length === 0) return null;
+export function getBotMove(board, difficulty = 'standard') {
+  const legalMoves = getAllLegalMoves(board, 'black');
+  if (legalMoves.length === 0) return null;
 
-  // Level 1: Gentle — random pick with high jitter
+  // Tier 1: Gentle (Casual / Playful)
   if (difficulty === 'gentle') {
-    const randomMove = candidateMoves[Math.floor(Math.random() * candidateMoves.length)];
-    return { from: randomMove.from, to: randomMove.to };
+    const captures = legalMoves.filter((m) => m.isCapture);
+    if (captures.length > 0) {
+      return captures[Math.floor(Math.random() * captures.length)];
+    }
+    return legalMoves[Math.floor(Math.random() * legalMoves.length)];
   }
 
-  let bestMove = null;
+  // Tier 2: Standard (Heuristic 1-ply tactical)
+  if (difficulty === 'standard') {
+    let bestScore = -Infinity;
+    let bestMove = legalMoves[0];
+
+    for (const move of legalMoves) {
+      let score = 0;
+      if (move.isCapture) score += 120;
+      if (!move.piece.isKing && move.to.r === 7) score += 90;
+      if (!move.piece.isKing) score += (move.to.r - move.from.r) * 10;
+      if (move.to.c >= 2 && move.to.c <= 5) score += 12;
+      if (move.from.r === 0 && !move.isCapture) score -= 25;
+
+      const { nextBoard } = applyMove(board, move.from, move.to);
+      const oppCaptures = hasAnyCaptures(nextBoard, 'white');
+      if (oppCaptures) score -= 90;
+
+      score += Math.random() * 8 - 4;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+    return { from: bestMove.from, to: bestMove.to };
+  }
+
+  // Tier 3: Deep (2-ply Minimax lookahead)
   let bestScore = -Infinity;
+  let bestMove = legalMoves[0];
 
-  for (const move of candidateMoves) {
-    let score = 0;
-
-    // 1. Capture bonus
-    if (move.isCapture) {
-      score += 120;
-    }
-
-    // 2. King creation bonus
-    if (!move.piece.isKing && move.to.r === 7) {
-      score += 90;
-    }
-
-    // 3. Forward progression for regular men
-    if (!move.piece.isKing) {
-      score += (move.to.r - move.from.r) * 12;
-    }
-
-    // 4. Center control (columns 2, 3, 4, 5)
-    if (move.to.c >= 2 && move.to.c <= 5) {
-      score += 15;
-    }
-
-    // 5. Back row protection (don't vacate row 0 without good reason)
-    if (move.from.r === 0 && !move.isCapture) {
-      score -= 20;
-    }
-
-    // 6. Blunder check / opponent response simulation
+  for (const move of legalMoves) {
     const { nextBoard } = applyMove(board, move.from, move.to);
-    const oppHasCapture = hasAnyCaptures(nextBoard, 'white');
-    if (oppHasCapture) {
-      // Check if white can specifically jump our landed piece
-      for (let wr = 0; wr < BOARD_SIZE; wr++) {
-        for (let wc = 0; wc < BOARD_SIZE; wc++) {
-          const wp = nextBoard[wr][wc];
-          if (wp && wp.player === 'white') {
-            const { captures } = getValidMoves(nextBoard, wr, wc);
-            const capturesOurLanded = captures.find(
-              (cap) => cap.jumpOverR === move.to.r && cap.jumpOverC === move.to.c
-            );
-            if (capturesOurLanded) {
-              score -= move.piece.isKing ? 150 : 80;
-            }
-          }
+    const whiteReplies = getAllLegalMoves(nextBoard, 'white');
+
+    let worstWhiteResponse = Infinity;
+
+    if (whiteReplies.length === 0) {
+      worstWhiteResponse = 10000;
+    } else {
+      for (const wMove of whiteReplies) {
+        const { nextBoard: finalBoard } = applyMove(nextBoard, wMove.from, wMove.to);
+        const evalScore = evaluateBoardStatic(finalBoard);
+        if (evalScore < worstWhiteResponse) {
+          worstWhiteResponse = evalScore;
         }
       }
     }
 
-    // Level 3: Deep — lookahead evaluation on material balance
-    if (difficulty === 'deep') {
-      const countsAfter = countPieces(nextBoard);
-      const materialAdvantage =
-        (countsAfter.blackPieces + countsAfter.blackKings * 1.5) -
-        (countsAfter.whitePieces + countsAfter.whiteKings * 1.5);
-      score += materialAdvantage * 30;
-      if (countsAfter.whitePieces === 0) score += 500;
-    }
+    const totalScore = worstWhiteResponse + (move.isCapture ? 40 : 0) + (Math.random() * 4);
 
-    // Subtle random jitter
-    score += Math.random() * 6 - 3;
-
-    if (score > bestScore) {
-      bestScore = score;
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
       bestMove = move;
     }
   }
 
-  return bestMove ? { from: bestMove.from, to: bestMove.to } : null;
+  return { from: bestMove.from, to: bestMove.to };
 }

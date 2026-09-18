@@ -15,7 +15,7 @@ import { Tile } from '../components/games/2048/Tile.jsx'
 import { playTap, playChime } from '../utils/audio.js'
 import { recordGameSession } from '../utils/storage.js'
 
-export function Game2048Screen() {
+export function Game2048Screen({ onBack }) {
   const [difficulty, setDifficulty] = useState('standard')
   const targetGoal = difficulty === 'gentle' ? 1024 : difficulty === 'deep' ? 4096 : 2048
   const [tiles, setTiles] = useState(() => initGameTiles())
@@ -36,17 +36,14 @@ export function Game2048Screen() {
   const touchStartRef = useRef(null)
   const cleanupTimeoutRef = useRef(null)
 
-  // Derive 4x4 grid matrix for score/valid moves/status checks
   const grid = tilesToGrid(tiles)
 
-  // Clean up animation timeout on unmount
   useEffect(() => {
     return () => {
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
     }
   }, [])
 
-  // Show a gentle toast notification
   const showToast = useCallback((msg, duration = 3000) => {
     setToastMessage(msg)
     if (duration > 0) {
@@ -56,7 +53,6 @@ export function Game2048Screen() {
     }
   }, [])
 
-  // Start new game
   const handleRestart = useCallback(() => {
     playTap()
     if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
@@ -69,7 +65,6 @@ export function Game2048Screen() {
     setToastMessage(null)
   }, [])
 
-  // Undo last move
   const handleUndo = useCallback(() => {
     if (history.length === 0) return
     playTap()
@@ -90,25 +85,20 @@ export function Game2048Screen() {
     setToastMessage(null)
   }, [history])
 
-  // Move handler
   const handleMove = useCallback(
     (direction) => {
       if (isGameOver) return
 
-      // Process movement and merges on current active tiles
       const { nextTiles, scoreGained, changed } = moveTiles(tiles, direction)
-
-      if (!changed) return // Invalid move in this direction
+      if (!changed) return
 
       playTap()
 
-      // Save previous stable state for Undo
       setHistory((prev) => [
         ...prev.slice(-30),
         { tiles: tiles.filter((t) => !t.isDeleting), score },
       ])
 
-      // Update score and best
       const nextScore = score + scoreGained
       setScore(nextScore)
       if (nextScore > bestScore) {
@@ -116,15 +106,13 @@ export function Game2048Screen() {
         try {
           localStorage.setItem('nook-2048-best', String(nextScore))
         } catch {
-          // Ignore storage errors
+          // Ignore storage error
         }
       }
 
-      // Spawn new tile into a free position
       const { nextTiles: withSpawn } = spawnRandomTileInTiles(nextTiles)
       setTiles(withSpawn)
 
-      // Schedule cleanup of parent tiles that merged and are now deleting
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
       cleanupTimeoutRef.current = setTimeout(() => {
         setTiles((prev) =>
@@ -134,7 +122,6 @@ export function Game2048Screen() {
         )
       }, 190)
 
-      // Check target goal achievement
       const finalGrid = tilesToGrid(withSpawn)
       let wonThisTurn = false
       if (!hasWon && hasReached2048(finalGrid, targetGoal)) {
@@ -143,11 +130,10 @@ export function Game2048Screen() {
         recordGameSession('2048', true)
         setTimeout(() => {
           playChime()
-          showToast('Form achieved: 2048', 4000)
+          showToast(`Form achieved: ${targetGoal}`, 4000)
         }, 200)
       }
 
-      // Check Game Over
       if (!hasValidMoves(finalGrid)) {
         setIsGameOver(true)
         recordGameSession('2048', hasWon || wonThisTurn)
@@ -156,10 +142,9 @@ export function Game2048Screen() {
         }, 300)
       }
     },
-    [tiles, score, bestScore, isGameOver, hasWon, showToast]
+    [tiles, score, bestScore, isGameOver, hasWon, showToast, targetGoal]
   )
 
-  // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e) {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
@@ -183,7 +168,6 @@ export function Game2048Screen() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleMove, handleUndo])
 
-  // Touch Swipe Event Handlers bound directly to the main 4x4 grid container
   const handleTouchStart = (e) => {
     if (e.touches && e.touches.length === 1) {
       touchStartRef.current = {
@@ -195,7 +179,6 @@ export function Game2048Screen() {
   }
 
   const handleTouchMove = (e) => {
-    // Prevent default scrolling behavior to keep the game locked in place
     if (touchStartRef.current && e.cancelable) {
       e.preventDefault()
     }
@@ -217,9 +200,7 @@ export function Game2048Screen() {
     const absY = Math.abs(deltaY)
     const minDistance = 20
 
-    // Filter accidental taps using threshold
     if (Math.max(absX, absY) >= minDistance) {
-      // Determine dominant swipe axis
       if (absX > absY) {
         handleMove(deltaX > 0 ? 'right' : 'left')
       } else {
@@ -234,7 +215,6 @@ export function Game2048Screen() {
     touchStartRef.current = null
   }
 
-  // Non-passive native listener fallback to guarantee touchmove preventDefault
   useEffect(() => {
     const boardEl = boardRef.current
     if (!boardEl) return
@@ -252,17 +232,19 @@ export function Game2048Screen() {
   }, [])
 
   function handleBack(e) {
-    e.preventDefault()
+    if (e) e.preventDefault()
     playTap()
-    window.location.hash = '/briefing/2048'
+    if (typeof onBack === 'function') {
+      onBack()
+    } else {
+      window.location.hash = ''
+    }
   }
 
   return (
     <div className="g2048-page game-screen-container">
-      {/* ── Top Bar ── */}
       <GameHeader title="2048" onBack={handleBack} />
 
-      {/* ── Difficulty Tabs ── */}
       <DifficultyTabs
         currentTier={difficulty}
         onSelectTier={(diff) => {
@@ -276,7 +258,6 @@ export function Game2048Screen() {
         ]}
       />
 
-      {/* ── Score Row ── */}
       <div className="g2048-status-card">
         <div className="g2048-stat-pills">
           <div className="g2048-pill">
@@ -292,12 +273,11 @@ export function Game2048Screen() {
           {isGameOver
             ? 'Space filled in quiet stillness.'
             : hasWon
-            ? 'Form achieved. Continue merging into infinity.'
-            : 'Slide to merge equal numbers into harmony.'}
+              ? 'Form achieved. Continue merging into infinity.'
+              : 'Slide to merge equal numbers into harmony.'}
         </p>
       </div>
 
-      {/* ── 4x4 Grid Board with bound touch handlers ── */}
       <div className="g2048-board-wrap">
         <div
           ref={boardRef}
@@ -310,7 +290,6 @@ export function Game2048Screen() {
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
         >
-          {/* 16 Static Background Slots */}
           {Array.from({ length: 4 }).map((_, r) =>
             Array.from({ length: 4 }).map((__, c) => (
               <div
@@ -322,7 +301,6 @@ export function Game2048Screen() {
             ))
           )}
 
-          {/* Dynamic Tiles Layer with smooth CSS transform translations */}
           <div
             className="g2048-tiles-container"
             style={{
@@ -340,7 +318,6 @@ export function Game2048Screen() {
         </div>
       </div>
 
-      {/* ── Footer ── */}
       <GameFooterActions
         onReset={handleRestart}
         onUndo={handleUndo}
@@ -349,7 +326,6 @@ export function Game2048Screen() {
         undoLabel="Undo"
       />
 
-      {/* ── Toast Notification ── */}
       <div
         className={`g2048-toast${toastMessage ? ' g2048-toast--visible' : ''}`}
         role="status"

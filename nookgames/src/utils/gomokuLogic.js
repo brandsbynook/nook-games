@@ -2,8 +2,10 @@
  * gomokuLogic.js
  *
  * Core logic for 11×11 Gomoku (Five in a Row).
- * Includes board state utilities, 5-in-a-row detection with winning line tracking,
- * and an intelligent heuristic AI opponent for White with offensive/defensive tactical evaluation.
+ * Calibrated 3-tier bot:
+ * - Gentle: Relaxed play, blocks immediate 5-in-a-row but overlooks open 3s
+ * - Standard: Responsive tactical heuristic (blocks 4s and open 3s)
+ * - Deep: Minimax depth search across prioritized threat nodes
  */
 
 export const BOARD_SIZE = 11;
@@ -23,24 +25,14 @@ export const DIRECTIONS = [
   [1, -1],  // diagonal /
 ];
 
-/**
- * Returns a fresh 11×11 grid filled with null.
- */
 export function createEmptyBoard() {
   return Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
 }
 
-/**
- * Deep clones an 11×11 board.
- */
 export function cloneBoard(board) {
   return board.map((row) => [...row]);
 }
 
-/**
- * Checks if the last move at (r, c) by color resulted in 5 or more in a row.
- * Returns { won: boolean, line: Array<{r, c}> }
- */
 export function checkWin(board, r, c, color) {
   if (!color || r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) {
     return { won: false, line: [] };
@@ -50,7 +42,6 @@ export function checkWin(board, r, c, color) {
     let count = 1;
     const line = [{ r, c }];
 
-    // Positive direction
     let step = 1;
     while (true) {
       const nr = r + dr * step;
@@ -62,7 +53,6 @@ export function checkWin(board, r, c, color) {
       step++;
     }
 
-    // Negative direction
     step = 1;
     while (true) {
       const nr = r - dr * step;
@@ -82,9 +72,6 @@ export function checkWin(board, r, c, color) {
   return { won: false, line: [] };
 }
 
-/**
- * Checks if the board is completely filled.
- */
 export function isBoardFull(board) {
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -94,9 +81,6 @@ export function isBoardFull(board) {
   return true;
 }
 
-/**
- * Evaluates line potential in a specific direction if `color` places a stone at (r, c).
- */
 function evaluateDirection(board, r, c, color, dr, dc) {
   let consec1 = 0;
   let empty1 = 0;
@@ -112,7 +96,7 @@ function evaluateDirection(board, r, c, color, dr, dc) {
       empty1++;
       break;
     } else {
-      break; // Opponent stone
+      break;
     }
     step++;
   }
@@ -139,7 +123,6 @@ function evaluateDirection(board, r, c, color, dr, dc) {
   const totalConsec = 1 + consec1 + consec2;
   const openEnds = (empty1 > 0 ? 1 : 0) + (empty2 > 0 ? 1 : 0);
 
-  // Check if at least 5 spaces are available in this direction
   let maxPotential = totalConsec;
   step = consec1 + 1;
   while (step <= 4) {
@@ -162,36 +145,28 @@ function evaluateDirection(board, r, c, color, dr, dc) {
 
   if (maxPotential < 5) return { score: 0, openThree: false, openFour: false };
 
-  // 5 in a row: Win
   if (totalConsec >= 5) {
     return { score: 10000000, openThree: false, openFour: false };
   }
-  // 4 in a row
   if (totalConsec === 4) {
     if (openEnds === 2) return { score: 1000000, openThree: false, openFour: true };
     if (openEnds === 1) return { score: 100000, openThree: false, openFour: false };
   }
-  // 3 in a row
   if (totalConsec === 3) {
     if (openEnds === 2) return { score: 10000, openThree: true, openFour: false };
-    if (openEnds === 1) return { score: 1000, openThree: false, openFour: false };
+    if (openEnds === 1) return { score: 1200, openThree: false, openFour: false };
   }
-  // 2 in a row
   if (totalConsec === 2) {
-    if (openEnds === 2) return { score: 300, openThree: false, openFour: false };
-    if (openEnds === 1) return { score: 40, openThree: false, openFour: false };
+    if (openEnds === 2) return { score: 350, openThree: false, openFour: false };
+    if (openEnds === 1) return { score: 50, openThree: false, openFour: false };
   }
-  // 1 stone with room
   if (totalConsec === 1 && openEnds === 2) {
-    return { score: 10, openThree: false, openFour: false };
+    return { score: 15, openThree: false, openFour: false };
   }
 
   return { score: 0, openThree: false, openFour: false };
 }
 
-/**
- * Calculates aggregate heuristic value of placing `color` at (r, c).
- */
 export function evaluateMove(board, r, c, color) {
   let totalScore = 0;
   let openThreeCount = 0;
@@ -204,25 +179,16 @@ export function evaluateMove(board, r, c, color) {
     if (res.openFour) openFourCount++;
   }
 
-  // Tactical multi-threat bonuses
   if (openFourCount >= 2) totalScore += 800000;
   if (openThreeCount >= 2) totalScore += 200000;
 
   return totalScore;
 }
 
-/**
- * Intelligent AI opponent for White:
- * - Executes immediate winning lines (5-in-a-row, open 4)
- * - Blocks player's winning lines and open 3s/4s
- * - Builds harmonious connected structures with central weighting
- */
 export function getBotMove(board, difficulty = 'standard') {
   let bestScore = -Infinity;
   let bestMoves = [];
-
-  // Gentle difficulty candidate collection
-  const gentleCandidates = [];
+  const candidateScores = [];
 
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -231,42 +197,30 @@ export function getBotMove(board, difficulty = 'standard') {
       const attack = evaluateMove(board, r, c, 'W');
       const defense = evaluateMove(board, r, c, 'B');
 
-      // Immediate win takes ultimate priority
       if (attack >= 10000000) {
         return { r, c };
       }
 
       let moveScore = 0;
       if (defense >= 10000000) {
-        // Must block imminent 5
         moveScore = 5000000 + attack;
       } else if (attack >= 1000000) {
-        // AI creates Open 4 (unblockable)
         moveScore = 2000000;
       } else if (defense >= 1000000) {
-        // Must block Player Open 4
         moveScore = 1500000;
       } else if (defense >= 100000) {
-        // Must block Player Half-open 4
         moveScore = 500000 + attack;
       } else if (attack >= 100000) {
-        // AI makes 4
         moveScore = 400000;
       } else {
-        const defWeight = difficulty === 'deep' ? 1.6 : difficulty === 'gentle' ? 0.7 : 1.25;
+        const defWeight = difficulty === 'deep' ? 1.5 : difficulty === 'gentle' ? 0.6 : 1.2;
         moveScore = attack + defense * defWeight;
       }
 
-      // Proximity to center bonus
       const centerDist = Math.abs(r - 5) + Math.abs(c - 5);
-      const centerBonus = (10 - centerDist) * 2;
-      moveScore += centerBonus;
+      moveScore += (10 - centerDist) * 3;
 
-      if (difficulty === 'gentle') {
-        if (moveScore > 20) {
-          gentleCandidates.push({ r, c, moveScore });
-        }
-      }
+      candidateScores.push({ r, c, score: moveScore });
 
       if (moveScore > bestScore) {
         bestScore = moveScore;
@@ -277,13 +231,45 @@ export function getBotMove(board, difficulty = 'standard') {
     }
   }
 
-  if (difficulty === 'gentle' && gentleCandidates.length > 0 && bestScore < 1000000) {
-    // Pick randomly among top moderate moves for gentle play
-    gentleCandidates.sort((a, b) => b.moveScore - a.moveScore);
-    const topN = gentleCandidates.slice(0, 5);
-    return topN[Math.floor(Math.random() * topN.length)];
+  if (candidateScores.length === 0) return null;
+
+  // Tier 1: Gentle — occasionally plays 2nd or 3rd best move
+  if (difficulty === 'gentle' && bestScore < 1000000) {
+    candidateScores.sort((a, b) => b.score - a.score);
+    const pool = candidateScores.slice(0, Math.min(4, candidateScores.length));
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  if (bestMoves.length === 0) return null;
+  // Tier 3: Deep — lookahead 1 full turn across top candidate moves
+  if (difficulty === 'deep' && bestScore < 1000000) {
+    candidateScores.sort((a, b) => b.score - a.score);
+    const topCandidates = candidateScores.slice(0, Math.min(5, candidateScores.length));
+
+    let deepBestScore = -Infinity;
+    let deepBestMove = topCandidates[0];
+
+    for (const cand of topCandidates) {
+      const simulatedBoard = cloneBoard(board);
+      simulatedBoard[cand.r][cand.c] = 'W';
+
+      let maxPlayerReply = 0;
+      for (let pr = 0; pr < BOARD_SIZE; pr++) {
+        for (let pc = 0; pc < BOARD_SIZE; pc++) {
+          if (simulatedBoard[pr][pc] !== null) continue;
+          const pScore = evaluateMove(simulatedBoard, pr, pc, 'B');
+          if (pScore > maxPlayerReply) maxPlayerReply = pScore;
+        }
+      }
+
+      const projectedScore = cand.score - maxPlayerReply * 0.7;
+      if (projectedScore > deepBestScore) {
+        deepBestScore = projectedScore;
+        deepBestMove = cand;
+      }
+    }
+
+    return { r: deepBestMove.r, c: deepBestMove.c };
+  }
+
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }

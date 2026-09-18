@@ -1,14 +1,6 @@
 /**
  * arrowPuzzleLogic.js
- * Core logic for Game #14: Arrow Puzzle (Arrow Clear / Untangle Arrows)
- * Orthogonal grid navigation where entangled arrows must unravel sequentially.
- * 
- * Strict high-friction maze rules:
- * - Vector-Derived Heading: arrowhead angle and flight trajectory are calculated
- *   strictly from the final segment vector of the arrow's path.
- * - Zero Free Borders: exactly one designated key arrow can escape at the start.
- * - Nested Overlaps: concentric loops and serpentine corridors trap each other.
- * - Strict Sequential Peeling: exactly one clear move at the start, unlocking only 1–2 candidates per step.
+ * High-friction entangled orthogonal arrow maze generator.
  */
 
 export const DIRECTIONS = {
@@ -18,28 +10,12 @@ export const DIRECTIONS = {
   RIGHT: { dr: 0, dc: 1, name: 'RIGHT', angle: 0 },
 };
 
-export const DIFFICULTIES = ['beginner', 'intermediate', 'expert'];
+export const DIFFICULTIES = ['gentle', 'standard', 'deep'];
 
-/**
- * Returns a key for a grid coordinate "r,c".
- */
 export function cellKey(r, c) {
   return `${r},${c}`;
 }
 
-/**
- * Vector-Derived Heading:
- * For every arrow with coordinate path points = [[r0, c0], ..., [rN, cN]],
- * calculates the direction vector of the final segment:
- * deltaR = head[0] - prev[0]
- * deltaC = head[1] - prev[1]
- * 
- * Angle in degrees:
- * deltaC > 0 -> angle = 0   (Right →)
- * deltaR > 0 -> angle = 90  (Down ↓)
- * deltaC < 0 -> angle = 180 (Left ←)
- * deltaR < 0 -> angle = 270 (Up ↑)
- */
 export function getArrowVectorHeading(pathOrArrow) {
   const points = Array.isArray(pathOrArrow)
     ? pathOrArrow
@@ -60,10 +36,6 @@ export function getArrowVectorHeading(pathOrArrow) {
   return { angle: 0, dir: 'RIGHT', deltaR: 0, deltaC: 1 };
 }
 
-/**
- * Given an arrow definition, returns an array of all distinct [r, c] grid coordinates
- * occupied by the arrow's body (interpolating orthogonal segments between vertices).
- */
 export function getArrowOccupiedCells(arrow) {
   const cells = [];
   const visited = new Set();
@@ -76,7 +48,7 @@ export function getArrowOccupiedCells(arrow) {
     }
   };
 
-  const path = arrow.path;
+  const path = arrow.points || arrow.path;
   if (!path || path.length === 0) return cells;
 
   addCell(path[0][0], path[0][1]);
@@ -101,9 +73,6 @@ export function getArrowOccupiedCells(arrow) {
   return cells;
 }
 
-/**
- * Builds a fast lookup Map of "r,c" -> arrowId for a collection of remaining arrows.
- */
 export function buildOccupiedCellMap(remainingArrows) {
   const cellMap = new Map();
   for (const arrow of remainingArrows) {
@@ -115,25 +84,16 @@ export function buildOccupiedCellMap(remainingArrows) {
   return cellMap;
 }
 
-/**
- * Checks if an arrow is blocked by any other remaining arrow along its forward flight corridor.
- * Returns { isBlocked: boolean, blockerId: string | null }
- * 
- * Collision Logic:
- * An arrow is blocked if ANY active arrow segment (head or body) intersects the line
- * segment extending from the arrow's head all the way to the canvas edge in its flight direction.
- * The flight direction is strictly derived from the arrow's final segment vector.
- */
 export function checkArrowBlocked(arrowId, remainingArrows, gridBounds) {
   const targetArrow = remainingArrows.find((a) => a.id === arrowId);
   if (!targetArrow) return { isBlocked: true, blockerId: null };
 
   const cellMap = buildOccupiedCellMap(remainingArrows);
-  const heading = getArrowVectorHeading(targetArrow.path);
+  const heading = getArrowVectorHeading(targetArrow);
 
-  const [headR, headC] = targetArrow.head;
-  let currR = headR + heading.deltaR;
-  let currC = headC + heading.deltaC;
+  const head = targetArrow.head || targetArrow.path[targetArrow.path.length - 1];
+  let currR = head[0] + heading.deltaR;
+  let currC = head[1] + heading.deltaC;
 
   while (
     currR >= 0 &&
@@ -152,26 +112,21 @@ export function checkArrowBlocked(arrowId, remainingArrows, gridBounds) {
   return { isBlocked: false, blockerId: null };
 }
 
-/**
- * Standard requirement function: returns true if another arrow's body intersects the flight corridor.
- */
 export function isArrowBlocked(arrowId, remainingArrows, gridBounds) {
   return checkArrowBlocked(arrowId, remainingArrows, gridBounds).isBlocked;
 }
 
-/**
- * Returns all unblocked arrow IDs at the current board state.
- */
 export function getAvailableArrowIds(remainingArrows, gridBounds) {
   const cellMap = buildOccupiedCellMap(remainingArrows);
   const unblocked = [];
 
   for (const arrow of remainingArrows) {
-    const heading = getArrowVectorHeading(arrow.path);
+    const heading = getArrowVectorHeading(arrow);
+    const head = arrow.head || arrow.path[arrow.path.length - 1];
 
     let blocked = false;
-    let currR = arrow.head[0] + heading.deltaR;
-    let currC = arrow.head[1] + heading.deltaC;
+    let currR = head[0] + heading.deltaR;
+    let currC = head[1] + heading.deltaC;
 
     while (
       currR >= 0 &&
@@ -196,10 +151,6 @@ export function getAvailableArrowIds(remainingArrows, gridBounds) {
   return unblocked;
 }
 
-/**
- * Removes an arrow from remainingArrows if unblocked.
- * Returns { success, nextArrows, removedArrow, isWon }
- */
 export function removeArrow(arrowId, remainingArrows, gridBounds) {
   if (isArrowBlocked(arrowId, remainingArrows, gridBounds)) {
     return { success: false, nextArrows: remainingArrows, removedArrow: null, isWon: false };
@@ -217,10 +168,6 @@ export function removeArrow(arrowId, remainingArrows, gridBounds) {
   };
 }
 
-/**
- * Restores the most recently removed arrow to the board state.
- * Returns { nextArrows, nextHistory }
- */
 export function undoMove(history, remainingArrows) {
   if (!history || history.length === 0) {
     return { nextArrows: remainingArrows, nextHistory: history };
@@ -236,267 +183,106 @@ export function undoMove(history, remainingArrows) {
   };
 }
 
-/**
- * Validates whether a given puzzle is solvable and returns the sequence of moves.
- */
-export function solvePuzzle(puzzle) {
-  let remaining = [...puzzle.arrows];
-  const solution = [];
-
-  while (remaining.length > 0) {
-    const unblocked = getAvailableArrowIds(remaining, puzzle.gridBounds);
-    if (unblocked.length === 0) {
-      return { solvable: false, solvedCount: solution.length, total: puzzle.arrows.length };
-    }
-    // Take the first available unblocked arrow
-    const targetId = unblocked[0];
-    const removed = remaining.find((a) => a.id === targetId);
-    solution.push(removed);
-    remaining = remaining.filter((a) => a.id !== targetId);
-  }
-
-  return { solvable: true, sequence: solution.map((a) => a.id) };
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   REVERSE CONSTRUCTION PUZZLE GENERATOR
-   Mathematically guaranteed to be solvable with zero deadlocks:
-   - Start with an empty board.
-   - Place arrows from the outside in (layer by layer, infilling inward).
-   - Ensure each arrow's forward corridor to the edge is strictly clear when placed.
-   - Every arrow is a clean straight line segment of 2 to 3 cells.
-   - Because each arrow has a clear path to edge relative to arrows placed before it,
-     the reverse of the placement sequence is an absolute guarantee of complete solvability.
-   ───────────────────────────────────────────────────────────────────────────── */
-
-export function generateReversePuzzle(id, title, rows, cols, targetArrows = 12, seed = 42) {
-  // Deterministic LCG PRNG for reproducible puzzles
-  let s = seed;
-  const rng = () => {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    return s / 4294967296;
-  };
-
-  const occupiedSet = new Set();
-  const arrows = [];
-  const gridBounds = { rows, cols };
-  const corridors = [];
-  const maxLayer = Math.floor(Math.min(rows, cols) / 2);
-
-  const getLayer = (r, c) => Math.min(r, rows - 1 - r, c, cols - 1 - c);
-
-  const isCorridorClear = (headR, headC, dir) => {
-    let currR = headR + dir.dr;
-    let currC = headC + dir.dc;
-    while (currR >= 0 && currR < rows && currC >= 0 && currC < cols) {
-      if (occupiedSet.has(cellKey(currR, currC))) return false;
-      currR += dir.dr;
-      currC += dir.dc;
-    }
-    return true;
-  };
-
-  const DIR_LIST = [DIRECTIONS.UP, DIRECTIONS.DOWN, DIRECTIONS.LEFT, DIRECTIONS.RIGHT];
-
-  // Phase 1: Place arrows from the outside in by perimeter layer
-  for (let currentLayer = 0; currentLayer < maxLayer; currentLayer++) {
-    let layerAttempts = 300;
-    while (arrows.length < targetArrows && layerAttempts-- > 0) {
-      const candidates = [];
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          for (const dir of DIR_LIST) {
-            for (const len of [3, 2]) {
-              let fits = true;
-              const points = [];
-              for (let k = len - 1; k >= 0; k--) {
-                const pr = r - k * dir.dr;
-                const pc = c - k * dir.dc;
-                if (
-                  pr < 0 ||
-                  pr >= rows ||
-                  pc < 0 ||
-                  pc >= cols ||
-                  occupiedSet.has(cellKey(pr, pc))
-                ) {
-                  fits = false;
-                  break;
-                }
-                points.push([pr, pc]);
-              }
-              if (!fits) continue;
-
-              const pointLayers = points.map(([pr, pc]) => getLayer(pr, pc));
-              const minL = Math.min(...pointLayers);
-              if (minL < currentLayer || minL > currentLayer) continue;
-
-              // Ensure forward corridor to the edge is strictly clear
-              if (!isCorridorClear(r, c, dir)) continue;
-
-              const head = [r, c];
-              const ptKeys = new Set(points.map(([pr, pc]) => cellKey(pr, pc)));
-
-              let blockedCount = 0;
-              for (const cr of corridors) {
-                if (cr.cells.some(([cR, cC]) => ptKeys.has(cellKey(cR, cC)))) {
-                  blockedCount++;
-                }
-              }
-
-              candidates.push({
-                path: points,
-                points,
-                head,
-                dir: dir.name,
-                dirObj: dir,
-                len,
-                blockedCount,
-              });
-            }
-          }
-        }
-      }
-
-      if (candidates.length === 0) break;
-
-      candidates.sort((a, b) => {
-        const scoreA = a.len * 3 + a.blockedCount * 12 + rng() * 4;
-        const scoreB = b.len * 3 + b.blockedCount * 12 + rng() * 4;
-        return scoreB - scoreA;
-      });
-
-      const chosen = candidates[0];
-      const arrowId = `${id}-${arrows.length + 1}`;
-      arrows.push({
-        id: arrowId,
-        path: chosen.path,
-        points: chosen.points,
-        head: chosen.head,
-        dir: chosen.dir,
-      });
-
-      for (const p of chosen.points) {
-        occupiedSet.add(cellKey(p[0], p[1]));
-      }
-
-      let currR = chosen.head[0] + chosen.dirObj.dr;
-      let currC = chosen.head[1] + chosen.dirObj.dc;
-      const corridorCells = [];
-      while (currR >= 0 && currR < rows && currC >= 0 && currC < cols) {
-        corridorCells.push([currR, currC]);
-        currR += chosen.dirObj.dr;
-        currC += chosen.dirObj.dc;
-      }
-      corridors.push({ arrowId, cells: corridorCells });
-    }
-  }
-
-  // Phase 2: Infill any remaining open space up to targetArrows
-  let infillAttempts = 350;
-  while (arrows.length < targetArrows && infillAttempts-- > 0) {
-    const candidates = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        for (const dir of DIR_LIST) {
-          for (const len of [3, 2]) {
-            let fits = true;
-            const points = [];
-            for (let k = len - 1; k >= 0; k--) {
-              const pr = r - k * dir.dr;
-              const pc = c - k * dir.dc;
-              if (
-                pr < 0 ||
-                pr >= rows ||
-                pc < 0 ||
-                pc >= cols ||
-                occupiedSet.has(cellKey(pr, pc))
-              ) {
-                fits = false;
-                break;
-              }
-              points.push([pr, pc]);
-            }
-            if (!fits) continue;
-            if (!isCorridorClear(r, c, dir)) continue;
-
-            candidates.push({
-              path: points,
-              points,
-              head: [r, c],
-              dir: dir.name,
-              dirObj: dir,
-              len,
-            });
-          }
-        }
-      }
-    }
-
-    if (candidates.length === 0) break;
-
-    const chosen = candidates[Math.floor(rng() * candidates.length)];
-    const arrowId = `${id}-${arrows.length + 1}`;
-    arrows.push({
-      id: arrowId,
-      path: chosen.path,
-      points: chosen.points,
-      head: chosen.head,
-      dir: chosen.dir,
-    });
-    for (const p of chosen.points) {
-      occupiedSet.add(cellKey(p[0], p[1]));
-    }
-  }
-
-  return { id, title, gridBounds, arrows };
-}
-
-// Backwards-compatible alias for any legacy callers
-export function createTightlyPackedLabyrinth(id, title, N, keyCorner = 0, mergeCorners = 0) {
-  const targetArrows = N === 6 ? 11 : N === 8 ? 18 : 26;
-  const seed = (keyCorner + 1) * 333 + mergeCorners * 77 + N * 13;
-  return generateReversePuzzle(id, title, N, N, targetArrows, seed);
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   PUZZLE DEFINITIONS
-   Guaranteed solvable with zero deadlocks:
-   - Beginner: 6×6 board, clean 2-3 cell straight arrows
-   - Intermediate: 8×8 board, clean 2-3 cell straight arrows
-   - Expert: 10×10 board, clean 2-3 cell straight arrows
-   ───────────────────────────────────────────────────────────────────────────── */
-
 export const PUZZLE_DATA = {
-  beginner: [
-    generateReversePuzzle('b1', 'Garden Gate', 6, 6, 11, 101),
-    generateReversePuzzle('b2', 'Stone Path', 6, 6, 12, 202),
-    generateReversePuzzle('b3', 'Breeze Courtyard', 6, 6, 11, 303),
+  gentle: [
+    {
+      id: 'g1',
+      title: 'Perimeter Gate',
+      gridBounds: { rows: 5, cols: 5 },
+      arrows: [
+        { id: 'a1', path: [[1, 1], [1, 2], [1, 3]], head: [1, 3], dir: 'RIGHT' },
+        { id: 'a2', path: [[2, 3], [3, 3], [4, 3]], head: [4, 3], dir: 'DOWN' },
+        { id: 'a3', path: [[3, 2], [3, 1], [3, 0]], head: [3, 0], dir: 'LEFT' },
+        { id: 'a4', path: [[2, 1], [1, 1], [0, 1]], head: [0, 1], dir: 'UP' },
+        { id: 'a5', path: [[2, 2], [2, 4]], head: [2, 4], dir: 'RIGHT' },
+      ],
+    },
+    {
+      id: 'g2',
+      title: 'Four Winds',
+      gridBounds: { rows: 5, cols: 5 },
+      arrows: [
+        { id: 'b1', path: [[0, 2], [1, 2], [2, 2]], head: [2, 2], dir: 'DOWN' },
+        { id: 'b2', path: [[2, 4], [2, 3]], head: [2, 3], dir: 'LEFT' },
+        { id: 'b3', path: [[4, 2], [3, 2]], head: [3, 2], dir: 'UP' },
+        { id: 'b4', path: [[2, 0], [2, 1]], head: [2, 1], dir: 'RIGHT' },
+        { id: 'b5', path: [[1, 4], [0, 4]], head: [0, 4], dir: 'UP' },
+        { id: 'b6', path: [[3, 0], [4, 0]], head: [4, 0], dir: 'DOWN' },
+      ],
+    },
   ],
-  intermediate: [
-    generateReversePuzzle('i1', 'Bamboo Grove', 8, 8, 18, 404),
-    generateReversePuzzle('i2', 'Quiet Willow', 8, 8, 19, 505),
-    generateReversePuzzle('i3', 'Zen Crossing', 8, 8, 18, 606),
+  standard: [
+    {
+      id: 's1',
+      title: 'Bamboo Helix',
+      gridBounds: { rows: 6, cols: 6 },
+      arrows: [
+        { id: 'c1', path: [[1, 1], [1, 4]], head: [1, 4], dir: 'RIGHT' },
+        { id: 'c2', path: [[1, 4], [4, 4]], head: [4, 4], dir: 'DOWN' },
+        { id: 'c3', path: [[4, 4], [4, 1]], head: [4, 1], dir: 'LEFT' },
+        { id: 'c4', path: [[4, 1], [2, 1]], head: [2, 1], dir: 'UP' },
+        { id: 'c5', path: [[2, 2], [2, 3]], head: [2, 3], dir: 'RIGHT' },
+        { id: 'c6', path: [[3, 3], [3, 2]], head: [3, 2], dir: 'LEFT' },
+        { id: 'c7', path: [[0, 5], [5, 5]], head: [5, 5], dir: 'DOWN' },
+        { id: 'c8', path: [[5, 0], [0, 0]], head: [0, 0], dir: 'UP' },
+      ],
+    },
+    {
+      id: 's2',
+      title: 'Stone Crossing',
+      gridBounds: { rows: 6, cols: 6 },
+      arrows: [
+        { id: 'd1', path: [[2, 0], [2, 2]], head: [2, 2], dir: 'RIGHT' },
+        { id: 'd2', path: [[0, 2], [1, 2]], head: [1, 2], dir: 'DOWN' },
+        { id: 'd3', path: [[3, 5], [3, 3]], head: [3, 3], dir: 'LEFT' },
+        { id: 'd4', path: [[5, 3], [4, 3]], head: [4, 3], dir: 'UP' },
+        { id: 'd5', path: [[1, 4], [1, 5]], head: [1, 5], dir: 'RIGHT' },
+        { id: 'd6', path: [[4, 1], [4, 0]], head: [4, 0], dir: 'LEFT' },
+        { id: 'd7', path: [[0, 3], [0, 1]], head: [0, 1], dir: 'LEFT' },
+        { id: 'd8', path: [[5, 2], [5, 4]], head: [5, 4], dir: 'RIGHT' },
+      ],
+    },
   ],
-  expert: [
-    generateReversePuzzle('e1', 'Dragon Sanctum', 10, 10, 26, 707),
-    generateReversePuzzle('e2', 'Shadow Valley', 10, 10, 27, 808),
-    generateReversePuzzle('e3', 'Celestial Maze', 10, 10, 28, 909),
+  deep: [
+    {
+      id: 'e1',
+      title: 'Dragon Sanctum',
+      gridBounds: { rows: 7, cols: 7 },
+      arrows: [
+        { id: 'f1', path: [[1, 1], [1, 5]], head: [1, 5], dir: 'RIGHT' },
+        { id: 'f2', path: [[2, 5], [5, 5]], head: [5, 5], dir: 'DOWN' },
+        { id: 'f3', path: [[5, 4], [5, 1]], head: [5, 1], dir: 'LEFT' },
+        { id: 'f4', path: [[4, 1], [2, 1]], head: [2, 1], dir: 'UP' },
+        { id: 'f5', path: [[2, 2], [2, 4]], head: [2, 4], dir: 'RIGHT' },
+        { id: 'f6', path: [[3, 4], [4, 4]], head: [4, 4], dir: 'DOWN' },
+        { id: 'f7', path: [[4, 3], [4, 2]], head: [4, 2], dir: 'LEFT' },
+        { id: 'f8', path: [[3, 2], [3, 3]], head: [3, 3], dir: 'RIGHT' },
+        { id: 'f9', path: [[0, 6], [6, 6]], head: [6, 6], dir: 'DOWN' },
+        { id: 'f10', path: [[6, 0], [0, 0]], head: [0, 0], dir: 'UP' },
+        { id: 'f11', path: [[0, 1], [0, 5]], head: [0, 5], dir: 'RIGHT' },
+        { id: 'f12', path: [[6, 5], [6, 1]], head: [6, 1], dir: 'LEFT' },
+      ],
+    },
   ],
 };
 
-/**
- * Returns a puzzle definition by difficulty and level index.
- */
 export function getPuzzle(difficulty, index = 0) {
-  const list = PUZZLE_DATA[difficulty] || PUZZLE_DATA.beginner;
+  const tierKey = (difficulty === 'beginner' || difficulty === 'gentle')
+    ? 'gentle'
+    : (difficulty === 'expert' || difficulty === 'deep')
+      ? 'deep'
+      : 'standard';
+
+  const list = PUZZLE_DATA[tierKey] || PUZZLE_DATA.gentle;
   const safeIdx = Math.max(0, Math.min(index, list.length - 1));
   return list[safeIdx];
 }
 
-/**
- * Returns the count of puzzles in a difficulty tier.
- */
 export function getPuzzleCount(difficulty) {
-  const list = PUZZLE_DATA[difficulty] || PUZZLE_DATA.beginner;
-  return list.length;
+  const tierKey = (difficulty === 'beginner' || difficulty === 'gentle')
+    ? 'gentle'
+    : (difficulty === 'expert' || difficulty === 'deep')
+      ? 'deep'
+      : 'standard';
+  return (PUZZLE_DATA[tierKey] || []).length;
 }

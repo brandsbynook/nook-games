@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Icon } from '../icons.jsx';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
-  DIFFICULTIES,
-  PUZZLES,
   getPuzzle,
   getPuzzleCount,
   getEdgeKey,
@@ -10,11 +12,11 @@ import {
   getAvailableNeighbors,
   isCompleted,
   undoLastMove,
-} from '../utils/oneLineLogic';
+} from '../utils/oneLineLogic.js';
 
 export function OneLineScreen({ onBack }) {
-  const [difficulty, setDifficulty] = useState('beginner');
-  const [puzzleIndex, setPuzzleIndex] = useState(() => Math.floor(Math.random() * getPuzzleCount('beginner')));
+  const [difficulty, setDifficulty] = useState('gentle');
+  const [puzzleIndex, setPuzzleIndex] = useState(0);
   const [currentPath, setCurrentPath] = useState([]);
   const [visitedEdges, setVisitedEdges] = useState(() => new Set());
   const [hasWon, setHasWon] = useState(false);
@@ -24,7 +26,6 @@ export function OneLineScreen({ onBack }) {
   const puzzle = useMemo(() => getPuzzle(difficulty, puzzleIndex), [difficulty, puzzleIndex]);
   const puzzleCount = useMemo(() => getPuzzleCount(difficulty), [difficulty]);
 
-  // Reset when difficulty or puzzle changes
   useEffect(() => {
     setCurrentPath([]);
     setVisitedEdges(new Set());
@@ -36,19 +37,21 @@ export function OneLineScreen({ onBack }) {
     if (newDiff === difficulty) return;
     playTap();
     setDifficulty(newDiff);
-    const count = getPuzzleCount(newDiff);
-    setPuzzleIndex(Math.floor(Math.random() * count));
+    setPuzzleIndex(0);
   };
 
   const handlePrevLevel = () => {
+    playTap();
     setPuzzleIndex((prev) => (prev > 0 ? prev - 1 : puzzleCount - 1));
   };
 
   const handleNextLevel = () => {
+    playTap();
     setPuzzleIndex((prev) => (prev + 1) % puzzleCount);
   };
 
   const handleReset = () => {
+    playTap();
     setCurrentPath([]);
     setVisitedEdges(new Set());
     setHasWon(false);
@@ -57,26 +60,27 @@ export function OneLineScreen({ onBack }) {
 
   const handleUndo = () => {
     if (currentPath.length === 0 || hasWon) return;
+    playTap();
     const { currentPath: nextPath, visitedEdges: nextEdges } = undoLastMove(currentPath, visitedEdges);
     setCurrentPath(nextPath);
     setVisitedEdges(nextEdges);
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e) e.preventDefault();
+    playTap();
     if (typeof onBack === 'function') {
       onBack();
     } else {
-      window.location.hash = '#/briefing/one-line';
+      window.location.hash = '';
     }
   };
 
   const currentNodeId = currentPath.length > 0 ? currentPath[currentPath.length - 1] : null;
 
-  // Available adjacent neighbors for the current node
   const availableNeighbors = useMemo(() => {
     if (hasWon) return [];
     if (currentNodeId === null) {
-      // If path hasn't started, all nodes can be starting nodes
       return puzzle.nodes.map((n) => n.id);
     }
     return getAvailableNeighbors(currentNodeId, visitedEdges, puzzle);
@@ -84,30 +88,26 @@ export function OneLineScreen({ onBack }) {
 
   const availableNeighborSet = useMemo(() => new Set(availableNeighbors), [availableNeighbors]);
 
-  // Attempt to step to a target node
   const tryMoveToNode = useCallback(
     (targetId) => {
       if (hasWon) return false;
 
-      // If no start node is chosen, initialize path with target
       if (currentPath.length === 0) {
+        playTap();
         setCurrentPath([targetId]);
         return true;
       }
 
       const headId = currentPath[currentPath.length - 1];
-
-      // Tapping the head node: no-op
       if (targetId === headId) return false;
 
-      // Undo shortcut: tapping the immediate previous node
       if (currentPath.length > 1 && targetId === currentPath[currentPath.length - 2]) {
         handleUndo();
         return true;
       }
 
-      // Check if valid unvisited edge exists
       if (canMove(headId, targetId, visitedEdges, puzzle)) {
+        playTap();
         const edgeKey = getEdgeKey(headId, targetId);
         const nextVisited = new Set(visitedEdges);
         nextVisited.add(edgeKey);
@@ -119,6 +119,8 @@ export function OneLineScreen({ onBack }) {
         if (isCompleted(nextVisited, puzzle)) {
           setHasWon(true);
           setIsDragging(false);
+          playChime();
+          recordGameSession('one-line', true);
         }
         return true;
       }
@@ -128,7 +130,6 @@ export function OneLineScreen({ onBack }) {
     [hasWon, currentPath, visitedEdges, puzzle]
   );
 
-  // Convert screen coordinates to SVG viewBox (0-100)
   const getSvgCoordinates = useCallback((clientX, clientY) => {
     if (!svgRef.current) return null;
     const pt = svgRef.current.createSVGPoint();
@@ -139,7 +140,6 @@ export function OneLineScreen({ onBack }) {
     return pt.matrixTransform(ctm.inverse());
   }, []);
 
-  // Pointer drag handling
   const handlePointerDown = (e, nodeId) => {
     e.preventDefault();
     if (hasWon) return;
@@ -153,13 +153,12 @@ export function OneLineScreen({ onBack }) {
       const coords = getSvgCoordinates(e.clientX, e.clientY);
       if (!coords) return;
 
-      // Find if pointer is close to any node (proximity threshold: 10 units in 0-100 scale)
       for (const node of puzzle.nodes) {
         const dx = coords.x - node.x;
         const dy = coords.y - node.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist <= 10) {
+        if (dist <= 11) {
           tryMoveToNode(node.id);
           break;
         }
@@ -172,7 +171,6 @@ export function OneLineScreen({ onBack }) {
     setIsDragging(false);
   }, []);
 
-  // Global pointerup listener
   useEffect(() => {
     window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('pointercancel', handlePointerUp);
@@ -182,25 +180,6 @@ export function OneLineScreen({ onBack }) {
     };
   }, [handlePointerUp]);
 
-  // Physical keyboard controls (Z = undo, R = reset, Space/Enter = next level when won)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') {
-        e.preventDefault();
-        handleUndo();
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault();
-        handleReset();
-      } else if ((e.key === ' ' || e.key === 'Enter') && hasWon) {
-        e.preventDefault();
-        handleNextLevel();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasWon, currentPath, visitedEdges]);
-
-  // Map of node ID to coordinates
   const nodeMap = useMemo(() => {
     const map = {};
     puzzle.nodes.forEach((n) => {
@@ -209,7 +188,6 @@ export function OneLineScreen({ onBack }) {
     return map;
   }, [puzzle]);
 
-  // Build SVG path data for continuous visited line
   const activePathD = useMemo(() => {
     if (currentPath.length < 2) return '';
     return currentPath.reduce((acc, nodeId, idx) => {
@@ -220,57 +198,22 @@ export function OneLineScreen({ onBack }) {
   }, [currentPath, nodeMap]);
 
   return (
-    <div className="ol-container">
-      {/* ── 1. Header Bar ──────────────────────────────────── */}
-      <header className="ol-header">
-        <button
-          onClick={handleBack}
-          className="ol-icon-btn"
-          aria-label="Back"
-          title="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+    <div className="ol-container game-screen-container">
+      <GameHeader title="One Line" onBack={handleBack} />
 
-        <h1 className="ol-title">One Line</h1>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={handleDifficultyChange}
+        tiers={[
+          { id: 'gentle', label: 'Gentle', subtitle: '5–6 Nodes' },
+          { id: 'standard', label: 'Standard', subtitle: '7–9 Nodes' },
+          { id: 'deep', label: 'Deep', subtitle: '10–12 Nodes' },
+        ]}
+      />
 
-        <div className="ol-header-actions">
-          <button
-            onClick={handleUndo}
-            disabled={currentPath.length === 0 || hasWon}
-            className="ol-icon-btn"
-            aria-label="Undo move"
-            title="Undo (Z / Backspace)"
-          >
-            <Icon name="undo" size={18} />
-          </button>
-          <button
-            onClick={handleReset}
-            className="ol-icon-btn"
-            aria-label="Reset Level"
-            title="Reset (R)"
-          >
-            <Icon name="restart" size={18} />
-          </button>
-        </div>
-      </header>
-
-      {/* ── 2. Unified Difficulty Pill Selector ─────────────── */}
-      <div className="ol-difficulty-selector">
-        {Object.values(DIFFICULTIES).map((tier) => (
-          <button
-            key={tier.id}
-            onClick={() => handleDifficultyChange(tier.id)}
-            className={`ol-diff-btn ${difficulty === tier.id ? 'active' : ''}`}
-          >
-            {tier.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── 3. Level Info & Progress Bar ─────────────────────── */}
       <div className="ol-level-bar">
         <button
+          type="button"
           onClick={handlePrevLevel}
           className="ol-level-nav-btn"
           title="Previous Level"
@@ -287,6 +230,7 @@ export function OneLineScreen({ onBack }) {
         </div>
 
         <button
+          type="button"
           onClick={handleNextLevel}
           className="ol-level-nav-btn"
           title="Next Level"
@@ -296,24 +240,14 @@ export function OneLineScreen({ onBack }) {
         </button>
       </div>
 
-      {/* ── 4. Interactive SVG Canvas ─────────────────────────── */}
       <div className="ol-canvas-card">
         <svg
           ref={svgRef}
           viewBox="0 0 100 100"
           className="ol-svg"
           onPointerMove={handlePointerMove}
-          touch-action="none"
+          style={{ touchAction: 'none' }}
         >
-          <defs>
-            {/* Active stroke glowing filter */}
-            <filter id="ol-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1.2" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          {/* Background unvisited edges */}
           <g className="ol-unvisited-edges">
             {puzzle.edges.map(([u, v]) => {
               const nodeU = nodeMap[u];
@@ -335,16 +269,13 @@ export function OneLineScreen({ onBack }) {
             })}
           </g>
 
-          {/* Active continuous path stroke */}
           {activePathD && (
             <path
               d={activePathD}
               className="ol-active-stroke"
-              filter="url(#ol-glow)"
             />
           )}
 
-          {/* Nodes */}
           <g className="ol-nodes">
             {puzzle.nodes.map((node) => {
               const isCurrentHead = currentNodeId === node.id;
@@ -357,38 +288,34 @@ export function OneLineScreen({ onBack }) {
                   className="ol-node-group"
                   onPointerDown={(e) => handlePointerDown(e, node.id)}
                 >
-                  {/* Invisible wide touch hit target */}
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={12}
+                    r={14}
                     className="ol-node-hitbox"
                   />
 
-                  {/* Pulsing halo ring for available target nodes */}
                   {isAvailable && !hasWon && (
                     <circle
                       cx={node.x}
                       cy={node.y}
-                      r={6}
+                      r={7}
                       className="ol-node-halo"
                     />
                   )}
 
-                  {/* Visible node circle */}
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={isCurrentHead ? 4.5 : isVisitedNode ? 3.5 : 3}
-                    className={`ol-node-dot ${
-                      isCurrentHead
-                        ? 'ol-node-dot--head'
-                        : isAvailable
+                    r={isCurrentHead ? 5 : isVisitedNode ? 4 : 3}
+                    className={`ol-node-dot ${isCurrentHead
+                      ? 'ol-node-dot--head'
+                      : isAvailable
                         ? 'ol-node-dot--available'
                         : isVisitedNode
-                        ? 'ol-node-dot--visited'
-                        : 'ol-node-dot--idle'
-                    }`}
+                          ? 'ol-node-dot--visited'
+                          : 'ol-node-dot--idle'
+                      }`}
                   />
                 </g>
               );
@@ -400,14 +327,21 @@ export function OneLineScreen({ onBack }) {
           {currentPath.length === 0
             ? 'Tap any node to begin your stroke.'
             : hasWon
-            ? 'Eulerian path complete.'
-            : isDragging
-            ? 'Slide to connect adjacent nodes.'
-            : 'Trace each edge once without crossing back.'}
+              ? 'Eulerian path complete.'
+              : isDragging
+                ? 'Connect adjacent nodes without crossing back.'
+                : 'Trace each edge once without repetition.'}
         </div>
       </div>
 
-      {/* ── 5. Quiet Solve Overlay ───────────────────────────── */}
+      <GameFooterActions
+        onReset={handleReset}
+        onUndo={handleUndo}
+        canUndo={currentPath.length > 0 && !hasWon}
+        resetLabel="Reset"
+        undoLabel="Undo"
+      />
+
       {hasWon && (
         <div className="ol-modal-backdrop">
           <div className="ol-modal-card">

@@ -7,25 +7,18 @@ import { SUDOKU_PRESETS, generateTransformedPreset, isSudokuComplete } from '../
 import { playTap, playChime } from '../utils/audio.js'
 import { recordGameSession } from '../utils/storage.js'
 
-export function SudokuScreen() {
+export function SudokuScreen({ onBack }) {
   const initialIndex = useRef(Math.floor(Math.random() * SUDOKU_PRESETS.length))
   const [presetIndex, setPresetIndex] = useState(initialIndex.current)
   const [activePreset, setActivePreset] = useState(() => generateTransformedPreset(SUDOKU_PRESETS[initialIndex.current]))
 
-  // Board state: array of 81 numbers (0 = empty)
   const [board, setBoard] = useState(() => [...activePreset.initial])
-  // Pencil notes: map of cell index -> Set of numbers (1..9)
   const [notes, setNotes] = useState(() => Array.from({ length: 81 }, () => new Set()))
-  // Selected cell index (0..80)
   const [selectedIndex, setSelectedIndex] = useState(null)
-  // Pencil mode flag
   const [pencilMode, setPencilMode] = useState(false)
-  // Completion status
   const [isSolved, setIsSolved] = useState(false)
-  // Toast notification
   const [showToast, setShowToast] = useState(false)
 
-  // Reset board when preset changes
   useEffect(() => {
     setBoard([...activePreset.initial])
     setNotes(Array.from({ length: 81 }, () => new Set()))
@@ -34,31 +27,29 @@ export function SudokuScreen() {
     setShowToast(false)
   }, [activePreset])
 
-  // Handle back to Briefing screen
   function handleBack(e) {
-    e.preventDefault()
+    if (e) e.preventDefault()
     playTap()
-    window.location.hash = '/briefing/sudoku'
+    if (typeof onBack === 'function') {
+      onBack()
+    } else {
+      window.location.hash = ''
+    }
   }
 
-  // Cell selection
   function handleSelectCell(index) {
     playTap()
     setSelectedIndex(index)
   }
 
-  // Handle number input (from keypad or physical keyboard)
   const handleNumberInput = useCallback(
     (num) => {
       if (selectedIndex === null || isSolved) return
-
-      // Fixed starting clues cannot be modified
       if (activePreset.initial[selectedIndex] !== 0) return
 
       playTap()
 
       if (pencilMode) {
-        // Toggle note in pencil mode
         setNotes((prevNotes) => {
           const nextNotes = prevNotes.map((set) => new Set(set))
           const currentCellNotes = nextNotes[selectedIndex]
@@ -70,13 +61,10 @@ export function SudokuScreen() {
           return nextNotes
         })
       } else {
-        // Normal number placement
         setBoard((prevBoard) => {
           const nextBoard = [...prevBoard]
-          // Toggle off if same number pressed, otherwise place number
           nextBoard[selectedIndex] = nextBoard[selectedIndex] === num ? 0 : num
 
-          // Clear pencil notes for this cell upon filling
           if (nextBoard[selectedIndex] !== 0) {
             setNotes((prevNotes) => {
               const nextNotes = prevNotes.map((set) => new Set(set))
@@ -85,7 +73,6 @@ export function SudokuScreen() {
             })
           }
 
-          // Check for completion
           if (isSudokuComplete(nextBoard)) {
             setIsSolved(true)
             recordGameSession('sudoku', true)
@@ -102,7 +89,6 @@ export function SudokuScreen() {
     [selectedIndex, isSolved, activePreset.initial, pencilMode]
   )
 
-  // Erase active cell
   const handleErase = useCallback(() => {
     if (selectedIndex === null || isSolved) return
     if (activePreset.initial[selectedIndex] !== 0) return
@@ -122,20 +108,17 @@ export function SudokuScreen() {
     })
   }, [selectedIndex, isSolved, activePreset.initial])
 
-  // Restart current puzzle with fresh isomorphic transformation
   function handleRestart() {
     playTap()
     setActivePreset(generateTransformedPreset(SUDOKU_PRESETS[presetIndex]))
   }
 
-  // Switch difficulty preset with fresh isomorphic transformation
   function handlePresetChange(nextIdx) {
     playTap()
     setPresetIndex(nextIdx)
     setActivePreset(generateTransformedPreset(SUDOKU_PRESETS[nextIdx]))
   }
 
-  // Physical keyboard listener
   useEffect(() => {
     function handleKeyDown(e) {
       if (isSolved) return
@@ -167,7 +150,6 @@ export function SudokuScreen() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleNumberInput, handleErase, selectedIndex, isSolved])
 
-  // Selected cell coordinates & value for contextual highlight
   const selectedRow = selectedIndex !== null ? Math.floor(selectedIndex / 9) : null
   const selectedCol = selectedIndex !== null ? selectedIndex % 9 : null
   const selectedBlockRow = selectedRow !== null ? Math.floor(selectedRow / 3) : null
@@ -176,10 +158,8 @@ export function SudokuScreen() {
 
   return (
     <div className="sdk-page game-screen-container">
-      {/* ── Top Bar ─────────────────────────────────────────── */}
       <GameHeader title="Sudoku" onBack={handleBack} />
 
-      {/* ── Difficulty Selector ─────────────────────────────── */}
       <DifficultyTabs
         currentTier={presetIndex}
         onSelectTier={(_, idx) => handlePresetChange(idx)}
@@ -190,9 +170,7 @@ export function SudokuScreen() {
         ]}
       />
 
-      {/* ── Main Game Content ───────────────────────────────── */}
       <div className="sdk-body">
-        {/* 9x9 Sudoku Grid */}
         <div className="sdk-grid-wrap">
           <div
             className="sdk-grid"
@@ -213,7 +191,6 @@ export function SudokuScreen() {
               const isSameNumber =
                 selectedValue !== 0 && selectedValue !== null && cellValue === selectedValue
 
-              // Class calculation for 3x3 block borders
               const isRightBorder = col === 2 || col === 5
               const isBottomBorder = row === 2 || row === 5
 
@@ -238,9 +215,8 @@ export function SudokuScreen() {
                   key={`sdk-cell-${idx}`}
                   className={cellClasses}
                   onClick={() => handleSelectCell(idx)}
-                  aria-label={`Row ${row + 1} Column ${col + 1}${
-                    cellValue ? `, value ${cellValue}` : ', empty'
-                  }`}
+                  aria-label={`Row ${row + 1} Column ${col + 1}${cellValue ? `, value ${cellValue}` : ', empty'
+                    }`}
                   tabIndex={0}
                 >
                   {cellValue !== 0 ? (
@@ -263,7 +239,6 @@ export function SudokuScreen() {
           </div>
         </div>
 
-        {/* ── Keypad & Controls ───────────────────────────────── */}
         <div className="sdk-controls">
           <GameFooterActions onReset={handleRestart} resetLabel="Reset">
             <button
@@ -292,7 +267,6 @@ export function SudokuScreen() {
             </button>
           </GameFooterActions>
 
-          {/* Number Pad (1 through 9) */}
           <div className="sdk-keypad">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button
@@ -308,7 +282,6 @@ export function SudokuScreen() {
         </div>
       </div>
 
-      {/* ── Completion Toast ─────────────────────────────────── */}
       <div
         className={`sdk-toast${showToast ? ' sdk-toast--visible' : ''}`}
         role="status"
@@ -319,3 +292,5 @@ export function SudokuScreen() {
     </div>
   )
 }
+
+export default SudokuScreen

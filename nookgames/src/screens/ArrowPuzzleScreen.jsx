@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Icon } from '../icons.jsx';
 import { GameHeader } from '../components/GameHeader.jsx';
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
 import { GameFooterActions } from '../components/GameFooterActions.jsx';
 import { playTap, playChime } from '../utils/audio.js';
+import { recordGameSession } from '../utils/storage.js';
 import {
-  DIFFICULTIES,
   getPuzzle,
   getPuzzleCount,
   isArrowBlocked,
@@ -16,14 +15,12 @@ import {
 } from '../utils/arrowPuzzleLogic.js';
 
 export function ArrowPuzzleScreen({ onBack }) {
-  const [difficulty, setDifficulty] = useState('beginner');
-  const [levelIndex, setLevelIndex] = useState(() => Math.floor(Math.random() * getPuzzleCount('beginner')));
+  const [difficulty, setDifficulty] = useState('gentle');
+  const [levelIndex, setLevelIndex] = useState(0);
 
-  // Active puzzle from logic
   const puzzle = useMemo(() => getPuzzle(difficulty, levelIndex), [difficulty, levelIndex]);
   const totalLevels = useMemo(() => getPuzzleCount(difficulty), [difficulty]);
 
-  // Game state
   const [remainingArrows, setRemainingArrows] = useState(() => puzzle.arrows);
   const [history, setHistory] = useState([]);
   const [flyingArrows, setFlyingArrows] = useState([]);
@@ -34,7 +31,6 @@ export function ArrowPuzzleScreen({ onBack }) {
   const recoilTimeoutRef = useRef(null);
   const flightTimeoutsRef = useRef(new Map());
 
-  // Reset when difficulty or level changes
   useEffect(() => {
     setRemainingArrows(puzzle.arrows);
     setHistory([]);
@@ -48,7 +44,6 @@ export function ArrowPuzzleScreen({ onBack }) {
     flightTimeoutsRef.current.clear();
   }, [puzzle]);
 
-  // Clean up timeouts on unmount
   useEffect(() => {
     return () => {
       if (recoilTimeoutRef.current) clearTimeout(recoilTimeoutRef.current);
@@ -57,18 +52,17 @@ export function ArrowPuzzleScreen({ onBack }) {
     };
   }, []);
 
-  // Compute unblocked arrow IDs for visual styling & hover clues
   const availableArrowIds = useMemo(() => {
     return new Set(getAvailableArrowIds(remainingArrows, puzzle.gridBounds));
   }, [remainingArrows, puzzle.gridBounds]);
 
-  // Navigation / toolbar handlers
-  const handleBack = useCallback(() => {
+  const handleBack = useCallback((e) => {
+    if (e) e.preventDefault();
     playTap();
     if (typeof onBack === 'function') {
       onBack();
     } else {
-      window.location.hash = '#/briefing/arrow-puzzle';
+      window.location.hash = '';
     }
   }, [onBack]);
 
@@ -76,8 +70,7 @@ export function ArrowPuzzleScreen({ onBack }) {
     if (newDiff === difficulty) return;
     playTap();
     setDifficulty(newDiff);
-    const count = getPuzzleCount(newDiff);
-    setLevelIndex(Math.floor(Math.random() * count));
+    setLevelIndex(0);
   };
 
   const handlePrevLevel = () => {
@@ -107,7 +100,6 @@ export function ArrowPuzzleScreen({ onBack }) {
     setRemainingArrows(nextArrows);
     setHistory(nextHistory);
 
-    // Cancel flying status for restored arrow if it was still animating
     const restoredArrow = history[history.length - 1];
     if (restoredArrow) {
       setFlyingArrows((prev) => prev.filter((f) => f.id !== restoredArrow.id));
@@ -118,14 +110,12 @@ export function ArrowPuzzleScreen({ onBack }) {
     }
   };
 
-  // Click on an arrow
   const handleArrowClick = (arrow) => {
     if (hasWon) return;
 
     const blocked = isArrowBlocked(arrow.id, remainingArrows, puzzle.gridBounds);
 
     if (blocked) {
-      // Gentle dampening recoil
       playTap();
       setRecoilingArrowId(arrow.id);
       if (recoilTimeoutRef.current) clearTimeout(recoilTimeoutRef.current);
@@ -135,20 +125,15 @@ export function ArrowPuzzleScreen({ onBack }) {
       return;
     }
 
-    // Arrow is unblocked: launch flight escape!
     playTap();
-
-    // Trigger flight animation
     setFlyingArrows((prev) => [...prev, arrow]);
 
-    // Set timeout to remove from flying DOM after animation completes
     const t = setTimeout(() => {
       setFlyingArrows((prev) => prev.filter((f) => f.id !== arrow.id));
       flightTimeoutsRef.current.delete(arrow.id);
     }, 500);
     flightTimeoutsRef.current.set(arrow.id, t);
 
-    // Update state immediately for rapid responsive interaction
     const { nextArrows, removedArrow, isWon } = removeArrow(
       arrow.id,
       remainingArrows,
@@ -162,11 +147,11 @@ export function ArrowPuzzleScreen({ onBack }) {
       setTimeout(() => {
         playChime();
         setHasWon(true);
+        recordGameSession('arrow-puzzle', true);
       }, 350);
     }
   };
 
-  // SVG grid sizing
   const cellSize = 38;
   const padding = 22;
   const { rows, cols } = puzzle.gridBounds;
@@ -178,7 +163,6 @@ export function ArrowPuzzleScreen({ onBack }) {
     y: padding + r * cellSize + cellSize / 2,
   });
 
-  // Convert arrow path coordinates to SVG path string
   const getPathData = (path) => {
     if (!path || path.length === 0) return '';
     const start = getCellCenter(path[0][0], path[0][1]);
@@ -186,8 +170,6 @@ export function ArrowPuzzleScreen({ onBack }) {
     for (let i = 1; i < path.length; i++) {
       const pt = getCellCenter(path[i][0], path[i][1]);
       if (i === path.length - 1 && path.length >= 2) {
-        // Shorten the final segment slightly (3px) so the round stroke-cap
-        // stays completely hidden behind the sharp arrowhead tip
         const prev = getCellCenter(path[i - 1][0], path[i - 1][1]);
         const dx = Math.sign(pt.x - prev.x);
         const dy = Math.sign(pt.y - prev.y);
@@ -199,35 +181,25 @@ export function ArrowPuzzleScreen({ onBack }) {
     return d;
   };
 
-  // Canonical arrowhead pointing Right (0 deg) with tip strictly on the cell center
   const getCanonicalHeadPoints = (center) => {
     const size = 9;
     return `${center.x},${center.y} ${center.x - size},${center.y - size * 0.55} ${center.x - size},${center.y + size * 0.55}`;
   };
 
-  // Backwards-compatible helper
-  const getHeadPoints = (head) => {
-    const center = getCellCenter(head[0], head[1]);
-    return getCanonicalHeadPoints(center);
-  };
-
   return (
     <div className="ap-page game-screen-container">
-      {/* ── 1. Top Header ───────────────────────────────────── */}
       <GameHeader title="Arrow Puzzle" onBack={handleBack} />
 
-      {/* ── 2. Difficulty Tabs ──────────────────────────────── */}
       <DifficultyTabs
         currentTier={difficulty}
-        onSelectTier={(diff) => handleDifficultyChange(diff)}
+        onSelectTier={handleDifficultyChange}
         tiers={[
-          { id: 'beginner', label: 'Gentle', subtitle: '4×4' },
-          { id: 'intermediate', label: 'Standard', subtitle: '5×5' },
-          { id: 'expert', label: 'Deep', subtitle: '6×6' },
+          { id: 'gentle', label: 'Gentle', subtitle: '5×5' },
+          { id: 'standard', label: 'Standard', subtitle: '6×6' },
+          { id: 'deep', label: 'Deep', subtitle: '7×7' },
         ]}
       />
 
-      {/* ── 3. Level Switcher ───────────────────────────────── */}
       <div className="ap-level-bar">
         <button
           type="button"
@@ -253,14 +225,12 @@ export function ArrowPuzzleScreen({ onBack }) {
         </button>
       </div>
 
-      {/* ── 4. Main SVG Grid Card ───────────────────────────── */}
       <div className="ap-grid-card">
         <svg
           viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
           className="ap-svg"
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Subtle Orthogonal Dot Guides */}
           <g className="ap-grid-dots">
             {Array.from({ length: rows }).map((_, r) =>
               Array.from({ length: cols }).map((__, c) => {
@@ -278,7 +248,6 @@ export function ArrowPuzzleScreen({ onBack }) {
             )}
           </g>
 
-          {/* Render Active Remaining Arrows */}
           <g className="ap-arrows-layer">
             {remainingArrows.map((arrow) => {
               const points = arrow.points || arrow.path;
@@ -294,26 +263,19 @@ export function ArrowPuzzleScreen({ onBack }) {
               return (
                 <g
                   key={arrow.id}
-                  className={`ap-arrow-group ${
-                    isUnblocked ? 'ap-arrow--unblocked' : 'ap-arrow--blocked'
-                  } ${isRecoiling ? `ap-recoil-${heading.dir.toLowerCase()}` : ''} ${
-                    isHovered ? 'ap-arrow--hovered' : ''
-                  }`}
+                  className={`ap-arrow-group ${isUnblocked ? 'ap-arrow--unblocked' : 'ap-arrow--blocked'
+                    } ${isRecoiling ? `ap-recoil-${heading.dir.toLowerCase()}` : ''} ${isHovered ? 'ap-arrow--hovered' : ''
+                    }`}
                   onClick={() => handleArrowClick(arrow)}
                   onMouseEnter={() => setHoveredArrowId(arrow.id)}
                   onMouseLeave={() => setHoveredArrowId(null)}
                 >
-                  {/* Invisible wide hit stroke */}
                   <path
                     d={pathD}
                     className="ap-arrow-hitbox"
                     strokeWidth={cellSize * 0.75}
                   />
-
-                  {/* Visible crisp arrow body */}
                   <path d={pathD} className="ap-arrow-body" />
-
-                  {/* Clean solid triangle head rotated strictly around head coordinate */}
                   <polygon
                     points={headPts}
                     className="ap-arrow-head"
@@ -324,7 +286,6 @@ export function ArrowPuzzleScreen({ onBack }) {
             })}
           </g>
 
-          {/* Render Flying Escaping Arrows */}
           <g className="ap-flying-layer">
             {flyingArrows.map((arrow) => {
               const points = arrow.points || arrow.path;
@@ -351,7 +312,6 @@ export function ArrowPuzzleScreen({ onBack }) {
           </g>
         </svg>
 
-        {/* Subtitle / Corridor Hint */}
         <div className="ap-hint-bar">
           {remainingArrows.length === 0
             ? 'All arrows have exited the labyrinth.'
@@ -359,7 +319,6 @@ export function ArrowPuzzleScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── 5. Action Toolbar ───────────────────────────────── */}
       <GameFooterActions
         onReset={handleReset}
         onUndo={handleUndo}
@@ -373,7 +332,6 @@ export function ArrowPuzzleScreen({ onBack }) {
         </div>
       </GameFooterActions>
 
-      {/* ── 6. Quiet Solve Overlay ───────────────────────────── */}
       {hasWon && (
         <div className="ap-modal-backdrop">
           <div className="ap-modal-card">

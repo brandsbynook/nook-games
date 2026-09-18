@@ -19,7 +19,7 @@ import {
 export function CrosswordScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('beginner');
   const [puzzle, setPuzzle] = useState(() => getPuzzle('beginner'));
-  const [playerGrid, setPlayerGrid] = useState(() => createPlayerGrid(puzzle));
+  const [playerGrid, setPlayerGrid] = useState(() => createPlayerGrid(getPuzzle('beginner')));
   const [selectedCell, setSelectedCell] = useState({ r: 0, c: 1 });
   const [direction, setDirection] = useState('across'); // 'across' | 'down'
   const [hasWon, setHasWon] = useState(false);
@@ -36,41 +36,46 @@ export function CrosswordScreen({ onBack }) {
     setHasWon(false);
     setScratchText('');
 
-    // Find first playable non-black cell
     let firstCell = { r: 0, c: 0 };
-    for (let r = 0; r < newPuzzle.gridSize.rows; r++) {
-      for (let c = 0; c < newPuzzle.gridSize.cols; c++) {
-        if (newPuzzle.grid[r][c] !== '#') {
-          firstCell = { r, c };
-          break;
+    if (newPuzzle && newPuzzle.gridSize && newPuzzle.grid) {
+      for (let r = 0; r < newPuzzle.gridSize.rows; r++) {
+        for (let c = 0; c < newPuzzle.gridSize.cols; c++) {
+          if (newPuzzle.grid[r] && newPuzzle.grid[r][c] !== '#') {
+            firstCell = { r, c };
+            break;
+          }
         }
+        if (newPuzzle.grid[firstCell.r] && newPuzzle.grid[firstCell.r][firstCell.c] !== '#') break;
       }
-      if (newPuzzle.grid[firstCell.r][firstCell.c] !== '#') break;
     }
     setSelectedCell(firstCell);
     setDirection('across');
   };
 
   const handleReset = () => {
+    if (!puzzle) return;
     setPlayerGrid(createPlayerGrid(puzzle));
     setHasWon(false);
     setScratchText('');
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e) e.preventDefault();
+    playTap();
     if (typeof onBack === 'function') {
       onBack();
     } else {
-      window.location.hash = '#/briefing/crossword';
+      window.location.hash = '';
     }
   };
 
-  // Get active clue for selected cell and direction
+  // Safe active clue evaluation
   const activeClue = useMemo(() => {
+    if (!puzzle || !puzzle.cellClues) return null;
     const key = `${selectedCell.r}-${selectedCell.c}`;
     const cellInfo = puzzle.cellClues[key];
     if (!cellInfo) return null;
-    return cellInfo[direction] || cellInfo[direction === 'across' ? 'down' : 'across'];
+    return cellInfo[direction] || cellInfo[direction === 'across' ? 'down' : 'across'] || null;
   }, [selectedCell, direction, puzzle]);
 
   // Active word cells
@@ -87,16 +92,15 @@ export function CrosswordScreen({ onBack }) {
 
   // Handle cell selection & direction toggle
   const handleCellClick = (r, c) => {
-    if (puzzle.grid[r][c] === '#') return;
+    if (!puzzle || !puzzle.grid || !puzzle.grid[r] || puzzle.grid[r][c] === '#') return;
     playTap();
 
     if (selectedCell.r === r && selectedCell.c === c) {
-      // Toggle direction
       setDirection((prev) => (prev === 'across' ? 'down' : 'across'));
     } else {
       setSelectedCell({ r, c });
       const key = `${r}-${c}`;
-      const cellInfo = puzzle.cellClues[key];
+      const cellInfo = puzzle.cellClues ? puzzle.cellClues[key] : null;
       if (cellInfo && !cellInfo[direction]) {
         setDirection(cellInfo.across ? 'across' : 'down');
       }
@@ -106,7 +110,7 @@ export function CrosswordScreen({ onBack }) {
   // Handle typing a character
   const handleInputChar = useCallback(
     (char) => {
-      if (hasWon) return;
+      if (hasWon || !puzzle || !puzzle.grid) return;
 
       playTap();
 
@@ -118,7 +122,7 @@ export function CrosswordScreen({ onBack }) {
       const upper = char.toUpperCase();
       const { r, c } = selectedCell;
 
-      if (puzzle.grid[r][c] === '#') return;
+      if (!puzzle.grid[r] || puzzle.grid[r][c] === '#') return;
 
       const newGrid = playerGrid.map((rowArr, rowIdx) =>
         rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? upper : val))
@@ -126,7 +130,6 @@ export function CrosswordScreen({ onBack }) {
 
       setPlayerGrid(newGrid);
 
-      // Check win condition
       if (isSolved(newGrid, puzzle)) {
         setHasWon(true);
         playChime();
@@ -134,9 +137,8 @@ export function CrosswordScreen({ onBack }) {
         return;
       }
 
-      // Auto-advance
       const next = getNextCell(r, c, direction, puzzle);
-      if (next.r !== r || next.c !== c) {
+      if (next && (next.r !== r || next.c !== c)) {
         setSelectedCell(next);
       }
     },
@@ -145,7 +147,7 @@ export function CrosswordScreen({ onBack }) {
 
   // Handle Backspace
   const handleBackspace = useCallback(() => {
-    if (hasWon) return;
+    if (hasWon || !playerGrid) return;
 
     playTap();
 
@@ -155,7 +157,7 @@ export function CrosswordScreen({ onBack }) {
     }
 
     const { r, c } = selectedCell;
-    const currentVal = playerGrid[r][c];
+    const currentVal = playerGrid[r]?.[c];
 
     if (currentVal !== '') {
       const newGrid = playerGrid.map((rowArr, rowIdx) =>
@@ -164,7 +166,7 @@ export function CrosswordScreen({ onBack }) {
       setPlayerGrid(newGrid);
     } else {
       const prev = getPrevCell(r, c, direction, puzzle);
-      if (prev.r !== r || prev.c !== c) {
+      if (prev && (prev.r !== r || prev.c !== c)) {
         const newGrid = playerGrid.map((rowArr, rowIdx) =>
           rowArr.map((val, colIdx) => (rowIdx === prev.r && colIdx === prev.c ? '' : val))
         );
@@ -176,7 +178,7 @@ export function CrosswordScreen({ onBack }) {
 
   // Handle Clear active word
   const handleClearWord = useCallback(() => {
-    if (!activeClue || hasWon) return;
+    if (!activeClue || hasWon || !playerGrid) return;
     const cellsToClear = getClueCells(activeClue, direction);
     const newGrid = playerGrid.map((rowArr, r) =>
       rowArr.map((val, c) =>
@@ -186,9 +188,9 @@ export function CrosswordScreen({ onBack }) {
     setPlayerGrid(newGrid);
   }, [activeClue, direction, hasWon, playerGrid]);
 
-  // Transfer rough word from scratchpad to active clue cells
+  // Transfer rough word from scratchpad
   const handleTransferScratchpad = useCallback(() => {
-    if (!activeClue || !scratchText || hasWon) return;
+    if (!activeClue || !scratchText || hasWon || !playerGrid || !puzzle) return;
 
     const cellsToFill = getClueCells(activeClue, direction);
     const chars = scratchText.toUpperCase().split('');
@@ -215,8 +217,9 @@ export function CrosswordScreen({ onBack }) {
     setIsScratchpadOpen(false);
   }, [activeClue, direction, scratchText, hasWon, playerGrid, puzzle]);
 
-  // Cycle to next clue
+  // Cycle clues
   const handleNextClue = useCallback(() => {
+    if (!puzzle || !puzzle.clues) return;
     const list = puzzle.clues[direction];
     if (!list || list.length === 0) return;
 
@@ -224,11 +227,13 @@ export function CrosswordScreen({ onBack }) {
     const nextIndex = (currentIndex + 1) % list.length;
     const nextClue = list[nextIndex];
 
-    setSelectedCell({ r: nextClue.row, c: nextClue.col });
+    if (nextClue) {
+      setSelectedCell({ r: nextClue.row, c: nextClue.col });
+    }
   }, [puzzle, direction, activeClue]);
 
-  // Cycle to prev clue
   const handlePrevClue = useCallback(() => {
+    if (!puzzle || !puzzle.clues) return;
     const list = puzzle.clues[direction];
     if (!list || list.length === 0) return;
 
@@ -236,13 +241,15 @@ export function CrosswordScreen({ onBack }) {
     const prevIndex = (currentIndex - 1 + list.length) % list.length;
     const prevClue = list[prevIndex];
 
-    setSelectedCell({ r: prevClue.row, c: prevClue.col });
+    if (prevClue) {
+      setSelectedCell({ r: prevClue.row, c: prevClue.col });
+    }
   }, [puzzle, direction, activeClue]);
 
-  // Physical keyboard support
+  // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (hasWon) return;
+      if (hasWon || !puzzle || !puzzle.gridSize) return;
 
       if (/^[a-zA-Z]$/.test(e.key)) {
         e.preventDefault();
@@ -309,7 +316,6 @@ export function CrosswordScreen({ onBack }) {
     puzzle,
   ]);
 
-  // Select clue directly from clues list
   const handleSelectClue = (clue, dir) => {
     setSelectedCell({ r: clue.row, c: clue.col });
     setDirection(dir);
@@ -321,12 +327,21 @@ export function CrosswordScreen({ onBack }) {
     ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
   ];
 
+  if (!puzzle || !puzzle.grid) {
+    return (
+      <div className="cw-container game-screen-container">
+        <GameHeader title="Crossword" onBack={handleBack} />
+        <div style={{ padding: '24px', textAlign: 'center', color: '#8e8e99' }}>
+          Loading puzzle...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="cw-container game-screen-container">
-      {/* ── 1. Header Bar ──────────────────────────────────── */}
       <GameHeader title="Crossword" onBack={handleBack} />
 
-      {/* ── 2. Unified Dark Pill Difficulty Selector ─────────── */}
       <DifficultyTabs
         currentTier={difficulty}
         onSelectTier={(tierId) => handleDifficultyChange(tierId)}
@@ -337,7 +352,6 @@ export function CrosswordScreen({ onBack }) {
         ]}
       />
 
-      {/* ── 3. Crossword 2D Grid ────────────────────────────── */}
       <div
         className="cw-grid"
         style={{
@@ -350,7 +364,7 @@ export function CrosswordScreen({ onBack }) {
             const isBlack = cellType === '#';
             const isSelected = selectedCell.r === r && selectedCell.c === c;
             const inActiveWord = activeWordSet.has(`${r}-${c}`);
-            const cellNum = puzzle.cellNumbers[`${r}-${c}`];
+            const cellNum = puzzle.cellNumbers ? puzzle.cellNumbers[`${r}-${c}`] : null;
             const val = playerGrid[r]?.[c] || '';
 
             if (isBlack) {
@@ -368,13 +382,12 @@ export function CrosswordScreen({ onBack }) {
                 key={`${r}-${c}`}
                 type="button"
                 onClick={() => handleCellClick(r, c)}
-                className={`cw-cell ${
-                  isSelected
-                    ? 'cw-cell--focused'
-                    : inActiveWord
+                className={`cw-cell ${isSelected
+                  ? 'cw-cell--focused'
+                  : inActiveWord
                     ? 'cw-cell--active-word'
                     : ''
-                }`}
+                  }`}
               >
                 {cellNum && <span className="cw-cell-number">{cellNum}</span>}
                 <span className="cw-cell-letter">{val}</span>
@@ -384,7 +397,6 @@ export function CrosswordScreen({ onBack }) {
         )}
       </div>
 
-      {/* ── 4. Sleek Active Clue Bar ────────────────────────── */}
       <div className="cw-clue-bar">
         <button
           type="button"
@@ -421,7 +433,6 @@ export function CrosswordScreen({ onBack }) {
         </button>
       </div>
 
-      {/* ── 4b. Collapsible Scratchpad / Rough Work Bar ─────────── */}
       {isScratchpadOpen && (
         <div className="cw-scratchpad">
           <span className="cw-scratchpad-label">ROUGH:</span>
@@ -456,7 +467,6 @@ export function CrosswordScreen({ onBack }) {
         </div>
       )}
 
-      {/* ── 5. On-Screen QWERTY Keyboard ─────────────────────── */}
       <div className="cw-keyboard">
         {keyboardRows.map((row, rowIdx) => (
           <div key={rowIdx} className="cw-keyboard-row">
@@ -509,7 +519,7 @@ export function CrosswordScreen({ onBack }) {
         <button
           type="button"
           className="game-action-btn"
-          onClick={handleClearActiveWord}
+          onClick={handleClearWord}
           aria-label="Clear Word"
         >
           <Icon name="erase" size={16} />
@@ -517,7 +527,6 @@ export function CrosswordScreen({ onBack }) {
         </button>
       </GameFooterActions>
 
-      {/* ── 6. Full Clues List Section ──────────────────────── */}
       <div className="cw-clues-section">
         <div className="cw-clues-tabs">
           <button
@@ -525,19 +534,19 @@ export function CrosswordScreen({ onBack }) {
             onClick={() => setActiveTab('across')}
             className={`cw-clues-tab-btn ${activeTab === 'across' ? 'active' : ''}`}
           >
-            Across ({puzzle.clues.across.length})
+            Across ({puzzle.clues?.across?.length || 0})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('down')}
             className={`cw-clues-tab-btn ${activeTab === 'down' ? 'active' : ''}`}
           >
-            Down ({puzzle.clues.down.length})
+            Down ({puzzle.clues?.down?.length || 0})
           </button>
         </div>
 
         <div className="cw-clues-list">
-          {puzzle.clues[activeTab].map((clue) => {
+          {(puzzle.clues?.[activeTab] || []).map((clue) => {
             const isSolvedItem = isClueSolved(clue, activeTab, playerGrid);
             const isSelectedClue =
               activeClue?.number === clue.number && direction === activeTab;
@@ -546,9 +555,8 @@ export function CrosswordScreen({ onBack }) {
               <div
                 key={`${clue.number}-${activeTab}`}
                 onClick={() => handleSelectClue(clue, activeTab)}
-                className={`cw-clue-item ${isSelectedClue ? 'active' : ''} ${
-                  isSolvedItem ? 'solved' : ''
-                }`}
+                className={`cw-clue-item ${isSelectedClue ? 'active' : ''} ${isSolvedItem ? 'solved' : ''
+                  }`}
               >
                 <span className="cw-clue-num">{clue.number}.</span>
                 <span className="cw-clue-text-item">{clue.clue}</span>
@@ -558,14 +566,13 @@ export function CrosswordScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── 7. Victory State Overlay ────────────────────────── */}
       {hasWon && (
         <div className="cw-modal-backdrop">
           <div className="cw-modal-card">
             <div className="cw-modal-icon">✓</div>
             <h2 className="cw-modal-title">Grid Solved</h2>
             <p className="cw-modal-desc">
-              You completed the {puzzle.difficulty} mini crossword puzzle cleanly.
+              You completed the {puzzle.difficulty || 'mini'} crossword puzzle cleanly.
             </p>
             <button
               type="button"
@@ -574,8 +581,8 @@ export function CrosswordScreen({ onBack }) {
                   difficulty === 'beginner'
                     ? 'intermediate'
                     : difficulty === 'intermediate'
-                    ? 'master'
-                    : 'beginner';
+                      ? 'master'
+                      : 'beginner';
                 handleDifficultyChange(nextDiff);
               }}
               className="cw-modal-btn-primary"

@@ -4,11 +4,7 @@ import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
-  DIFFICULTIES,
-  DIFFICULTY_PRESETS,
-  CODE_LENGTH,
   getSymbol,
-  getColor,
   getPalette,
   generateSecretCode,
   evaluateGuess,
@@ -16,11 +12,6 @@ import {
 } from '../utils/mastermindLogic.js'
 import { playTap, playChime } from '../utils/audio.js'
 
-/**
- * Clean geometric stroke SVGs (monochrome #eaeaea, fill: none).
- * Base 6: circle, square, triangle, diamond, plus, hexagon
- * Master tier extra 2: star, ring
- */
 function SymbolIcon({ id, size = 18, strokeWidth = 1.8 }) {
   const common = {
     width: size,
@@ -88,26 +79,28 @@ function SymbolIcon({ id, size = 18, strokeWidth = 1.8 }) {
   }
 }
 
+const MASTERMIND_CONFIGS = {
+  gentle: { slots: 4, paletteSize: 6, maxAttempts: 10, allowDuplicates: false },
+  standard: { slots: 4, paletteSize: 6, maxAttempts: 8, allowDuplicates: true },
+  deep: { slots: 5, paletteSize: 8, maxAttempts: 10, allowDuplicates: true },
+}
+
 export function MastermindScreen({ onBack } = {}) {
-  const [difficulty, setDifficulty] = useState('standard') // Default tier: Standard
-  const activePresets = DIFFICULTIES || DIFFICULTY_PRESETS
-  const difficultyConfig = activePresets[difficulty] || activePresets.standard
-  const currentPreset = difficultyConfig
-  const slotsCount = difficultyConfig.slots || CODE_LENGTH
+  const [difficulty, setDifficulty] = useState('standard')
+  const difficultyConfig = MASTERMIND_CONFIGS[difficulty] || MASTERMIND_CONFIGS.standard
 
   const [secret, setSecret] = useState(() => generateSecretCode(difficultyConfig))
-  const [history, setHistory] = useState([]) // Array of { guess: string[], exact: number, misplaced: number }
-  const [currentGuess, setCurrentGuess] = useState([]) // Array of symbol IDs
-  const [status, setStatus] = useState('in_progress') // 'in_progress' | 'won' | 'lost'
-  const [hint, setHint] = useState(null) // { message: string, symbolId?: string, slot?: number }
-  const [eliminatedSymbols, setEliminatedSymbols] = useState([]) // Symbol IDs known to be absent
-  const [revealedSlots, setRevealedSlots] = useState([]) // Slot indices revealed by hint
+  const [history, setHistory] = useState([])
+  const [currentGuess, setCurrentGuess] = useState([])
+  const [status, setStatus] = useState('in_progress')
+  const [hint, setHint] = useState(null)
+  const [eliminatedSymbols, setEliminatedSymbols] = useState([])
+  const [revealedSlots, setRevealedSlots] = useState([])
   const [showToast, setShowToast] = useState(false)
 
-  // Start new game with specified or current tier
   const startNewGame = useCallback((diffKey = difficulty) => {
     playTap()
-    const config = (DIFFICULTIES || DIFFICULTY_PRESETS)[diffKey] || (DIFFICULTIES || DIFFICULTY_PRESETS).hard
+    const config = MASTERMIND_CONFIGS[diffKey] || MASTERMIND_CONFIGS.standard
     setSecret(generateSecretCode(config))
     setHistory([])
     setCurrentGuess([])
@@ -118,14 +111,12 @@ export function MastermindScreen({ onBack } = {}) {
     setShowToast(false)
   }, [difficulty])
 
-  // Difficulty switch handler
   const handleDifficultyChange = (diffKey) => {
     if (diffKey === difficulty) return
     setDifficulty(diffKey)
     startNewGame(diffKey)
   }
 
-  // Back button handler
   const handleBack = useCallback(
     (e) => {
       if (e) e.preventDefault()
@@ -133,34 +124,30 @@ export function MastermindScreen({ onBack } = {}) {
       if (typeof onBack === 'function') {
         onBack()
       } else {
-        window.location.hash = '/briefing/mastermind'
+        window.location.hash = ''
       }
     },
     [onBack]
   )
 
-  // Add symbol to current guess
   const handleSelectSymbol = (symbolId) => {
     if (status !== 'in_progress' || currentGuess.length >= difficultyConfig.slots) return
     playTap()
     setCurrentGuess((prev) => [...prev, symbolId])
   }
 
-  // Remove specific symbol from active row
   const handleRemoveSlot = (index) => {
     if (status !== 'in_progress') return
     playTap()
     setCurrentGuess((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Backspace (remove last placed symbol)
   const handleBackspace = () => {
     if (status !== 'in_progress' || currentGuess.length === 0) return
     playTap()
     setCurrentGuess((prev) => prev.slice(0, -1))
   }
 
-  // Submit current guess
   const handleSubmit = () => {
     if (status !== 'in_progress' || currentGuess.length !== difficultyConfig.slots) return
     playTap()
@@ -192,41 +179,14 @@ export function MastermindScreen({ onBack } = {}) {
     }
   }
 
-  // Hint button handler
-  const handleHint = () => {
-    if (status !== 'in_progress') return
-    playTap()
-
-    const hintResult = getEliminationHint(
-      secret,
-      eliminatedSymbols,
-      revealedSlots,
-      difficultyConfig.paletteSize
-    )
-    setHint(hintResult)
-
-    const absentId = hintResult.symbolId || hintResult.colorId
-    if (hintResult.type === 'elimination' && absentId) {
-      setEliminatedSymbols((prev) =>
-        prev.includes(absentId) ? prev : [...prev, absentId]
-      )
-    } else if (hintResult.type === 'reveal' && typeof hintResult.slot === 'number') {
-      setRevealedSlots((prev) =>
-        prev.includes(hintResult.slot) ? prev : [...prev, hintResult.slot]
-      )
-    }
-  }
-
   const currentRow = history.length
   const isGameOver = status !== 'in_progress'
   const activePalette = getPalette(difficultyConfig.paletteSize)
 
   return (
     <div className="mm-page game-screen-container">
-      {/* ── Top Header Bar ──────────────────────────────────── */}
       <GameHeader title="Mastermind" onBack={handleBack} />
 
-      {/* ── Segmented Difficulty Selector ───────────────────── */}
       <DifficultyTabs
         currentTier={difficulty}
         onSelectTier={(tierId) => handleDifficultyChange(tierId)}
@@ -237,7 +197,6 @@ export function MastermindScreen({ onBack } = {}) {
         ]}
       />
 
-      {/* ── Secret Code Mystery Banner ───────────────────────── */}
       <div className="mm-secret-banner">
         <div className="mm-secret-row" aria-label="Secret Code">
           {secret.map((symbolId, i) => {
@@ -261,8 +220,8 @@ export function MastermindScreen({ onBack } = {}) {
           {status === 'won'
             ? `Code cracked in ${history.length} ${history.length === 1 ? 'attempt' : 'attempts'}.`
             : status === 'lost'
-            ? 'The secret sequence is revealed. Order awaits another attempt.'
-            : `Attempt ${currentRow + 1} of ${difficultyConfig.maxAttempts} — ${difficultyConfig.slots} slots, ${difficultyConfig.paletteSize} symbols${difficultyConfig.allowDuplicates ? ' (repeats allowed)' : ' (unique)'}.`}
+              ? 'The secret sequence is revealed. Order awaits another attempt.'
+              : `Attempt ${currentRow + 1} of ${difficultyConfig.maxAttempts} — ${difficultyConfig.slots} slots, ${difficultyConfig.paletteSize} symbols${difficultyConfig.allowDuplicates ? ' (repeats allowed)' : ' (unique)'}.`}
         </p>
 
         {hint && (
@@ -279,7 +238,6 @@ export function MastermindScreen({ onBack } = {}) {
         )}
       </div>
 
-      {/* ── Vertical Decoding Board (Dynamic Rows & Slots) ─────── */}
       <div className="mm-board-scroll">
         <div className="mm-board" role="region" aria-label="Decoding Rows">
           {Array.from({ length: difficultyConfig.maxAttempts }).map((_, rIndex) => {
@@ -290,16 +248,13 @@ export function MastermindScreen({ onBack } = {}) {
             return (
               <div
                 key={`row-${rIndex}`}
-                className={`mm-row${isActive ? ' mm-row--active' : ''}${
-                  isPast ? ' mm-row--past' : ''
-                }`}
+                className={`mm-row${isActive ? ' mm-row--active' : ''}${isPast ? ' mm-row--past' : ''
+                  }`}
               >
-                {/* Row Number */}
                 <span className="mm-row-num">
                   {String(rIndex + 1).padStart(2, '0')}
                 </span>
 
-                {/* Symbol Slots (4 or 5 slots based on active tier) */}
                 <div className="mm-slots-cluster">
                   {Array.from({ length: difficultyConfig.slots }).map((_, sIndex) => {
                     let slotSymbolId = null
@@ -318,11 +273,9 @@ export function MastermindScreen({ onBack } = {}) {
                       <button
                         key={`slot-${rIndex}-${sIndex}`}
                         type="button"
-                        className={`mm-slot${
-                          difficultyConfig.slots === 5 ? ' mm-slot--5' : ''
-                        }${slotSymbolId ? ' mm-slot--filled' : ' mm-slot--empty'}${
-                          isCurrentActiveSlot ? ' mm-slot--next' : ''
-                        }`}
+                        className={`mm-slot${difficultyConfig.slots === 5 ? ' mm-slot--5' : ''
+                          }${slotSymbolId ? ' mm-slot--filled' : ' mm-slot--empty'}${isCurrentActiveSlot ? ' mm-slot--next' : ''
+                          }`}
                         onClick={() => {
                           if (isActive && slotSymbolId) {
                             handleRemoveSlot(sIndex)
@@ -348,11 +301,9 @@ export function MastermindScreen({ onBack } = {}) {
                   })}
                 </div>
 
-                {/* Feedback Indicator Pips (Monochrome) */}
                 <div
-                  className={`mm-feedback-box${
-                    difficultyConfig.slots === 5 ? ' mm-feedback-box--5' : ''
-                  }`}
+                  className={`mm-feedback-box${difficultyConfig.slots === 5 ? ' mm-feedback-box--5' : ''
+                    }`}
                   aria-label={
                     rowData
                       ? `${rowData.exact} exact, ${rowData.misplaced} misplaced`
@@ -363,9 +314,9 @@ export function MastermindScreen({ onBack } = {}) {
                     let pipClass = 'mm-pip--empty'
                     if (rowData) {
                       if (pIndex < rowData.exact) {
-                        pipClass = 'mm-pip--exact' // Solid white dot
+                        pipClass = 'mm-pip--exact'
                       } else if (pIndex < rowData.exact + rowData.misplaced) {
-                        pipClass = 'mm-pip--misplaced' // Hollow ring
+                        pipClass = 'mm-pip--misplaced'
                       }
                     }
 
@@ -378,7 +329,6 @@ export function MastermindScreen({ onBack } = {}) {
         </div>
       </div>
 
-      {/* ── Bottom Symbol Selection Dock & Actions ─────────────── */}
       <footer className="mm-dock">
         {isGameOver ? (
           <div className="mm-gameover-actions">
@@ -392,11 +342,9 @@ export function MastermindScreen({ onBack } = {}) {
           </div>
         ) : (
           <div className="mm-input-panel">
-            {/* Dynamic Symbol Palette Tokens (6 or 8) */}
             <div
-              className={`mm-colors-row mm-symbols-row${
-                activePalette.length === 8 ? ' mm-colors-row--8 mm-symbols-row--8' : ''
-              }`}
+              className={`mm-colors-row mm-symbols-row${activePalette.length === 8 ? ' mm-colors-row--8 mm-symbols-row--8' : ''
+                }`}
               role="group"
               aria-label="Symbol Palette"
             >
@@ -407,13 +355,11 @@ export function MastermindScreen({ onBack } = {}) {
                   <button
                     key={s.id}
                     type="button"
-                    className={`mm-color-btn mm-symbol-btn${
-                      activePalette.length === 8 ? ' mm-color-btn--8 mm-symbol-btn--8' : ''
-                    }${isEliminated ? ' mm-color-btn--eliminated mm-symbol-btn--eliminated' : ''}`}
+                    className={`mm-color-btn mm-symbol-btn${activePalette.length === 8 ? ' mm-color-btn--8 mm-symbol-btn--8' : ''
+                      }${isEliminated ? ' mm-color-btn--eliminated mm-symbol-btn--eliminated' : ''}`}
                     onClick={() => handleSelectSymbol(s.id)}
-                    aria-label={`Select ${s.label}${
-                      isEliminated ? ' (Likely absent)' : ''
-                    }`}
+                    aria-label={`Select ${s.label}${isEliminated ? ' (Likely absent)' : ''
+                      }`}
                     title={s.label}
                   >
                     <SymbolIcon id={s.id} size={activePalette.length === 8 ? 16 : 19} />
@@ -423,7 +369,6 @@ export function MastermindScreen({ onBack } = {}) {
               })}
             </div>
 
-            {/* Bottom Actions: Backspace + Submit Guess */}
             <div className="mm-actions-row">
               <button
                 id="mm-undo-btn"
@@ -441,9 +386,8 @@ export function MastermindScreen({ onBack } = {}) {
               <button
                 id="mm-submit-btn"
                 type="button"
-                className={`mm-submit-btn${
-                  currentGuess.length === difficultyConfig.slots ? ' mm-submit-btn--ready' : ''
-                }`}
+                className={`mm-submit-btn${currentGuess.length === difficultyConfig.slots ? ' mm-submit-btn--ready' : ''
+                  }`}
                 onClick={handleSubmit}
                 disabled={currentGuess.length !== difficultyConfig.slots}
                 aria-label={`Submit ${difficultyConfig.slots}-symbol guess`}
@@ -455,7 +399,6 @@ export function MastermindScreen({ onBack } = {}) {
         )}
       </footer>
 
-      {/* ── Completion Toast ──────────────────────────────────── */}
       <div
         className={`mm-toast${showToast ? ' mm-toast--visible' : ''}`}
         role="status"
