@@ -32,6 +32,14 @@ const icons = {
       <circle cx="16" cy="16" r="1.4" />
     </>
   ),
+  deduction: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+    </>
+  ),
   words: (
     <>
       <path d="M5 7h14M5 12h10M5 17h7" />
@@ -181,11 +189,24 @@ const icons = {
       <path d="M8 6h8M6 8v8M18 8v8M8 18h8M8 8l8 8M16 8l-8 8" />
     </>
   ),
-  'arrow-puzzle': (
+  'lights-out': (
     <>
-      <path d="M5 12h14" />
-      <path d="M13 6l6 6-6 6" />
-      <path d="M5 6v12" strokeDasharray="2 2" />
+      <rect x="3" y="3" width="18" height="18" rx="1.5" />
+      <rect x="5.5" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="10.25" y="10.25" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="5.5" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+    </>
+  ),
+  lanterns: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="1.5" />
+      <rect x="5.5" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="5.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="10.25" y="10.25" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="5.5" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15" y="15" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
     </>
   ),
   'one-line': (

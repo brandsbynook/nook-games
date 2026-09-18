@@ -172,30 +172,30 @@ export const collections = [
         isPlayable: true,
       },
       {
-        id: 'untangle',
-        title: 'Untangle',
+        id: 'tower-of-hanoi',
+        title: 'Tower of Hanoi',
         category: 'sequence',
-        quote: 'Every knot has a geometry of release.',
-        about: 'Drag nodes of a planar graph until no two edges cross.',
-        bestFor: 'Spatial reasoning and graph intuition.',
-        origin: "Created by John Tantalo in 2005, inspired by Euler's 1736 planar graph theory.",
-        howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
+        quote: 'Recursion made physical.',
+        about: 'Move a stack of differently-sized discs from one rod to another, never placing a larger disc on a smaller one.',
+        bestFor: 'Recursive thinking and problem decomposition.',
+        origin: 'Invented by Édouard Lucas in 1883 with a legend of 64 golden discs marking the end of the world.',
+        howToPlay: 'Move one disc at a time. Never place a larger disc on a smaller one. Complete in 2ⁿ − 1 moves.',
         difficulty: 'Moderate',
-        timeEstimate: '5–20 min',
+        timeEstimate: '5–15 min',
         isPlayable: true,
       },
       {
-        id: 'arrow-puzzle',
-        title: 'Arrow Puzzle',
+        id: 'lights-out',
+        title: 'Lights Out',
         category: 'sequence',
-        description: 'Find the sequence to launch entangled arrows off the board without collisions.',
-        quote: 'Every arrow knows where it wants to point.',
-        about: 'Clear entangled arrows from the grid by launching unblocked arrows one by one along their flight trajectory.',
-        bestFor: 'Pattern recognition and logical flow.',
-        origin: 'Popularised in the mobile gaming era of the early 2010s as directional flow puzzles.',
-        howToPlay: 'Tap an unblocked arrow to launch it off the board. An arrow is blocked if another arrow lies in its forward flight path.',
+        description: 'Toggle lanterns into serene darkness.',
+        quote: 'Silence restored to the grid.',
+        about: 'Toggle tiles to invert their state and adjacent neighbors until all lights are dark tranquility.',
+        bestFor: 'Pattern logic and spatial deduction.',
+        origin: 'Invented by Tiger Electronics in 1995. Grounded in modulo-2 linear algebra.',
+        howToPlay: 'Tap any tile to toggle it and its orthogonal neighbors. Turn all lights off.',
         difficulty: 'Easy',
-        timeEstimate: '5–15 min',
+        timeEstimate: '2–10 min',
         isPlayable: true,
       },
       {
@@ -227,16 +227,16 @@ export const collections = [
     ],
   },
   {
-    id: 'words',
-    title: 'Words',
-    description: 'Expand your mind through language and structure.',
-    tagline: 'Expand your mind through language and structure.',
-    icon: 'words',
+    id: 'deduction',
+    title: 'Deduction',
+    description: 'Unravel patterns through quiet deductive reasoning.',
+    tagline: 'Unravel patterns through quiet deductive reasoning.',
+    icon: 'deduction',
     games: [
       {
         id: 'word-ladder',
         title: 'Word Ladder',
-        category: 'words',
+        category: 'deduction',
         quote: 'One letter at a time.',
         about: 'Transform one word into another by changing a single letter at each step through valid words.',
         bestFor: 'Vocabulary breadth and lateral thinking.',
@@ -249,7 +249,7 @@ export const collections = [
       {
         id: 'crossword',
         title: 'Crossword',
-        category: 'words',
+        category: 'deduction',
         quote: 'The intersection of knowledge and language.',
         about: 'Fill a grid of interlocking words using definitional or cryptic clues for Across and Down answers.',
         bestFor: 'Vocabulary, general knowledge, and wordplay.',
@@ -262,7 +262,7 @@ export const collections = [
       {
         id: 'anagrams',
         title: 'Anagrams',
-        category: 'words',
+        category: 'deduction',
         quote: 'Every word is hiding another word.',
         about: 'Rearrange a set of scrambled letters to discover all valid words hidden within them.',
         bestFor: 'Vocabulary and pattern recognition.',
@@ -275,7 +275,7 @@ export const collections = [
       {
         id: 'mastermind',
         title: 'Mastermind',
-        category: 'words',
+        category: 'deduction',
         quote: 'Every deduction narrows the realm of possibility.',
         about: 'Crack the hidden 4-color code through stepwise feedback and logical elimination.',
         bestFor: 'Deductive elimination and combinatorial reasoning.',
@@ -286,16 +286,16 @@ export const collections = [
         isPlayable: true,
       },
       {
-        id: 'tower-of-hanoi',
-        title: 'Tower of Hanoi',
-        category: 'words',
-        quote: 'Recursion made physical.',
-        about: 'Move a stack of differently-sized discs from one rod to another, never placing a larger disc on a smaller one.',
-        bestFor: 'Recursive thinking and problem decomposition.',
-        origin: 'Invented by Édouard Lucas in 1883 with a legend of 64 golden discs marking the end of the world.',
-        howToPlay: 'Move one disc at a time. Never place a larger disc on a smaller one. Complete in 2ⁿ − 1 moves.',
+        id: 'untangle',
+        title: 'Untangle',
+        category: 'deduction',
+        quote: 'Every knot has a geometry of release.',
+        about: 'Drag nodes of a planar graph until no two edges cross.',
+        bestFor: 'Spatial reasoning and graph intuition.',
+        origin: "Created by John Tantalo in 2005, inspired by Euler's 1736 planar graph theory.",
+        howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
         difficulty: 'Moderate',
-        timeEstimate: '5–15 min',
+        timeEstimate: '5–20 min',
         isPlayable: true,
       },
     ],
@@ -308,8 +308,13 @@ export function getCollection(id) {
   if (normalized === 'spatial') {
     return collections.find((c) => c.id === 'sequence') ?? null
   }
-  if (normalized === 'words-reasoning' || normalized === 'word-reasoning') {
-    return collections.find((c) => c.id === 'words') ?? null
+  if (
+    normalized === 'words' ||
+    normalized === 'words-reasoning' ||
+    normalized === 'word-reasoning' ||
+    normalized === 'reasoning'
+  ) {
+    return collections.find((c) => c.id === 'deduction') ?? null
   }
   return collections.find((collection) => collection.id === normalized) ?? null
 }

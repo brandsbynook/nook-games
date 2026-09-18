@@ -16,7 +16,7 @@ import NonogramScreen from './screens/NonogramScreen';
 import AnagramsScreen from './screens/AnagramsScreen';
 import CrosswordScreen from './screens/CrosswordScreen';
 import OneLineScreen from './screens/OneLineScreen';
-import ArrowPuzzleScreen from './screens/ArrowPuzzleScreen';
+import LightsOutScreen from './screens/LightsOutScreen.jsx';
 import { ChessScreen } from './screens/ChessScreen.jsx';
 import { KnightsTourScreen } from './screens/KnightsTourScreen.jsx';
 import { CheckersScreen } from './screens/CheckersScreen.jsx';
@@ -155,9 +155,9 @@ function parseRoute() {
       window.location.replace('#/collection/sequence')
       return { name: 'collection', id: 'sequence' }
     }
-    if (rawId === 'words-reasoning' || rawId === 'word-reasoning') {
-      window.location.replace('#/collection/words')
-      return { name: 'collection', id: 'words' }
+    if (rawId === 'words' || rawId === 'words-reasoning' || rawId === 'word-reasoning') {
+      window.location.replace('#/collection/deduction')
+      return { name: 'collection', id: 'deduction' }
     }
     return { name: 'collection', id: rawId }
   }
@@ -185,7 +185,7 @@ function parseRoute() {
     if (gameId === 'anagrams') return { name: 'play-anagrams' }
     if (gameId === 'crossword') return { name: 'play-crossword' }
     if (gameId === 'one-line') return { name: 'play-one-line' }
-    if (gameId === 'arrow-puzzle') return { name: 'play-arrow-puzzle' }
+    if (gameId === 'lights-out' || gameId === 'lanterns') return { name: 'play-lights-out' }
     if (gameId === 'chess') return { name: 'play-chess' }
     if (gameId === 'knights-tour' || gameId === 'knightstour') return { name: 'play-knights-tour' }
     if (gameId === 'checkers' || gameId === 'draughts') return { name: 'play-checkers' }
@@ -315,12 +315,14 @@ function parseRoute() {
   }
 
   if (
-    path === 'play/arrow-puzzle' ||
-    parts[0] === 'arrow-puzzle' ||
-    (parts[0] === 'game' && String(parts[1]).toLowerCase() === 'arrow-puzzle') ||
-    parts[0] === 'play-arrow-puzzle'
+    path === 'play/lights-out' ||
+    path === 'play/lanterns' ||
+    parts[0] === 'lights-out' ||
+    parts[0] === 'lanterns' ||
+    (parts[0] === 'game' && (String(parts[1]).toLowerCase() === 'lights-out' || String(parts[1]).toLowerCase() === 'lanterns')) ||
+    parts[0] === 'play-lights-out'
   ) {
-    return { name: 'play-arrow-puzzle' }
+    return { name: 'play-lights-out' }
   }
 
   if (parts[0] === 'game' && parts[1]) {
@@ -371,8 +373,8 @@ function Screen({ route }) {
     return <OneLineScreen onBack={() => navigate('briefing/one-line')} />
   }
 
-  if (route.name === 'play-arrow-puzzle') {
-    return <ArrowPuzzleScreen onBack={() => navigate('briefing/arrow-puzzle')} />
+  if (route.name === 'play-lights-out') {
+    return <LightsOutScreen onBack={() => navigate('briefing/lights-out')} />
   }
 
   if (route.name === 'play-shikaku') {
@@ -506,8 +508,8 @@ function AppContent() {
     return <OneLineScreen onBack={() => navigate('briefing/one-line')} />
   }
 
-  if (route.name === 'play-arrow-puzzle') {
-    return <ArrowPuzzleScreen onBack={() => navigate('briefing/arrow-puzzle')} />
+  if (route.name === 'play-lights-out') {
+    return <LightsOutScreen onBack={() => navigate('briefing/lights-out')} />
   }
 
   if (route.name === 'play-chess') {
