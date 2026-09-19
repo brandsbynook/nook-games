@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Icon } from '../icons.jsx';
 import { GameHeader } from '../components/GameHeader.jsx';
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
 import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -14,6 +15,8 @@ import {
   getClueCells,
   getNextCell,
   getPrevCell,
+  getHintCell,
+  getSolutionGrid,
   DIFFICULTIES,
 } from '../utils/crosswordLogic';
 
@@ -25,6 +28,8 @@ export function CrosswordScreen({ onBack }) {
   const totalLevels = useMemo(() => getPuzzleCount(difficulty), [difficulty]);
 
   const [playerGrid, setPlayerGrid] = useState(() => createPlayerGrid(puzzle));
+  const [history, setHistory] = useState(() => [createPlayerGrid(puzzle)]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedCell, setSelectedCell] = useState(() => {
     let first = { r: 0, c: 0 };
     if (puzzle && puzzle.gridSize && puzzle.grid) {
@@ -42,15 +47,38 @@ export function CrosswordScreen({ onBack }) {
   });
   const [direction, setDirection] = useState('across'); // 'across' | 'down'
   const [hasWon, setHasWon] = useState(false);
-  const [activeTab, setActiveTab] = useState('across'); // 'across' | 'down' for full clues list
-  const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
-  const [scratchText, setScratchText] = useState('');
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [isCluesDrawerOpen, setIsCluesDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState('across'); // 'across' | 'down'
+  const [isRevealModalOpen, setIsRevealModalOpen] = useState(false);
+  const [hintedCell, setHintedCell] = useState(null); // { r, c } | null
+
+  const hintTimeoutRef = useRef(null);
+  const isInspecting = historyIndex < history.length - 1;
+  const currentGrid = history[historyIndex] || playerGrid;
+
+  // Clear hint timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) {
+        clearTimeout(hintTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const resetForPuzzle = (p) => {
-    setPlayerGrid(createPlayerGrid(p));
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current);
+    }
+    const initialGrid = createPlayerGrid(p);
+    setPlayerGrid(initialGrid);
+    setHistory([initialGrid]);
+    setHistoryIndex(0);
     setHasWon(false);
-    setScratchText('');
-    setIsScratchpadOpen(false);
+    setIsRevealed(false);
+    setHintedCell(null);
+    setIsCluesDrawerOpen(false);
+    setIsRevealModalOpen(false);
 
     let firstCell = { r: 0, c: 0 };
     if (p && p.gridSize && p.grid) {
@@ -96,12 +124,30 @@ export function CrosswordScreen({ onBack }) {
     }
   };
 
+  const commitGrid = useCallback(
+    (newGrid) => {
+      const nextHistory = history.slice(0, historyIndex + 1);
+      nextHistory.push(newGrid);
+      setHistory(nextHistory);
+      setHistoryIndex(nextHistory.length - 1);
+      setPlayerGrid(newGrid);
+    },
+    [history, historyIndex]
+  );
+
   const handleReset = () => {
     if (!puzzle) return;
     playTap();
-    setPlayerGrid(createPlayerGrid(puzzle));
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current);
+    }
+    const initialGrid = createPlayerGrid(puzzle);
+    setPlayerGrid(initialGrid);
+    setHistory([initialGrid]);
+    setHistoryIndex(0);
     setHasWon(false);
-    setScratchText('');
+    setIsRevealed(false);
+    setHintedCell(null);
   };
 
   const handleBack = (e) => {
@@ -181,25 +227,21 @@ export function CrosswordScreen({ onBack }) {
   // Handle typing a character
   const handleInputChar = useCallback(
     (char) => {
-      if (hasWon || !puzzle || !puzzle.grid) return;
+      if (hasWon || isRevealed || !puzzle || !puzzle.grid) return;
 
       playTap();
-
-      if (isScratchpadOpen) {
-        setScratchText((prev) => (prev.length >= 15 ? prev : prev + char.toUpperCase()));
-        return;
-      }
 
       const upper = char.toUpperCase();
       const { r, c } = selectedCell;
 
       if (!puzzle.grid[r] || puzzle.grid[r][c] === '#') return;
 
-      const newGrid = playerGrid.map((rowArr, rowIdx) =>
+      const baseGrid = history[historyIndex] || playerGrid;
+      const newGrid = baseGrid.map((rowArr, rowIdx) =>
         rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? upper : val))
       );
 
-      setPlayerGrid(newGrid);
+      commitGrid(newGrid);
 
       if (isSolved(newGrid, puzzle)) {
         setHasWon(true);
@@ -213,80 +255,102 @@ export function CrosswordScreen({ onBack }) {
         setSelectedCell(next);
       }
     },
-    [hasWon, isScratchpadOpen, selectedCell, puzzle, playerGrid, direction]
+    [hasWon, isRevealed, selectedCell, puzzle, history, historyIndex, playerGrid, commitGrid, direction]
   );
 
   // Handle Backspace
   const handleBackspace = useCallback(() => {
-    if (hasWon || !playerGrid) return;
+    if (hasWon || isRevealed || !playerGrid) return;
 
     playTap();
 
-    if (isScratchpadOpen) {
-      setScratchText((prev) => prev.slice(0, -1));
-      return;
-    }
-
     const { r, c } = selectedCell;
-    const currentVal = playerGrid[r]?.[c];
+    const baseGrid = history[historyIndex] || playerGrid;
+    const currentVal = baseGrid[r]?.[c];
 
     if (currentVal !== '') {
-      const newGrid = playerGrid.map((rowArr, rowIdx) =>
+      const newGrid = baseGrid.map((rowArr, rowIdx) =>
         rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? '' : val))
       );
-      setPlayerGrid(newGrid);
+      commitGrid(newGrid);
     } else {
       const prev = getPrevCell(r, c, direction, puzzle);
       if (prev && (prev.r !== r || prev.c !== c)) {
-        const newGrid = playerGrid.map((rowArr, rowIdx) =>
+        const newGrid = baseGrid.map((rowArr, rowIdx) =>
           rowArr.map((val, colIdx) => (rowIdx === prev.r && colIdx === prev.c ? '' : val))
         );
-        setPlayerGrid(newGrid);
+        commitGrid(newGrid);
         setSelectedCell(prev);
       }
     }
-  }, [hasWon, isScratchpadOpen, selectedCell, playerGrid, direction, puzzle]);
+  }, [hasWon, isRevealed, selectedCell, history, historyIndex, playerGrid, commitGrid, direction, puzzle]);
 
   // Handle Clear active word
   const handleClearWord = useCallback(() => {
-    if (!activeClue || hasWon || !playerGrid) return;
+    if (!activeClue || hasWon || isRevealed || !playerGrid) return;
+    playTap();
     const cellsToClear = getClueCells(activeClue, direction);
-    const newGrid = playerGrid.map((rowArr, r) =>
+    const baseGrid = history[historyIndex] || playerGrid;
+    const newGrid = baseGrid.map((rowArr, r) =>
       rowArr.map((val, c) =>
         cellsToClear.some((cell) => cell.r === r && cell.c === c) ? '' : val
       )
     );
-    setPlayerGrid(newGrid);
-  }, [activeClue, direction, hasWon, playerGrid]);
+    commitGrid(newGrid);
+  }, [activeClue, direction, hasWon, isRevealed, history, historyIndex, playerGrid, commitGrid]);
 
-  // Transfer rough word from scratchpad
-  const handleTransferScratchpad = useCallback(() => {
-    if (!activeClue || !scratchText || hasWon || !playerGrid || !puzzle) return;
+  // Handle Hint
+  const handleHint = useCallback(() => {
+    if (hasWon || isRevealed || !puzzle || !puzzle.grid) return;
 
-    const cellsToFill = getClueCells(activeClue, direction);
-    const chars = scratchText.toUpperCase().split('');
+    const baseGrid = history[historyIndex] || playerGrid;
+    const hint = getHintCell(baseGrid, puzzle, selectedCell, direction);
+    if (!hint) return;
 
-    const newGrid = playerGrid.map((rowArr, r) =>
-      rowArr.map((val, c) => {
-        const charIdx = cellsToFill.findIndex((cell) => cell.r === r && cell.c === c);
-        if (charIdx !== -1 && charIdx < chars.length) {
-          return chars[charIdx];
-        }
-        return val;
-      })
+    playTap();
+
+    const { r, c, char } = hint;
+    const newGrid = baseGrid.map((rowArr, rowIdx) =>
+      rowArr.map((val, colIdx) => (rowIdx === r && colIdx === c ? char : val))
     );
 
-    setPlayerGrid(newGrid);
+    commitGrid(newGrid);
+    setSelectedCell({ r, c });
+    setHintedCell({ r, c });
+
+    if (hintTimeoutRef.current) {
+      clearTimeout(hintTimeoutRef.current);
+    }
+    hintTimeoutRef.current = setTimeout(() => {
+      setHintedCell(null);
+    }, 1200);
 
     if (isSolved(newGrid, puzzle)) {
       setHasWon(true);
       playChime();
       recordGameSession('crossword', true);
     }
+  }, [hasWon, isRevealed, puzzle, history, historyIndex, playerGrid, selectedCell, direction, commitGrid]);
 
-    setScratchText('');
-    setIsScratchpadOpen(false);
-  }, [activeClue, direction, scratchText, hasWon, playerGrid, puzzle]);
+  // Handle Reveal Solution
+  const handleOpenRevealModal = () => {
+    if (hasWon || isRevealed) return;
+    playTap();
+    setIsRevealModalOpen(true);
+  };
+
+  const handleConfirmReveal = () => {
+    if (!puzzle) return;
+    playTap();
+    const solution = getSolutionGrid(puzzle);
+    const nextHistory = history.slice(0, historyIndex + 1);
+    nextHistory.push(solution);
+    setHistory(nextHistory);
+    setHistoryIndex(nextHistory.length - 1);
+    setPlayerGrid(solution);
+    setIsRevealed(true);
+    setIsRevealModalOpen(false);
+  };
 
   // Cycle clues
   const handleNextClue = useCallback(() => {
@@ -301,10 +365,10 @@ export function CrosswordScreen({ onBack }) {
 
     if (nextClue) {
       const cells = getClueCells(nextClue, direction);
-      const firstEmpty = cells.find((cell) => !playerGrid[cell.r]?.[cell.c]) || cells[0];
+      const firstEmpty = cells.find((cell) => !currentGrid[cell.r]?.[cell.c]) || cells[0];
       setSelectedCell(firstEmpty);
     }
-  }, [puzzle, direction, activeClue, playerGrid]);
+  }, [puzzle, direction, activeClue, currentGrid]);
 
   const handlePrevClue = useCallback(() => {
     if (!puzzle || !puzzle.clues) return;
@@ -318,15 +382,15 @@ export function CrosswordScreen({ onBack }) {
 
     if (prevClue) {
       const cells = getClueCells(prevClue, direction);
-      const firstEmpty = cells.find((cell) => !playerGrid[cell.r]?.[cell.c]) || cells[0];
+      const firstEmpty = cells.find((cell) => !currentGrid[cell.r]?.[cell.c]) || cells[0];
       setSelectedCell(firstEmpty);
     }
-  }, [puzzle, direction, activeClue, playerGrid]);
+  }, [puzzle, direction, activeClue, currentGrid]);
 
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (hasWon || !puzzle || !puzzle.gridSize) return;
+      if (hasWon || isRevealed || !puzzle || !puzzle.gridSize) return;
 
       if (/^[a-zA-Z]$/.test(e.key)) {
         e.preventDefault();
@@ -335,16 +399,14 @@ export function CrosswordScreen({ onBack }) {
         e.preventDefault();
         handleBackspace();
       } else if (e.key === 'Escape') {
-        if (isScratchpadOpen) {
+        if (isCluesDrawerOpen) {
           e.preventDefault();
-          setIsScratchpadOpen(false);
-        }
-      } else if (e.key === 'Enter') {
-        if (isScratchpadOpen && scratchText.length > 0) {
+          setIsCluesDrawerOpen(false);
+        } else if (isRevealModalOpen) {
           e.preventDefault();
-          handleTransferScratchpad();
+          setIsRevealModalOpen(false);
         }
-      } else if (!isScratchpadOpen) {
+      } else if (!isCluesDrawerOpen && !isRevealModalOpen) {
         if (e.key === 'Tab' || e.key === ' ') {
           e.preventDefault();
           const key = `${selectedCell.r}-${selectedCell.c}`;
@@ -389,22 +451,23 @@ export function CrosswordScreen({ onBack }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     hasWon,
-    isScratchpadOpen,
-    scratchText,
+    isRevealed,
+    isCluesDrawerOpen,
+    isRevealModalOpen,
     handleInputChar,
     handleBackspace,
-    handleTransferScratchpad,
     selectedCell,
     puzzle,
     direction,
   ]);
 
-  const handleSelectClue = (clue, dir) => {
+  const handleSelectClueFromDrawer = (clue, dir) => {
     playTap();
     const cells = getClueCells(clue, dir);
-    const firstEmpty = cells.find((cell) => !playerGrid[cell.r]?.[cell.c]) || cells[0];
+    const firstEmpty = cells.find((cell) => !currentGrid[cell.r]?.[cell.c]) || cells[0];
     setSelectedCell(firstEmpty);
     setDirection(dir);
+    setIsCluesDrawerOpen(false);
   };
 
   const keyboardRows = [
@@ -425,6 +488,7 @@ export function CrosswordScreen({ onBack }) {
   }
 
   const clueNum = activeClue?.num || activeClue?.number || '';
+  const clueAnsLen = activeClue?.answer?.length ? ` (${activeClue.answer.length})` : '';
 
   return (
     <div className="cw-container game-screen-container">
@@ -467,6 +531,13 @@ export function CrosswordScreen({ onBack }) {
         </button>
       </div>
 
+      {isRevealed && (
+        <div className="cw-revealed-indicator" role="status">
+          <Icon name="eye" size={14} />
+          <span>Solution Revealed &bull; Peaceful Study Mode</span>
+        </div>
+      )}
+
       <div
         className="cw-grid"
         style={{
@@ -481,7 +552,8 @@ export function CrosswordScreen({ onBack }) {
             const inActiveWord = activeWordSet.has(`${r}-${c}`);
             const inCrossingWord = crossingWordSet.has(`${r}-${c}`);
             const cellNum = puzzle.cellNumbers ? puzzle.cellNumbers[`${r}-${c}`] : null;
-            const val = playerGrid[r]?.[c] || '';
+            const val = currentGrid[r]?.[c] || '';
+            const isHinted = hintedCell?.r === r && hintedCell?.c === c;
 
             if (isBlack) {
               return (
@@ -500,6 +572,9 @@ export function CrosswordScreen({ onBack }) {
               cellClass += ' cw-cell--active-word';
             } else if (inCrossingWord) {
               cellClass += ' cw-cell--crossing-word';
+            }
+            if (isHinted) {
+              cellClass += ' cw-cell--hint-flash';
             }
 
             return (
@@ -527,29 +602,27 @@ export function CrosswordScreen({ onBack }) {
           ‹
         </button>
 
-        <div
+        <button
+          type="button"
           onClick={() => {
-            const key = `${selectedCell.r}-${selectedCell.c}`;
-            const cellInfo = puzzle.cellClues ? puzzle.cellClues[key] : null;
-            const otherDir = direction === 'across' ? 'down' : 'across';
-            if (cellInfo && cellInfo[otherDir]) {
-              playTap();
-              setDirection(otherDir);
-            }
+            playTap();
+            setDrawerTab(direction);
+            setIsCluesDrawerOpen(true);
           }}
           className="cw-clue-content"
+          aria-label="Open Full Clues List"
         >
           {activeClue ? (
             <>
               <span className="cw-clue-badge">
-                {clueNum} {direction}
+                {clueNum} {direction}{clueAnsLen}
               </span>
               <span className="cw-clue-text">{activeClue.clue}</span>
             </>
           ) : (
-            <span className="cw-clue-text">Tap a cell to view clue</span>
+            <span className="cw-clue-text">Tap to view all clues</span>
           )}
-        </div>
+        </button>
 
         <button
           type="button"
@@ -559,41 +632,22 @@ export function CrosswordScreen({ onBack }) {
         >
           ›
         </button>
-      </div>
 
-      {isScratchpadOpen && (
-        <div className="cw-scratchpad">
-          <span className="cw-scratchpad-label">ROUGH:</span>
-          <div className="cw-scratchpad-display">
-            {scratchText ? (
-              <span className="cw-scratchpad-text">{scratchText}</span>
-            ) : (
-              <span className="cw-scratchpad-placeholder">Type to test...</span>
-            )}
-            <span className="cw-scratchpad-cursor" />
-          </div>
-          {scratchText.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setScratchText('')}
-              className="cw-scratchpad-clear-btn"
-              title="Clear rough text"
-              aria-label="Clear rough text"
-            >
-              ×
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleTransferScratchpad}
-            disabled={!scratchText || !activeClue}
-            className="cw-scratchpad-transfer-btn"
-            title="Transfer to current grid word"
-          >
-            Transfer
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          onClick={() => {
+            playTap();
+            setDrawerTab(direction);
+            setIsCluesDrawerOpen(true);
+          }}
+          className="cw-clue-all-btn"
+          aria-label="Open Full Clues List"
+          title="All Clues"
+        >
+          <Icon name="list" size={16} />
+          <span>Clues</span>
+        </button>
+      </div>
 
       <div className="cw-keyboard">
         {keyboardRows.map((row, rowIdx) => (
@@ -601,9 +655,10 @@ export function CrosswordScreen({ onBack }) {
             {rowIdx === 2 && (
               <button
                 type="button"
-                onClick={isScratchpadOpen ? () => setScratchText('') : handleClearWord}
+                onClick={handleClearWord}
                 className="cw-key-btn cw-key-btn--special"
-                title={isScratchpadOpen ? 'Clear rough text' : 'Clear current word'}
+                title="Clear current word"
+                disabled={isRevealed || isInspecting}
               >
                 Clear
               </button>
@@ -615,6 +670,7 @@ export function CrosswordScreen({ onBack }) {
                 type="button"
                 onClick={() => handleInputChar(char)}
                 className="cw-key-btn"
+                disabled={isRevealed || isInspecting}
               >
                 {char}
               </button>
@@ -626,6 +682,7 @@ export function CrosswordScreen({ onBack }) {
                 onClick={handleBackspace}
                 className="cw-key-btn cw-key-btn--special"
                 title="Backspace"
+                disabled={isRevealed || isInspecting}
               >
                 ⌫
               </button>
@@ -634,117 +691,193 @@ export function CrosswordScreen({ onBack }) {
         ))}
       </div>
 
-      <GameFooterActions onReset={handleReset} resetLabel="Reset">
-        <button
-          type="button"
-          className={`game-action-btn ${isScratchpadOpen ? 'game-action-btn--active' : ''}`}
-          onClick={() => setIsScratchpadOpen((prev) => !prev)}
-          aria-label="Notes / Scratchpad"
-        >
-          <Icon name="pencil" size={16} />
-          <span>Notes</span>
-        </button>
+      <GameFooterActions
+        onReset={handleReset}
+        resetLabel="Reset"
+        onHint={handleHint}
+        hintLabel="Hint"
+        canHint={!hasWon && !isRevealed && !isInspecting}
+        onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+        onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+        canStepBack={historyIndex > 0}
+        canStepForward={historyIndex < history.length - 1}
+        stepIndicator={history.length > 1 ? `${historyIndex + 1}/${history.length}` : null}
+        isInspecting={isInspecting}
+        onExitInspection={() => setHistoryIndex(history.length - 1)}
+      >
         <button
           type="button"
           className="game-action-btn"
-          onClick={handleClearWord}
-          aria-label="Clear Word"
+          onClick={handleOpenRevealModal}
+          disabled={hasWon || isRevealed}
+          aria-label="Reveal Solution"
         >
-          <Icon name="erase" size={16} />
-          <span>Clear</span>
+          <Icon name="eye" size={16} />
+          <span>Reveal</span>
         </button>
       </GameFooterActions>
 
-      <div className="cw-clues-section">
-        <div className="cw-clues-tabs">
-          <button
-            type="button"
-            onClick={() => {
-              playTap();
-              setActiveTab('across');
-            }}
-            className={`cw-clues-tab-btn ${activeTab === 'across' ? 'active' : ''}`}
+      {/* ── Full Clue Drawer / Modal ── */}
+      {isCluesDrawerOpen && (
+        <div
+          className="cw-drawer-backdrop"
+          onClick={() => {
+            playTap();
+            setIsCluesDrawerOpen(false);
+          }}
+        >
+          <div
+            className="cw-drawer"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="All Clues"
           >
-            Across ({puzzle.clues?.across?.length || 0})
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playTap();
-              setActiveTab('down');
-            }}
-            className={`cw-clues-tab-btn ${activeTab === 'down' ? 'active' : ''}`}
-          >
-            Down ({puzzle.clues?.down?.length || 0})
-          </button>
-        </div>
-
-        <div className="cw-clues-list">
-          {(puzzle.clues?.[activeTab] || []).map((clue) => {
-            const isSolvedItem = isClueSolved(clue, activeTab, playerGrid);
-            const cNum = clue.num || clue.number;
-            const aNum = activeClue?.num || activeClue?.number;
-            const isSelectedClue = aNum === cNum && direction === activeTab;
-
-            return (
-              <div
-                key={`${cNum}-${activeTab}`}
-                onClick={() => handleSelectClue(clue, activeTab)}
-                className={`cw-clue-item ${isSelectedClue ? 'active' : ''} ${
-                  isSolvedItem ? 'solved' : ''
-                }`}
-              >
-                <span className="cw-clue-num">{cNum}.</span>
-                <span className="cw-clue-text-item">{clue.clue}</span>
+            <div className="cw-drawer-header">
+              <div className="cw-drawer-header-left">
+                <Icon name="list" size={16} />
+                <h3 className="cw-drawer-title">All Clues</h3>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {hasWon && (
-        <div className="cw-modal-backdrop">
-          <div className="cw-modal-card">
-            <div className="cw-modal-icon">✓</div>
-            <h2 className="cw-modal-title">Grid Solved</h2>
-            <p className="cw-modal-desc">
-              You completed &ldquo;{puzzle.title}&rdquo; cleanly.
-            </p>
-            {levelIndex < totalLevels - 1 ? (
               <button
                 type="button"
-                onClick={handleNextLevel}
-                className="cw-modal-btn-primary"
+                className="cw-drawer-close-btn"
+                onClick={() => {
+                  playTap();
+                  setIsCluesDrawerOpen(false);
+                }}
+                aria-label="Close clues drawer"
               >
-                Next Level
+                ✕
               </button>
-            ) : (
+            </div>
+
+            <div className="cw-drawer-tabs">
               <button
                 type="button"
                 onClick={() => {
-                  const nextDiff =
-                    difficulty === 'gentle'
-                      ? 'standard'
-                      : difficulty === 'standard'
-                        ? 'deep'
-                        : 'gentle';
-                  handleDifficultyChange(nextDiff);
+                  playTap();
+                  setDrawerTab('across');
                 }}
-                className="cw-modal-btn-primary"
+                className={`cw-drawer-tab-btn ${drawerTab === 'across' ? 'active' : ''}`}
               >
-                Next Difficulty
+                Across ({puzzle.clues?.across?.length || 0})
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => {
+                  playTap();
+                  setDrawerTab('down');
+                }}
+                className={`cw-drawer-tab-btn ${drawerTab === 'down' ? 'active' : ''}`}
+              >
+                Down ({puzzle.clues?.down?.length || 0})
+              </button>
+            </div>
+
+            <div className="cw-drawer-clues-list">
+              {(puzzle.clues?.[drawerTab] || []).map((clue) => {
+                const isSolvedItem = isClueSolved(clue, drawerTab, currentGrid);
+                const cNum = clue.num || clue.number;
+                const aNum = activeClue?.num || activeClue?.number;
+                const isSelectedClue = aNum === cNum && direction === drawerTab;
+                const ansLen = clue.answer?.length || 0;
+
+                return (
+                  <button
+                    key={`${cNum}-${drawerTab}`}
+                    type="button"
+                    onClick={() => handleSelectClueFromDrawer(clue, drawerTab)}
+                    className={`cw-drawer-clue-item ${isSelectedClue ? 'active' : ''} ${
+                      isSolvedItem ? 'solved' : ''
+                    }`}
+                  >
+                    <span className="cw-drawer-clue-num">{cNum}.</span>
+                    <span className="cw-drawer-clue-text">
+                      {clue.clue} <span className="cw-drawer-clue-len">({ansLen})</span>
+                    </span>
+                    {isSolvedItem && (
+                      <span className="cw-drawer-clue-check" aria-label="Completed">
+                        <Icon name="check" size={14} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reveal Confirmation Modal ── */}
+      {isRevealModalOpen && (
+        <div
+          className="cw-modal-backdrop"
+          onClick={() => {
+            playTap();
+            setIsRevealModalOpen(false);
+          }}
+        >
+          <div
+            className="cw-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="reveal-modal-title"
+          >
+            <div className="cw-modal-icon">
+              <Icon name="eye" size={20} />
+            </div>
+            <h2 id="reveal-modal-title" className="cw-modal-title">
+              Reveal Solution?
+            </h2>
+            <p className="cw-modal-desc">
+              This will populate the full grid with all correct solution letters for peaceful study.
+            </p>
             <button
               type="button"
-              onClick={handleReset}
+              onClick={handleConfirmReveal}
+              className="cw-modal-btn-primary"
+            >
+              Reveal All
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                playTap();
+                setIsRevealModalOpen(false);
+              }}
               className="cw-modal-btn-secondary"
             >
-              Replay Puzzle
+              Cancel
             </button>
           </div>
         </div>
       )}
+
+      {/* ── Universal Victory / Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={hasWon && !isRevealed}
+        title="Grid Solved"
+        description={`You completed "${puzzle.title || 'Crossword'}" cleanly.`}
+        icon="✓"
+        onNext={
+          levelIndex < totalLevels - 1
+            ? handleNextLevel
+            : () => {
+                const nextDiff =
+                  difficulty === 'gentle'
+                    ? 'standard'
+                    : difficulty === 'standard'
+                      ? 'deep'
+                      : 'gentle';
+                handleDifficultyChange(nextDiff);
+              }
+        }
+        nextLabel={levelIndex < totalLevels - 1 ? 'Next Level' : 'Next Difficulty'}
+        onReplay={handleReset}
+        replayLabel="Replay Puzzle"
+        reviewLabel="Review Grid"
+      />
     </div>
   );
 }

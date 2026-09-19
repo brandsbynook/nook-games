@@ -2634,3 +2634,69 @@ export function getPrevCell(r, c, direction, puzzle) {
   }
   return { r, c };
 }
+
+/**
+ * Resolves a hint cell for the crossword.
+ * Priority:
+ * 1. Currently selected cell if empty or incorrect.
+ * 2. First empty or incorrect cell in the active word.
+ * 3. First empty or incorrect cell in the entire grid.
+ */
+export function getHintCell(playerGrid, puzzle, selectedCell, direction = 'across') {
+  if (!puzzle || !puzzle.grid || !playerGrid) return null;
+
+  const { rows, cols } = puzzle.gridSize;
+
+  // 1. Check selected cell
+  if (selectedCell && selectedCell.r >= 0 && selectedCell.c >= 0) {
+    const { r, c } = selectedCell;
+    if (puzzle.grid[r]?.[c] && puzzle.grid[r][c] !== '#') {
+      const current = (playerGrid[r]?.[c] || '').toUpperCase();
+      const target = (puzzle.grid[r][c] || '').toUpperCase();
+      if (current !== target) {
+        return { r, c, char: target };
+      }
+    }
+  }
+
+  // 2. Check active word
+  if (selectedCell && puzzle.cellClues) {
+    const key = `${selectedCell.r}-${selectedCell.c}`;
+    const clue = puzzle.cellClues[key]?.[direction] || puzzle.cellClues[key]?.across || puzzle.cellClues[key]?.down;
+    if (clue) {
+      const cells = getClueCells(clue, direction);
+      for (const cell of cells) {
+        const current = (playerGrid[cell.r]?.[cell.c] || '').toUpperCase();
+        const target = (puzzle.grid[cell.r]?.[cell.c] || '').toUpperCase();
+        if (current !== target) {
+          return { r: cell.r, c: cell.c, char: target };
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: Search the entire grid
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (puzzle.grid[r]?.[c] === '#') continue;
+      const current = (playerGrid[r]?.[c] || '').toUpperCase();
+      const target = (puzzle.grid[r]?.[c] || '').toUpperCase();
+      if (current !== target) {
+        return { r, c, char: target };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Returns a fully solved grid for the puzzle.
+ */
+export function getSolutionGrid(puzzle) {
+  if (!puzzle || !puzzle.grid || !puzzle.gridSize) return [];
+  const { rows, cols } = puzzle.gridSize;
+  return Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => (puzzle.grid[r][c] === '#' ? '#' : puzzle.grid[r][c].toUpperCase()))
+  );
+}
