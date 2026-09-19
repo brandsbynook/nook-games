@@ -7,20 +7,6 @@ export const collections = [
     icon: 'strategy',
     games: [
       {
-        id: 'knights-tour',
-        title: "Knight's Tour",
-        category: 'strategy',
-        description: 'Traverse every square on the board once and only once using pure knight jumps.',
-        quote: 'Every square, visited once.',
-        about: 'Move a chess knight to visit every square on the board exactly once — a Hamiltonian path problem.',
-        bestFor: 'Algorithmic thinking and spatial memory.',
-        origin: 'Recorded as early as the 9th century in Arabic manuscripts. Euler found a closed tour in 1759.',
-        howToPlay: 'Place a knight and move it in L-shapes. Visit every square exactly once.',
-        difficulty: 'Hard',
-        timeEstimate: '15–40 min',
-        isPlayable: true,
-      },
-      {
         id: 'chess',
         title: 'Chess',
         category: 'strategy',
@@ -32,6 +18,33 @@ export const collections = [
         howToPlay: "Move pieces according to their unique rules. Threaten the opponent's king with inevitable capture.",
         difficulty: 'Hard',
         timeEstimate: '15–90 min',
+        isPlayable: true,
+      },
+      {
+        id: 'checkers',
+        title: 'Checkers',
+        category: 'strategy',
+        description: 'Classic draughts. Maneuver across diagonals and crown your pieces in quiet focus.',
+        quote: 'The diagonal world has its own laws.',
+        about: 'Move pieces diagonally and jump over opponents. Reach the far side to become a King.',
+        bestFor: 'Tactical captures and forward planning.',
+        origin: 'Descended from Alquerque (Egypt, ~1400 BCE). Computationally solved by Jonathan Schaeffer in 2007.',
+        howToPlay: 'Move diagonally forward. Capture by jumping over opponent pieces. Kings move in any diagonal direction.',
+        difficulty: 'Easy',
+        timeEstimate: '10–20 min',
+        isPlayable: true,
+      },
+      {
+        id: 'reversi',
+        title: 'Reversi',
+        category: 'strategy',
+        quote: 'To place is to transform.',
+        about: 'Place discs to flip all opponent discs flanked between yours. The player with most discs wins.',
+        bestFor: 'Tactical thinking and positional awareness.',
+        origin: 'Invented in England in 1883; repackaged as Othello in Japan in 1971.',
+        howToPlay: 'Place a disc so it flanks opponent discs in a line. All flanked discs flip to your colour.',
+        difficulty: 'Moderate',
+        timeEstimate: '10–30 min',
         isPlayable: true,
       },
       {
@@ -49,30 +62,17 @@ export const collections = [
         isPlayable: true,
       },
       {
-        id: 'reversi',
-        title: 'Reversi',
+        id: 'knights-tour',
+        title: "Knight's Tour",
         category: 'strategy',
-        quote: 'To place is to transform.',
-        about: 'Place discs to flip all opponent discs flanked between yours. The player with most discs wins.',
-        bestFor: 'Tactical thinking and positional awareness.',
-        origin: 'Invented in England in 1883; repackaged as Othello in Japan in 1971.',
-        howToPlay: 'Place a disc so it flanks opponent discs in a line. All flanked discs flip to your colour.',
-        difficulty: 'Moderate',
-        timeEstimate: '10–30 min',
-        isPlayable: true,
-      },
-      {
-        id: 'checkers',
-        title: 'Checkers',
-        category: 'strategy',
-        description: 'Classic draughts. Maneuver across diagonals and crown your pieces in quiet focus.',
-        quote: 'The diagonal world has its own laws.',
-        about: 'Move pieces diagonally and jump over opponents. Reach the far side to become a King.',
-        bestFor: 'Tactical captures and forward planning.',
-        origin: 'Descended from Alquerque (Egypt, ~1400 BCE). Computationally solved by Jonathan Schaeffer in 2007.',
-        howToPlay: 'Move diagonally forward. Capture by jumping over opponent pieces. Kings move in any diagonal direction.',
-        difficulty: 'Easy',
-        timeEstimate: '10–20 min',
+        description: 'Traverse every square on the board once and only once using pure knight jumps.',
+        quote: 'Every square, visited once.',
+        about: 'Move a chess knight to visit every square on the board exactly once — a Hamiltonian path problem.',
+        bestFor: 'Algorithmic thinking and spatial memory.',
+        origin: 'Recorded as early as the 9th century in Arabic manuscripts. Euler found a closed tour in 1759.',
+        howToPlay: 'Place a knight and move it in L-shapes. Visit every square exactly once.',
+        difficulty: 'Hard',
+        timeEstimate: '15–40 min',
         isPlayable: true,
       },
     ],
@@ -185,20 +185,6 @@ export const collections = [
         isPlayable: true,
       },
       {
-        id: 'lights-out',
-        title: 'Lights Out',
-        category: 'sequence',
-        description: 'Toggle lanterns into serene darkness.',
-        quote: 'Silence restored to the grid.',
-        about: 'Toggle tiles to invert their state and adjacent neighbors until all lights are dark tranquility.',
-        bestFor: 'Pattern logic and spatial deduction.',
-        origin: 'Invented by Tiger Electronics in 1995. Grounded in modulo-2 linear algebra.',
-        howToPlay: 'Tap any tile to toggle it and its orthogonal neighbors. Turn all lights off.',
-        difficulty: 'Easy',
-        timeEstimate: '2–10 min',
-        isPlayable: true,
-      },
-      {
         id: 'one-line',
         title: 'One Line',
         category: 'sequence',
@@ -224,19 +210,32 @@ export const collections = [
         timeEstimate: '5–30 min',
         isPlayable: true,
       },
+      {
+        id: 'untangle',
+        title: 'Untangle',
+        category: 'sequence',
+        quote: 'Every knot has a geometry of release.',
+        about: 'Drag nodes of a planar graph until no two edges cross.',
+        bestFor: 'Spatial reasoning and graph intuition.',
+        origin: "Created by John Tantalo in 2005, inspired by Euler's 1736 planar graph theory.",
+        howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
+        difficulty: 'Moderate',
+        timeEstimate: '5–20 min',
+        isPlayable: true,
+      },
     ],
   },
   {
-    id: 'deduction',
-    title: 'Deduction',
-    description: 'Unravel patterns through quiet deductive reasoning.',
-    tagline: 'Unravel patterns through quiet deductive reasoning.',
-    icon: 'deduction',
+    id: 'cipher',
+    title: 'Cipher',
+    description: 'Decipher clues. Crack patterns.',
+    tagline: 'Decipher clues. Crack patterns.',
+    icon: 'cipher',
     games: [
       {
         id: 'word-ladder',
         title: 'Word Ladder',
-        category: 'deduction',
+        category: 'cipher',
         quote: 'One letter at a time.',
         about: 'Transform one word into another by changing a single letter at each step through valid words.',
         bestFor: 'Vocabulary breadth and lateral thinking.',
@@ -249,7 +248,7 @@ export const collections = [
       {
         id: 'crossword',
         title: 'Crossword',
-        category: 'deduction',
+        category: 'cipher',
         quote: 'The intersection of knowledge and language.',
         about: 'Fill a grid of interlocking words using definitional or cryptic clues for Across and Down answers.',
         bestFor: 'Vocabulary, general knowledge, and wordplay.',
@@ -262,7 +261,7 @@ export const collections = [
       {
         id: 'anagrams',
         title: 'Anagrams',
-        category: 'deduction',
+        category: 'cipher',
         quote: 'Every word is hiding another word.',
         about: 'Rearrange a set of scrambled letters to discover all valid words hidden within them.',
         bestFor: 'Vocabulary and pattern recognition.',
@@ -275,7 +274,7 @@ export const collections = [
       {
         id: 'mastermind',
         title: 'Mastermind',
-        category: 'deduction',
+        category: 'cipher',
         quote: 'Every deduction narrows the realm of possibility.',
         about: 'Crack the hidden 4-color code through stepwise feedback and logical elimination.',
         bestFor: 'Deductive elimination and combinatorial reasoning.',
@@ -286,16 +285,17 @@ export const collections = [
         isPlayable: true,
       },
       {
-        id: 'untangle',
-        title: 'Untangle',
-        category: 'deduction',
-        quote: 'Every knot has a geometry of release.',
-        about: 'Drag nodes of a planar graph until no two edges cross.',
-        bestFor: 'Spatial reasoning and graph intuition.',
-        origin: "Created by John Tantalo in 2005, inspired by Euler's 1736 planar graph theory.",
-        howToPlay: 'Drag nodes to new positions until every edge is crossing-free.',
-        difficulty: 'Moderate',
-        timeEstimate: '5–20 min',
+        id: 'lights-out',
+        title: 'Lights Out',
+        category: 'cipher',
+        description: 'Toggle lanterns into serene darkness.',
+        quote: 'Silence restored to the grid.',
+        about: 'Toggle tiles to invert their state and adjacent neighbors until all lights are dark tranquility.',
+        bestFor: 'Pattern logic and spatial deduction.',
+        origin: 'Invented by Tiger Electronics in 1995. Grounded in modulo-2 linear algebra.',
+        howToPlay: 'Tap any tile to toggle it and its orthogonal neighbors. Turn all lights off.',
+        difficulty: 'Easy',
+        timeEstimate: '2–10 min',
         isPlayable: true,
       },
     ],
@@ -312,9 +312,10 @@ export function getCollection(id) {
     normalized === 'words' ||
     normalized === 'words-reasoning' ||
     normalized === 'word-reasoning' ||
-    normalized === 'reasoning'
+    normalized === 'reasoning' ||
+    normalized === 'deduction'
   ) {
-    return collections.find((c) => c.id === 'deduction') ?? null
+    return collections.find((c) => c.id === 'cipher') ?? null
   }
   return collections.find((collection) => collection.id === normalized) ?? null
 }
@@ -328,3 +329,4 @@ export function getGame(id) {
   }
   return null
 }
+

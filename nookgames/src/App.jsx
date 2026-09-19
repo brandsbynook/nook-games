@@ -155,9 +155,15 @@ function parseRoute() {
       window.location.replace('#/collection/sequence')
       return { name: 'collection', id: 'sequence' }
     }
-    if (rawId === 'words' || rawId === 'words-reasoning' || rawId === 'word-reasoning') {
-      window.location.replace('#/collection/deduction')
-      return { name: 'collection', id: 'deduction' }
+    if (
+      rawId === 'words' ||
+      rawId === 'words-reasoning' ||
+      rawId === 'word-reasoning' ||
+      rawId === 'reasoning' ||
+      rawId === 'deduction'
+    ) {
+      window.location.replace('#/collection/cipher')
+      return { name: 'collection', id: 'cipher' }
     }
     return { name: 'collection', id: rawId }
   }

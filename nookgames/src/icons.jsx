@@ -32,12 +32,22 @@ const icons = {
       <circle cx="16" cy="16" r="1.4" />
     </>
   ),
+  cipher: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <path d="M12 2.5v2.5M12 19v2.5M2.5 12h2.5M19 12h2.5" />
+      <path d="m5.5 5.5 1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" strokeWidth="1" opacity="0.6" />
+    </>
+  ),
   deduction: (
     <>
       <circle cx="12" cy="12" r="8" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
-      <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <path d="M12 2.5v2.5M12 19v2.5M2.5 12h2.5M19 12h2.5" />
+      <path d="m5.5 5.5 1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" strokeWidth="1" opacity="0.6" />
     </>
   ),
   words: (
