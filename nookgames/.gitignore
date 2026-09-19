@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Offline scratch generation scripts and local archives
+scratch/
+*.zip
+OS Docs/
+
