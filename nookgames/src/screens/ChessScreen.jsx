@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Icon } from '../icons.jsx'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   createGame,
   getValidMoves,
@@ -21,6 +22,8 @@ export function ChessScreen({ onBack }) {
   const game = gameRef.current
 
   const [fen, setFen] = useState(() => game.fen())
+  const [fenHistory, setFenHistory] = useState(() => [game.fen()])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [difficulty, setDifficulty] = useState('standard')
   const [selectedSquare, setSelectedSquare] = useState(null)
   const [validMoves, setValidMoves] = useState([])
@@ -34,6 +37,21 @@ export function ChessScreen({ onBack }) {
   })
   const [historyCount, setHistoryCount] = useState(0)
   const botTimerRef = useRef(null)
+
+  const isInspecting = historyIndex < fenHistory.length - 1
+  const displayedFen = fenHistory[historyIndex] || fen
+
+  // Read-only game instance for inspecting past boards
+  const displayGame = useMemo(() => {
+    if (!isInspecting) return game
+    const g = createGame()
+    try {
+      g.load(displayedFen)
+    } catch {
+      // fallback
+    }
+    return g
+  }, [isInspecting, displayedFen, game])
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -82,7 +100,10 @@ export function ChessScreen({ onBack }) {
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
-    setFen(gameRef.current.fen())
+    const newFen = gameRef.current.fen()
+    setFen(newFen)
+    setFenHistory([newFen])
+    setHistoryIndex(0)
     setSelectedSquare(null)
     setValidMoves([])
     setIsBotThinking(false)
@@ -103,7 +124,10 @@ export function ChessScreen({ onBack }) {
     setDifficulty(newDiff)
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
-    setFen(gameRef.current.fen())
+    const newFen = gameRef.current.fen()
+    setFen(newFen)
+    setFenHistory([newFen])
+    setHistoryIndex(0)
     setSelectedSquare(null)
     setValidMoves([])
     setIsBotThinking(false)
@@ -131,13 +155,19 @@ export function ChessScreen({ onBack }) {
       if (move) {
         const result = makeMove(game, move)
         playTap()
-        setFen(game.fen())
+        const nextFen = game.fen()
+        setFen(nextFen)
+        setFenHistory((prev) => {
+          const nextHist = [...prev.slice(0, historyIndex + 1), nextFen]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
         setLastMove({ from: move.from, to: move.to })
         updateGameStatus()
       }
       setIsBotThinking(false)
     }, 400)
-  }, [game, difficulty, updateGameStatus])
+  }, [game, difficulty, historyIndex, updateGameStatus])
 
   // Handle square click
   const handleSquareClick = (square) => {
@@ -300,13 +330,14 @@ export function ChessScreen({ onBack }) {
               const square = `${file}${rank}`
               const isLight = (r + c) % 2 === 0
               const isDark = !isLight
-              const piece = game.get(square)
-              const isSelected = selectedSquare === square
-              const isTarget = validMoves.includes(square)
+              const piece = displayGame.get(square)
+              const isSelected = selectedSquare === square && !isInspecting
+              const isTarget = validMoves.includes(square) && !isInspecting
               const isCapture = isTarget && piece && piece.color !== 'w'
               const isLastMoveSquare =
                 lastMove && (lastMove.from === square || lastMove.to === square)
               const isCheckedKing =
+                !isInspecting &&
                 gameStatus.inCheck &&
                 piece &&
                 piece.type === 'k' &&
@@ -322,6 +353,7 @@ export function ChessScreen({ onBack }) {
                     isLastMoveSquare ? 'chess-square--last' : ''
                   } ${isCheckedKing ? 'chess-square--check' : ''}`}
                   onClick={() => handleSquareClick(square)}
+                  disabled={isInspecting}
                   aria-label={`${square}: ${
                     piece ? `${piece.color === 'w' ? 'White' : 'Black'} ${piece.type}` : 'Empty'
                   }`}
@@ -353,25 +385,52 @@ export function ChessScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── Controls: Reset & Undo Actions ─────────────────── */}
-      <GameFooterActions
-        onReset={handleReset}
-        onUndo={handleUndo}
-        canUndo={!isBotThinking && historyCount > 0}
-        resetLabel="Reset"
-        undoLabel="Undo"
-      />
+      {/* Controls: Reset & Stepper Actions */}
+      <div className="chess-footer-controls">
+        <GameFooterActions
+          onReset={handleReset}
+          resetLabel="Restart"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(fenHistory.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < fenHistory.length - 1}
+          stepIndicator={fenHistory.length > 1 ? `Move ${historyIndex}/${fenHistory.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(fenHistory.length - 1)}
+        />
+      </div>
 
-      {/* ── Footer / Sanctuary Tagline ───────────────────────── */}
-      <footer className="chess-footer">
-        <p className="chess-quote">
-          {gameStatus.isCheckmate
+      {/* Universal Completion Modal */}
+      <GameCompletionModal
+        isOpen={gameStatus.isCheckmate || gameStatus.isDraw}
+        title={
+          gameStatus.isCheckmate
             ? gameStatus.winner === 'w'
-              ? 'The system yields. Stillness restored.'
-              : 'The system prevails. Return to quiet contemplation.'
-            : 'The board remembers every intention.'}
-        </p>
-      </footer>
+              ? 'Checkmate - Victory'
+              : 'Checkmate - Defeat'
+            : 'Stalemate - Draw'
+        }
+        description={
+          gameStatus.isCheckmate
+            ? gameStatus.winner === 'w'
+              ? 'The system yields in stillness.'
+              : 'The opponent found checkmate.'
+            : 'No legal moves remain in balance.'
+        }
+        icon={gameStatus.winner === 'w' ? '✓' : '❖'}
+        stats={[
+          { label: 'Result', value: gameStatus.winner === 'w' ? 'Victory' : gameStatus.winner === 'b' ? 'Defeat' : 'Draw' },
+          { label: 'Tier', value: difficulty },
+          { label: 'Plies', value: `${fenHistory.length - 1}` },
+        ]}
+        onNext={handleReset}
+        nextLabel="New Game"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Board"
+      />
     </div>
   )
 }
+
+export default ChessScreen

@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
-  DIFFICULTY_TIERS,
   ANAGRAM_PUZZLES,
   generatePuzzle,
   validateGuess,
@@ -32,10 +32,15 @@ export function AnagramsScreen({ onBack } = {}) {
   const [selectedLetterIds, setSelectedLetterIds] = useState([])
   // Words discovered by player
   const [foundWords, setFoundWords] = useState([])
+  const [foundWordsHistory, setFoundWordsHistory] = useState(() => [[]])
+  const [historyIndex, setHistoryIndex] = useState(0)
   // Notification / toast feedback
   const [feedback, setFeedback] = useState(null)
   const [isShaking, setIsShaking] = useState(false)
   const feedbackTimerRef = useRef(null)
+
+  const isInspecting = historyIndex < foundWordsHistory.length - 1
+  const displayedFoundWords = foundWordsHistory[historyIndex] || foundWords
 
   // Load new puzzle or switch tier
   const initPuzzle = useCallback((newTier, newIndex) => {
@@ -49,6 +54,8 @@ export function AnagramsScreen({ onBack } = {}) {
     )
     setSelectedLetterIds([])
     setFoundWords([])
+    setFoundWordsHistory([[]])
+    setHistoryIndex(0)
     setFeedback(null)
   }, [])
 
@@ -80,6 +87,8 @@ export function AnagramsScreen({ onBack } = {}) {
     playTap()
     setSelectedLetterIds([])
     setFoundWords([])
+    setFoundWordsHistory([[]])
+    setHistoryIndex(0)
     setFeedback(null)
     setDockLetters(
       puzzle.scrambledLetters.map((char, idx) => ({
@@ -162,6 +171,9 @@ export function AnagramsScreen({ onBack } = {}) {
       playTap()
       const newFound = [...foundWords, result.word]
       setFoundWords(newFound)
+      const nextHist = [...foundWordsHistory.slice(0, historyIndex + 1), newFound]
+      setFoundWordsHistory(nextHist)
+      setHistoryIndex(nextHist.length - 1)
       setSelectedLetterIds([])
       triggerFeedback(result.message, 'success')
 
@@ -226,9 +238,6 @@ export function AnagramsScreen({ onBack } = {}) {
   )
 
   const isAllSolved = puzzle.targetWords.every((w) => foundWords.includes(w))
-  const currentInputWord = selectedLetterIds
-    .map((id) => dockLetters.find((l) => l.id === id)?.char)
-    .join('')
 
   return (
     <div className="ag-page game-screen-container">
@@ -239,7 +248,7 @@ export function AnagramsScreen({ onBack } = {}) {
       />
 
       <div className="ag-status-sub">
-        {foundWords.length} of {puzzle.totalWords ?? puzzle.targetWords.length} words found
+        {displayedFoundWords.length} of {puzzle.totalWords ?? puzzle.targetWords.length} words found
       </div>
 
       {/* ── Segmented Difficulty Selector ───────────────────── */}
@@ -288,7 +297,7 @@ export function AnagramsScreen({ onBack } = {}) {
               <div className="ag-group-label">{len}-Letter Words</div>
               <div className="ag-word-tokens-row">
                 {wordsList.map((targetWord) => {
-                  const isFound = foundWords.includes(targetWord)
+                  const isFound = displayedFoundWords.includes(targetWord)
                   return (
                     <div
                       key={`word-${targetWord}`}
@@ -324,106 +333,113 @@ export function AnagramsScreen({ onBack } = {}) {
           )}
         </div>
 
-        {isAllSolved ? (
-          <div className="ag-victory-card">
-            <div className="ag-victory-info">
-              <span className="ag-victory-tag">Complete</span>
-              <h2 className="ag-victory-title">Root Word: {puzzle.root}</h2>
-            </div>
+        {/* Active Input Row */}
+        <div
+          className={`ag-input-row${isShaking ? ' ag-input-row--shake' : ''}`}
+        >
+          <div className="ag-input-letters">
+            {selectedLetterIds.map((id, index) => {
+              const item = dockLetters.find((l) => l.id === id)
+              return (
+                <button
+                  key={`input-${id}-${index}`}
+                  type="button"
+                  className="ag-input-tile"
+                  onClick={() => handleRemoveInputLetter(index)}
+                  title="Tap to return letter"
+                  disabled={isInspecting}
+                >
+                  {item?.char}
+                </button>
+              )
+            })}
+            {selectedLetterIds.length === 0 && (
+              <span className="ag-input-placeholder">Tap letters below</span>
+            )}
+            <span className="ag-cursor" aria-hidden="true" />
+          </div>
+
+          <div className="ag-input-actions">
             <button
-              id="ag-next-btn"
-              className="ag-next-btn"
-              onClick={handleNextPuzzle}
+              type="button"
+              className="ag-action-text-btn"
+              onClick={handleClear}
+              disabled={selectedLetterIds.length === 0 || isInspecting}
+              aria-label="Clear input"
             >
-              Next Puzzle
+              Clear
+            </button>
+            <button
+              id="ag-submit-btn"
+              type="button"
+              className={`ag-submit-btn${
+                selectedLetterIds.length >= 3 ? ' ag-submit-btn--ready' : ''
+              }`}
+              onClick={handleSubmit}
+              disabled={selectedLetterIds.length < 3 || isInspecting}
+              aria-label="Submit word"
+            >
+              Enter
             </button>
           </div>
-        ) : (
-          <>
-            {/* Active Input Row */}
-            <div
-              className={`ag-input-row${isShaking ? ' ag-input-row--shake' : ''}`}
-            >
-              <div className="ag-input-letters">
-                {selectedLetterIds.map((id, index) => {
-                  const item = dockLetters.find((l) => l.id === id)
-                  return (
-                    <button
-                      key={`input-${id}-${index}`}
-                      type="button"
-                      className="ag-input-tile"
-                      onClick={() => handleRemoveInputLetter(index)}
-                      title="Tap to return letter"
-                    >
-                      {item?.char}
-                    </button>
-                  )
-                })}
-                {selectedLetterIds.length === 0 && (
-                  <span className="ag-input-placeholder">Tap letters below</span>
-                )}
-                <span className="ag-cursor" aria-hidden="true" />
-              </div>
+        </div>
 
-              <div className="ag-input-actions">
-                <button
-                  type="button"
-                  className="ag-action-text-btn"
-                  onClick={handleClear}
-                  disabled={selectedLetterIds.length === 0}
-                  aria-label="Clear input"
-                >
-                  Clear
-                </button>
-                <button
-                  id="ag-submit-btn"
-                  type="button"
-                  className={`ag-submit-btn${
-                    selectedLetterIds.length >= 3 ? ' ag-submit-btn--ready' : ''
-                  }`}
-                  onClick={handleSubmit}
-                  disabled={selectedLetterIds.length < 3}
-                  aria-label="Submit word"
-                >
-                  Enter
-                </button>
-              </div>
-            </div>
-
-            {/* Circular Letter Dock */}
-            <div className="ag-letter-dock" role="group" aria-label="Available Letters">
-              {dockLetters.map((item) => {
-                const isSelected = selectedLetterIds.includes(item.id)
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`ag-letter-btn${isSelected ? ' ag-letter-btn--selected' : ''}`}
-                    onClick={() => handleSelectDockLetter(item)}
-                    disabled={isSelected}
-                    aria-label={`Letter ${item.char}${isSelected ? ' (used)' : ''}`}
-                  >
-                    {item.char}
-                  </button>
-                )
-              })}
-            </div>
-
-            <GameFooterActions onReset={handleReset} resetLabel="Reset">
+        {/* Circular Letter Dock */}
+        <div className="ag-letter-dock" role="group" aria-label="Available Letters">
+          {dockLetters.map((item) => {
+            const isSelected = selectedLetterIds.includes(item.id)
+            return (
               <button
-                id="ag-shuffle-btn"
+                key={item.id}
                 type="button"
-                className="game-action-btn"
-                onClick={handleShuffle}
-                aria-label="Shuffle letters"
+                className={`ag-letter-btn${isSelected ? ' ag-letter-btn--selected' : ''}`}
+                onClick={() => handleSelectDockLetter(item)}
+                disabled={isSelected || isInspecting}
+                aria-label={`Letter ${item.char}${isSelected ? ' (used)' : ''}`}
               >
-                <Icon name="sparkles" size={16} />
-                <span>Shuffle</span>
+                {item.char}
               </button>
-            </GameFooterActions>
-          </>
-        )}
+            )
+          })}
+        </div>
+
+        <GameFooterActions
+          onReset={handleReset}
+          resetLabel="Reset"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(foundWordsHistory.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < foundWordsHistory.length - 1}
+          stepIndicator={foundWordsHistory.length > 1 ? `Words ${historyIndex + 1}/${foundWordsHistory.length}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(foundWordsHistory.length - 1)}
+        >
+          <button
+            id="ag-shuffle-btn"
+            type="button"
+            className="game-action-btn"
+            onClick={handleShuffle}
+            disabled={isInspecting}
+            aria-label="Shuffle letters"
+          >
+            <Icon name="sparkles" size={16} />
+            <span>Shuffle</span>
+          </button>
+        </GameFooterActions>
       </footer>
+
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isAllSolved}
+        title="Words Unlocked"
+        description={`Root word: ${puzzle.root}. You uncovered all target anagrams.`}
+        stats={[{ label: 'Words Found', value: foundWords.length }]}
+        onNext={handleNextPuzzle}
+        nextLabel="Next Puzzle"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Words"
+      />
     </div>
   )
 }

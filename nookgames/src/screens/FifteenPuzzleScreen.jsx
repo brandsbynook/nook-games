@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import { playTap, playChime } from '../utils/audio.js'
 
 // ── Puzzle helpers for dynamic N×N grids ────────────────────────────────────
@@ -81,9 +82,13 @@ export function FifteenPuzzleScreen() {
   const size = difficulty === 'gentle' ? 3 : difficulty === 'deep' ? 5 : 4
 
   const [tiles, setTiles] = useState(() => generateSolvable(4))
+  const [history, setHistory] = useState(() => [generateSolvable(4)])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [solved, setSolved] = useState(false)
-  const [showToast, setShowToast] = useState(false)
   const [lastMoved, setLastMoved] = useState(null)
+
+  const isInspecting = historyIndex < history.length - 1
+  const displayedTiles = history[historyIndex] || tiles
 
   function handleBack(e) {
     e?.preventDefault?.()
@@ -94,14 +99,16 @@ export function FifteenPuzzleScreen() {
   const handleDifficultyChange = (diff) => {
     setDifficulty(diff)
     const newSize = diff === 'gentle' ? 3 : diff === 'deep' ? 5 : 4
-    setTiles(generateSolvable(newSize))
+    const newTiles = generateSolvable(newSize)
+    setTiles(newTiles)
+    setHistory([newTiles])
+    setHistoryIndex(0)
     setSolved(false)
-    setShowToast(false)
     setLastMoved(null)
   }
 
   function handleTap(idx) {
-    if (solved) return
+    if (solved || isInspecting) return
     const blank = blankIndex(tiles)
     if (!isAdjacentToBlank(idx, blank, size)) return
 
@@ -112,32 +119,37 @@ export function FifteenPuzzleScreen() {
     next[blank] = next[idx]
     next[idx] = 0
     setTiles(next)
+    setHistory((prev) => {
+      const nextHist = [...prev.slice(0, historyIndex + 1), next]
+      setHistoryIndex(nextHist.length - 1)
+      return nextHist
+    })
 
     if (checkIsSolved(next, size)) {
       setSolved(true)
       setTimeout(() => {
         playChime()
-        setShowToast(true)
       }, 200)
     }
   }
 
   const handleShuffle = useCallback(() => {
     playTap()
-    setTiles(generateSolvable(size))
+    const newTiles = generateSolvable(size)
+    setTiles(newTiles)
+    setHistory([newTiles])
+    setHistoryIndex(0)
     setSolved(false)
-    setShowToast(false)
     setLastMoved(null)
   }, [size])
 
-  // Dismiss toast after 3.5 s
-  useEffect(() => {
-    if (!showToast) return
-    const id = setTimeout(() => setShowToast(false), 3500)
-    return () => clearTimeout(id)
-  }, [showToast])
+  const blank = blankIndex(displayedTiles)
 
-  const blank = blankIndex(tiles)
+  const tierNames = {
+    gentle: 'Gentle (3×3)',
+    standard: 'Standard (4×4)',
+    deep: 'Deep (5×5)',
+  }
 
   return (
     <div className="fp-page game-screen-container">
@@ -166,7 +178,7 @@ export function FifteenPuzzleScreen() {
             gridTemplateRows: `repeat(${size}, 1fr)`,
           }}
         >
-          {tiles.map((tile, idx) => {
+          {displayedTiles.map((tile, idx) => {
             const isBlank = tile === 0
             const isMovable = !isBlank && isAdjacentToBlank(idx, blank, size)
             return (
@@ -175,7 +187,7 @@ export function FifteenPuzzleScreen() {
                 className={`fp-tile${isBlank ? ' fp-tile--blank' : ''}${isMovable ? ' fp-tile--movable' : ''}${lastMoved === idx ? ' fp-tile--just-moved' : ''}`}
                 onClick={() => handleTap(idx)}
                 aria-label={isBlank ? 'Empty space' : `Tile ${tile}`}
-                disabled={isBlank || solved}
+                disabled={isBlank || solved || isInspecting}
                 tabIndex={isMovable ? 0 : -1}
                 style={{
                   fontSize: size === 5 ? '15px' : size === 4 ? '18px' : '22px',
@@ -188,22 +200,36 @@ export function FifteenPuzzleScreen() {
         </div>
       </div>
 
-      {/* Footer Controls */}
+      {/* Footer Controls & History Stepper */}
       <GameFooterActions
         onReset={handleShuffle}
-        onNewGame={handleShuffle}
         resetLabel="Shuffle"
-        newGameLabel="New Game"
+        onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+        onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+        canStepBack={historyIndex > 0}
+        canStepForward={historyIndex < history.length - 1}
+        stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+        isInspecting={isInspecting}
+        onExitInspection={() => setHistoryIndex(history.length - 1)}
       />
 
-      {/* Completion toast */}
-      <div
-        className={`fp-toast${showToast ? ' fp-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        Ordered with patience.
-      </div>
+      {/* Universal Completion Modal */}
+      <GameCompletionModal
+        isOpen={solved}
+        title="Ordered with Patience"
+        description="All numbered tiles have slid into sequential harmony."
+        icon="✓"
+        stats={[
+          { label: 'Grid Size', value: `${size}×${size}` },
+          { label: 'Tier', value: tierNames[difficulty] || difficulty },
+          { label: 'Moves', value: `${history.length - 1}` },
+        ]}
+        onNext={handleShuffle}
+        nextLabel="New Shuffle"
+        onReplay={handleShuffle}
+        replayLabel="Replay"
+        reviewLabel="Review Grid"
+      />
     </div>
   )
 }

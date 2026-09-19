@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   getSymbol,
   getPalette,
   generateSecretCode,
   evaluateGuess,
-  getEliminationHint,
 } from '../utils/mastermindLogic.js'
 import { playTap, playChime } from '../utils/audio.js'
 
@@ -91,24 +91,27 @@ export function MastermindScreen({ onBack } = {}) {
 
   const [secret, setSecret] = useState(() => generateSecretCode(difficultyConfig))
   const [history, setHistory] = useState([])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [currentGuess, setCurrentGuess] = useState([])
   const [status, setStatus] = useState('in_progress')
   const [hint, setHint] = useState(null)
   const [eliminatedSymbols, setEliminatedSymbols] = useState([])
   const [revealedSlots, setRevealedSlots] = useState([])
-  const [showToast, setShowToast] = useState(false)
+
+  const isInspecting = history.length > 0 && historyIndex < history.length - 1
+  const displayedHistory = isInspecting ? history.slice(0, historyIndex + 1) : history
 
   const startNewGame = useCallback((diffKey = difficulty) => {
     playTap()
     const config = MASTERMIND_CONFIGS[diffKey] || MASTERMIND_CONFIGS.standard
     setSecret(generateSecretCode(config))
     setHistory([])
+    setHistoryIndex(0)
     setCurrentGuess([])
     setStatus('in_progress')
     setHint(null)
     setEliminatedSymbols([])
     setRevealedSlots([])
-    setShowToast(false)
   }, [difficulty])
 
   const handleDifficultyChange = (diffKey) => {
@@ -131,25 +134,25 @@ export function MastermindScreen({ onBack } = {}) {
   )
 
   const handleSelectSymbol = (symbolId) => {
-    if (status !== 'in_progress' || currentGuess.length >= difficultyConfig.slots) return
+    if (status !== 'in_progress' || isInspecting || currentGuess.length >= difficultyConfig.slots) return
     playTap()
     setCurrentGuess((prev) => [...prev, symbolId])
   }
 
   const handleRemoveSlot = (index) => {
-    if (status !== 'in_progress') return
+    if (status !== 'in_progress' || isInspecting) return
     playTap()
     setCurrentGuess((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleBackspace = () => {
-    if (status !== 'in_progress' || currentGuess.length === 0) return
+    if (status !== 'in_progress' || isInspecting || currentGuess.length === 0) return
     playTap()
     setCurrentGuess((prev) => prev.slice(0, -1))
   }
 
   const handleSubmit = () => {
-    if (status !== 'in_progress' || currentGuess.length !== difficultyConfig.slots) return
+    if (status !== 'in_progress' || isInspecting || currentGuess.length !== difficultyConfig.slots) return
     playTap()
 
     const result = evaluateGuess(secret, currentGuess)
@@ -163,23 +166,18 @@ export function MastermindScreen({ onBack } = {}) {
     ]
 
     setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
     setCurrentGuess([])
 
     if (result.isWon) {
       setStatus('won')
-      setTimeout(() => {
-        playChime()
-        setShowToast(true)
-      }, 250)
+      playChime()
     } else if (newHistory.length >= difficultyConfig.maxAttempts) {
       setStatus('lost')
-      setTimeout(() => {
-        setShowToast(true)
-      }, 250)
     }
   }
 
-  const currentRow = history.length
+  const currentRow = displayedHistory.length
   const isGameOver = status !== 'in_progress'
   const activePalette = getPalette(difficultyConfig.paletteSize)
 
@@ -241,9 +239,9 @@ export function MastermindScreen({ onBack } = {}) {
       <div className="mm-board-scroll">
         <div className="mm-board" role="region" aria-label="Decoding Rows">
           {Array.from({ length: difficultyConfig.maxAttempts }).map((_, rIndex) => {
-            const isPast = rIndex < history.length
-            const isActive = rIndex === currentRow && !isGameOver
-            const rowData = isPast ? history[rIndex] : null
+            const isPast = rIndex < displayedHistory.length
+            const isActive = rIndex === currentRow && !isGameOver && !isInspecting
+            const rowData = isPast ? displayedHistory[rIndex] : null
 
             return (
               <div
@@ -330,84 +328,96 @@ export function MastermindScreen({ onBack } = {}) {
       </div>
 
       <footer className="mm-dock">
-        {isGameOver ? (
-          <div className="mm-gameover-actions">
+        <div className="mm-input-panel">
+          <div
+            className={`mm-colors-row mm-symbols-row${activePalette.length === 8 ? ' mm-colors-row--8 mm-symbols-row--8' : ''
+              }`}
+            role="group"
+            aria-label="Symbol Palette"
+          >
+            {activePalette.map((s) => {
+              const isEliminated = eliminatedSymbols.includes(s.id)
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`mm-color-btn mm-symbol-btn${activePalette.length === 8 ? ' mm-color-btn--8 mm-symbol-btn--8' : ''
+                    }${isEliminated ? ' mm-color-btn--eliminated mm-symbol-btn--eliminated' : ''}`}
+                  onClick={() => handleSelectSymbol(s.id)}
+                  aria-label={`Select ${s.label}${isEliminated ? ' (Likely absent)' : ''
+                    }`}
+                  title={s.label}
+                  disabled={isGameOver || isInspecting}
+                >
+                  <SymbolIcon id={s.id} size={activePalette.length === 8 ? 16 : 19} />
+                  {isEliminated && <span className="mm-eliminated-mark">×</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mm-actions-row">
             <button
-              id="mm-next-btn"
-              className="mm-next-btn"
-              onClick={() => startNewGame(difficulty)}
+              id="mm-undo-btn"
+              type="button"
+              className="mm-undo-btn"
+              onClick={handleBackspace}
+              disabled={currentGuess.length === 0 || isGameOver || isInspecting}
+              aria-label="Remove last symbol"
+              title="Backspace"
             >
-              New Code
+              <Icon name="undo" size={17} />
+              <span>Clear</span>
+            </button>
+
+            <button
+              id="mm-submit-btn"
+              type="button"
+              className={`mm-submit-btn${currentGuess.length === difficultyConfig.slots ? ' mm-submit-btn--ready' : ''
+                }`}
+              onClick={handleSubmit}
+              disabled={currentGuess.length !== difficultyConfig.slots || isGameOver || isInspecting}
+              aria-label={`Submit ${difficultyConfig.slots}-symbol guess`}
+            >
+              Submit Guess
             </button>
           </div>
-        ) : (
-          <div className="mm-input-panel">
-            <div
-              className={`mm-colors-row mm-symbols-row${activePalette.length === 8 ? ' mm-colors-row--8 mm-symbols-row--8' : ''
-                }`}
-              role="group"
-              aria-label="Symbol Palette"
-            >
-              {activePalette.map((s) => {
-                const isEliminated = eliminatedSymbols.includes(s.id)
 
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className={`mm-color-btn mm-symbol-btn${activePalette.length === 8 ? ' mm-color-btn--8 mm-symbol-btn--8' : ''
-                      }${isEliminated ? ' mm-color-btn--eliminated mm-symbol-btn--eliminated' : ''}`}
-                    onClick={() => handleSelectSymbol(s.id)}
-                    aria-label={`Select ${s.label}${isEliminated ? ' (Likely absent)' : ''
-                      }`}
-                    title={s.label}
-                  >
-                    <SymbolIcon id={s.id} size={activePalette.length === 8 ? 16 : 19} />
-                    {isEliminated && <span className="mm-eliminated-mark">×</span>}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="mm-actions-row">
-              <button
-                id="mm-undo-btn"
-                type="button"
-                className="mm-undo-btn"
-                onClick={handleBackspace}
-                disabled={currentGuess.length === 0}
-                aria-label="Remove last symbol"
-                title="Backspace"
-              >
-                <Icon name="undo" size={17} />
-                <span>Undo</span>
-              </button>
-
-              <button
-                id="mm-submit-btn"
-                type="button"
-                className={`mm-submit-btn${currentGuess.length === difficultyConfig.slots ? ' mm-submit-btn--ready' : ''
-                  }`}
-                onClick={handleSubmit}
-                disabled={currentGuess.length !== difficultyConfig.slots}
-                aria-label={`Submit ${difficultyConfig.slots}-symbol guess`}
-              >
-                Submit Guess
-              </button>
-            </div>
-          </div>
-        )}
+          <GameFooterActions
+            onReset={() => startNewGame(difficulty)}
+            resetLabel="Restart"
+            onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+            onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+            canStepBack={historyIndex > 0}
+            canStepForward={historyIndex < history.length - 1}
+            stepIndicator={history.length > 1 ? `Attempt ${historyIndex + 1}/${history.length}` : null}
+            isInspecting={isInspecting}
+            onExitInspection={() => setHistoryIndex(history.length - 1)}
+          />
+        </div>
       </footer>
 
-      <div
-        className={`mm-toast${showToast ? ' mm-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        {status === 'won'
-          ? 'Silence restored. Code deduced with clarity.'
-          : 'Every attempt is an exercise in deduction.'}
-      </div>
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isGameOver}
+        title={status === 'won' ? 'Code Cracked' : 'Code Unsolved'}
+        description={
+          status === 'won'
+            ? `Decoded in ${history.length} ${history.length === 1 ? 'attempt' : 'attempts'}.`
+            : 'The maximum attempts were reached.'
+        }
+        icon={status === 'won' ? '✓' : 'eye'}
+        stats={[
+          { label: 'Attempts', value: `${history.length}/${difficultyConfig.maxAttempts}` },
+          { label: 'Tier', value: difficulty },
+        ]}
+        onNext={() => startNewGame(difficulty)}
+        nextLabel="New Code"
+        onReplay={() => startNewGame(difficulty)}
+        replayLabel="Retry"
+        reviewLabel="Review Deduction"
+      />
     </div>
   )
 }

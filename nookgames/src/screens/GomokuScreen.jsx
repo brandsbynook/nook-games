@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   BOARD_SIZE,
   STAR_POINTS,
@@ -19,11 +20,22 @@ export function GomokuScreen({ onBack }) {
   const [board, setBoard] = useState(createEmptyBoard)
   const [difficulty, setDifficulty] = useState('standard')
   const [turn, setTurn] = useState('B') // 'B' (Player - Black) | 'W' (System - White)
-  const [history, setHistory] = useState([]) // array of { board, lastMove, turn }
   const [lastMove, setLastMove] = useState(null) // { r, c }
   const [winningLine, setWinningLine] = useState([]) // Array of { r, c }
   const [winner, setWinner] = useState(null) // 'player' | 'bot' | 'draw' | null
   const [isBotThinking, setIsBotThinking] = useState(false)
+
+  // Snapshots for non-destructive history inspection
+  const [snapshots, setSnapshots] = useState(() => [
+    { board: createEmptyBoard(), lastMove: null, turn: 'B', winningLine: [] },
+  ])
+  const [historyIndex, setHistoryIndex] = useState(0)
+  const isInspecting = historyIndex < snapshots.length - 1
+  const displayedState =
+    snapshots[historyIndex] || { board, lastMove, turn, winningLine }
+  const displayBoard = displayedState.board
+  const displayLastMove = displayedState.lastMove
+  const displayWinningLine = displayedState.winningLine || []
 
   const botTimerRef = useRef(null)
 
@@ -38,9 +50,9 @@ export function GomokuScreen({ onBack }) {
   // Check if a coordinate is winning
   const winningSet = useMemo(() => {
     const set = new Set()
-    winningLine.forEach((pt) => set.add(`${pt.r},${pt.c}`))
+    displayWinningLine.forEach((pt) => set.add(`${pt.r},${pt.c}`))
     return set
-  }, [winningLine])
+  }, [displayWinningLine])
 
   const handleBack = () => {
     playTap()
@@ -54,117 +66,209 @@ export function GomokuScreen({ onBack }) {
   const restartGame = useCallback(() => {
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     playTap()
-    setBoard(createEmptyBoard())
+    const initial = createEmptyBoard()
+    setBoard(initial)
     setTurn('B')
-    setHistory([])
     setLastMove(null)
     setWinningLine([])
     setWinner(null)
     setIsBotThinking(false)
+    setSnapshots([{ board: initial, lastMove: null, turn: 'B', winningLine: [] }])
+    setHistoryIndex(0)
   }, [])
 
   // Execute bot turn after a calm delay
-  const executeBotTurn = useCallback((currentBoard) => {
-    setIsBotThinking(true)
+  const executeBotTurn = useCallback(
+    (currentBoard) => {
+      setIsBotThinking(true)
 
-    botTimerRef.current = setTimeout(() => {
-      const move = getBotMove(currentBoard, difficulty)
-      if (!move) {
-        setWinner('draw')
-        recordGameSession('gomoku', false)
-        setIsBotThinking(false)
+      botTimerRef.current = setTimeout(() => {
+        const move = getBotMove(currentBoard, difficulty)
+        if (!move) {
+          setWinner('draw')
+          recordGameSession('gomoku', false)
+          setIsBotThinking(false)
+          return
+        }
+
+        playTap()
+        const nextBoard = cloneBoard(currentBoard)
+        nextBoard[move.r][move.c] = 'W'
+        const botMovePos = { r: move.r, c: move.c }
+
+        const winResult = checkWin(nextBoard, move.r, move.c, 'W')
+        if (winResult.won) {
+          setBoard(nextBoard)
+          setLastMove(botMovePos)
+          setWinningLine(winResult.line)
+          setWinner('bot')
+          recordGameSession('gomoku', false)
+          setIsBotThinking(false)
+
+          setSnapshots((prev) => {
+            const next = [
+              ...prev,
+              {
+                board: nextBoard,
+                lastMove: botMovePos,
+                turn: 'W',
+                winningLine: winResult.line,
+              },
+            ]
+            setHistoryIndex(next.length - 1)
+            return next
+          })
+        } else if (isBoardFull(nextBoard)) {
+          setBoard(nextBoard)
+          setLastMove(botMovePos)
+          setWinner('draw')
+          recordGameSession('gomoku', false)
+          setIsBotThinking(false)
+
+          setSnapshots((prev) => {
+            const next = [
+              ...prev,
+              { board: nextBoard, lastMove: botMovePos, turn: 'W', winningLine: [] },
+            ]
+            setHistoryIndex(next.length - 1)
+            return next
+          })
+        } else {
+          setBoard(nextBoard)
+          setLastMove(botMovePos)
+          setTurn('B')
+          setIsBotThinking(false)
+
+          setSnapshots((prev) => {
+            const next = [
+              ...prev,
+              { board: nextBoard, lastMove: botMovePos, turn: 'B', winningLine: [] },
+            ]
+            setHistoryIndex(next.length - 1)
+            return next
+          })
+        }
+      }, 420)
+    },
+    [difficulty]
+  )
+
+  // Handle player stone placement
+  const handleCellClick = useCallback(
+    (r, c) => {
+      if (board[r][c] !== null || turn !== 'B' || isBotThinking || winner || isInspecting) {
         return
       }
 
       playTap()
-      const nextBoard = cloneBoard(currentBoard)
-      nextBoard[move.r][move.c] = 'W'
 
-      const winResult = checkWin(nextBoard, move.r, move.c, 'W')
+      const nextBoard = cloneBoard(board)
+      nextBoard[r][c] = 'B'
+      const newLastMove = { r, c }
+
+      const winResult = checkWin(nextBoard, r, c, 'B')
       if (winResult.won) {
         setBoard(nextBoard)
-        setLastMove({ r: move.r, c: move.c })
+        setLastMove(newLastMove)
         setWinningLine(winResult.line)
-        setWinner('bot')
-        recordGameSession('gomoku', false)
-        setIsBotThinking(false)
-      } else if (isBoardFull(nextBoard)) {
+        setWinner('player')
+        recordGameSession('gomoku', true)
+        setTimeout(() => playChime(), 200)
+
+        setSnapshots((prev) => {
+          const next = [
+            ...prev.slice(0, historyIndex + 1),
+            {
+              board: nextBoard,
+              lastMove: newLastMove,
+              turn: 'B',
+              winningLine: winResult.line,
+            },
+          ]
+          setHistoryIndex(next.length - 1)
+          return next
+        })
+        return
+      }
+
+      if (isBoardFull(nextBoard)) {
         setBoard(nextBoard)
-        setLastMove({ r: move.r, c: move.c })
+        setLastMove(newLastMove)
         setWinner('draw')
         recordGameSession('gomoku', false)
-        setIsBotThinking(false)
-      } else {
-        setBoard(nextBoard)
-        setLastMove({ r: move.r, c: move.c })
-        setTurn('B')
-        setIsBotThinking(false)
+
+        setSnapshots((prev) => {
+          const next = [
+            ...prev.slice(0, historyIndex + 1),
+            {
+              board: nextBoard,
+              lastMove: newLastMove,
+              turn: 'B',
+              winningLine: [],
+            },
+          ]
+          setHistoryIndex(next.length - 1)
+          return next
+        })
+        return
       }
-    }, 420)
-  }, [difficulty])
 
-  // Handle player stone placement
-  const handleCellClick = useCallback((r, c) => {
-    if (board[r][c] !== null || turn !== 'B' || isBotThinking || winner) {
-      return
-    }
-
-    playTap()
-
-    // Save snapshot for undo
-    const snapshot = {
-      board: cloneBoard(board),
-      lastMove,
-      turn: 'B',
-    }
-
-    const nextBoard = cloneBoard(board)
-    nextBoard[r][c] = 'B'
-    const newLastMove = { r, c }
-
-    const winResult = checkWin(nextBoard, r, c, 'B')
-    if (winResult.won) {
-      setHistory((prev) => [...prev, snapshot])
       setBoard(nextBoard)
       setLastMove(newLastMove)
-      setWinningLine(winResult.line)
-      setWinner('player')
-      recordGameSession('gomoku', true)
-      setTimeout(() => playChime(), 200)
-      return
-    }
+      setTurn('W')
 
-    if (isBoardFull(nextBoard)) {
-      setHistory((prev) => [...prev, snapshot])
-      setBoard(nextBoard)
-      setLastMove(newLastMove)
-      setWinner('draw')
-      recordGameSession('gomoku', false)
-      return
-    }
+      setSnapshots((prev) => {
+        const next = [
+          ...prev.slice(0, historyIndex + 1),
+          {
+            board: nextBoard,
+            lastMove: newLastMove,
+            turn: 'W',
+            winningLine: [],
+          },
+        ]
+        setHistoryIndex(next.length - 1)
+        return next
+      })
 
-    setHistory((prev) => [...prev, snapshot])
-    setBoard(nextBoard)
-    setLastMove(newLastMove)
-    setTurn('W')
-
-    executeBotTurn(nextBoard)
-  }, [board, turn, isBotThinking, winner, lastMove, executeBotTurn])
+      executeBotTurn(nextBoard)
+    },
+    [board, turn, isBotThinking, winner, isInspecting, historyIndex, executeBotTurn]
+  )
 
   // Handle undo: reverts bot move and player move together
   const handleUndo = () => {
-    if (isBotThinking || history.length === 0) return
+    if (isBotThinking || snapshots.length <= 1) return
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
 
-    const previousState = history[history.length - 1]
-    setHistory((prev) => prev.slice(0, -1))
+    const stepBackCount = snapshots.length >= 3 ? 2 : 1
+    const newSnapshots = snapshots.slice(0, -stepBackCount)
+    if (newSnapshots.length === 0) return
+
+    const previousState = newSnapshots[newSnapshots.length - 1]
+    setSnapshots(newSnapshots)
+    setHistoryIndex(newSnapshots.length - 1)
     setBoard(previousState.board)
     setLastMove(previousState.lastMove)
     setTurn(previousState.turn)
-    setWinningLine([])
+    setWinningLine(previousState.winningLine || [])
     setWinner(null)
     setIsBotThinking(false)
+  }
+
+  const handleStepBack = () => {
+    if (historyIndex > 0) {
+      playTap()
+      setHistoryIndex((prev) => prev - 1)
+    }
+  }
+
+  const handleStepForward = () => {
+    if (historyIndex < snapshots.length - 1) {
+      playTap()
+      setHistoryIndex((prev) => prev + 1)
+    }
   }
 
   // Count total placed stones
@@ -172,11 +276,11 @@ export function GomokuScreen({ onBack }) {
     let count = 0
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
-        if (board[r][c] !== null) count++
+        if (displayBoard[r][c] !== null) count++
       }
     }
     return count
-  }, [board])
+  }, [displayBoard])
 
   return (
     <div className="gmk-page game-screen-container">
@@ -200,7 +304,11 @@ export function GomokuScreen({ onBack }) {
       {/* ── Status Indicator ─────────────────────────────────── */}
       <div className="gmk-status-bar">
         <div className="gmk-status-pill">
-          {winner ? (
+          {isInspecting ? (
+            <span className="gmk-status-text">
+              Inspecting Move {historyIndex + 1} of {snapshots.length}
+            </span>
+          ) : winner ? (
             winner === 'player' ? (
               <span className="gmk-status-text gmk-status-text--win">Five in harmony · Black wins</span>
             ) : winner === 'bot' ? (
@@ -267,10 +375,10 @@ export function GomokuScreen({ onBack }) {
 
           {/* Interactive 11×11 intersection overlay */}
           <div className="gmk-intersections-grid">
-            {board.map((row, r) =>
+            {displayBoard.map((row, r) =>
               row.map((cell, c) => {
                 const isWinning = winningSet.has(`${r},${c}`)
-                const isLast = lastMove && lastMove.r === r && lastMove.c === c
+                const isLast = displayLastMove && displayLastMove.r === r && displayLastMove.c === c
 
                 return (
                   <button
@@ -278,7 +386,7 @@ export function GomokuScreen({ onBack }) {
                     id={`gmk-cell-${r}-${c}`}
                     className={`gmk-cell ${cell ? 'gmk-cell--occupied' : ''}`}
                     onClick={() => handleCellClick(r, c)}
-                    disabled={Boolean(cell || isBotThinking || winner)}
+                    disabled={Boolean(cell || isBotThinking || winner || isInspecting)}
                     aria-label={`Intersection ${r + 1}, ${c + 1}${
                       cell === 'B' ? ': Black stone' : cell === 'W' ? ': White stone' : ': Empty'
                     }`}
@@ -301,75 +409,56 @@ export function GomokuScreen({ onBack }) {
       </main>
 
       {/* ── Control Actions ─────────────────────────────────── */}
-      {/* ── Control Actions ─────────────────────────────────── */}
       <GameFooterActions
         onReset={restartGame}
         onUndo={handleUndo}
-        canUndo={history.length > 0 && !isBotThinking}
+        canUndo={snapshots.length > 1 && !isBotThinking && !isInspecting}
+        onStepBack={handleStepBack}
+        onStepForward={handleStepForward}
+        canStepBack={historyIndex > 0}
+        canStepForward={historyIndex < snapshots.length - 1}
+        stepIndicator={`${historyIndex + 1} / ${snapshots.length}`}
+        isInspecting={isInspecting}
+        onExitInspection={() => setHistoryIndex(snapshots.length - 1)}
         resetLabel="Reset"
         undoLabel="Undo"
       />
 
       {/* ── Victory / Defeat Modal ──────────────────────────── */}
-      {winner && (
-        <div className="gmk-modal-backdrop" role="dialog" aria-modal="true" aria-label="Game complete">
-          <div className="gmk-modal-card">
-            <div
-              className={`gmk-modal-badge ${
-                winner === 'player' ? 'gmk-modal-badge--win' : 'gmk-modal-badge--loss'
-              }`}
-            >
-              {winner === 'player' ? '✦' : '•'}
-            </div>
-
-            <h2 className="gmk-modal-title">
-              {winner === 'player'
-                ? 'Five in Harmony'
-                : winner === 'bot'
-                ? 'Quiet Contemplation'
-                : 'Balanced Stalemate'}
-            </h2>
-
-            <p className="gmk-modal-desc">
-              {winner === 'player'
-                ? 'You aligned five uninterrupted stones. Spatial intent brought into harmony.'
-                : winner === 'bot'
-                ? 'The system recognized an unbroken five-stone alignment first.'
-                : 'All 121 intersections have been filled in total equilibrium.'}
-            </p>
-
-            <div className="gmk-modal-stats">
-              <div className="gmk-modal-stat">
-                <span className="gmk-stat-label">Total Stones</span>
-                <span className="gmk-stat-value">{moveCount}</span>
-              </div>
-              <div className="gmk-modal-stat">
-                <span className="gmk-stat-label">Turns</span>
-                <span className="gmk-stat-value">{Math.ceil(moveCount / 2)}</span>
-              </div>
-            </div>
-
-            <div className="gmk-modal-actions">
-              <button
-                id="gmk-modal-restart-btn"
-                className="gmk-modal-primary-btn"
-                onClick={restartGame}
-              >
-                Play Again
-              </button>
-              <button
-                id="gmk-modal-back-btn"
-                className="gmk-modal-secondary-btn"
-                onClick={handleBack}
-              >
-                Return to Strategy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GameCompletionModal
+        isOpen={!!winner}
+        title={
+          winner === 'player'
+            ? 'Five in Harmony'
+            : winner === 'bot'
+            ? 'Quiet Contemplation'
+            : 'Balanced Stalemate'
+        }
+        subtitle={
+          winner === 'player'
+            ? 'You aligned five uninterrupted stones. Spatial intent brought into harmony.'
+            : winner === 'bot'
+            ? 'The system recognized an unbroken five-stone alignment first.'
+            : 'All 121 intersections have been filled in total equilibrium.'
+        }
+        stats={[
+          { label: 'Total Stones', value: moveCount },
+          { label: 'Turns', value: Math.ceil(moveCount / 2) },
+          { label: 'Difficulty', value: difficulty.toUpperCase() },
+        ]}
+        primaryAction={{
+          label: 'Play Again',
+          onClick: restartGame,
+        }}
+        secondaryAction={{
+          label: 'Return to Strategy',
+          onClick: handleBack,
+        }}
+        reviewLabel="Review Board"
+      />
     </div>
   )
 }
 
 export default GomokuScreen
+

@@ -4,6 +4,7 @@ import { getDailyEssay } from '../data/essays.js'
 import { CollectionCard } from '../components/CollectionCard.jsx'
 import { SectionLabel } from '../components/SectionLabel.jsx'
 import { Header } from '../components/Header.jsx'
+import { BookIcon } from '../components/Icons'
 import { playTap } from '../utils/audio.js'
 import { getLastActiveGame } from '../utils/storage.js'
 
@@ -81,12 +82,7 @@ export function HomeScreen() {
           aria-label={`Read: ${essay.title}`}
         >
           <div className="ep-home-thumb" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="7" y1="8" x2="17" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="7" y1="12" x2="17" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="7" y1="16" x2="13" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <BookIcon size={22} strokeWidth={1.5} />
           </div>
           <div className="ep-home-text">
             <span className="ep-home-title">{essay.title}</span>

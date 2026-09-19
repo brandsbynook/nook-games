@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Icon } from '../icons.jsx';
+import { Icon } from '../components/Icons';
 import { GameHeader } from '../components/GameHeader.jsx';
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
 import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -18,18 +19,24 @@ export function KakuroScreen({ onBack }) {
   const puzzle = useMemo(() => KAKURO_PUZZLES[difficulty] || KAKURO_PUZZLES.intro, [difficulty]);
 
   const [grid, setGrid] = useState(() => cloneGrid(puzzle.grid));
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => [cloneGrid(puzzle.grid)]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedCell, setSelectedCell] = useState(null); // { r, c }
   const [pencilMode, setPencilMode] = useState(false);
   const [hasWon, setHasWon] = useState(false);
 
-  // Validate runs whenever grid changes
-  const validation = useMemo(() => validateRuns(grid), [grid]);
+  const isInspecting = historyIndex < history.length - 1;
+  const displayedGrid = history[historyIndex] || grid;
+
+  // Validate runs whenever displayedGrid changes
+  const validation = useMemo(() => validateRuns(displayedGrid), [displayedGrid]);
 
   // Reset state when difficulty changes
   useEffect(() => {
-    setGrid(cloneGrid(puzzle.grid));
-    setHistory([]);
+    const init = cloneGrid(puzzle.grid);
+    setGrid(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setSelectedCell(null);
     setHasWon(false);
     setPencilMode(false);
@@ -60,22 +67,21 @@ export function KakuroScreen({ onBack }) {
 
   // Cell selection
   const handleSelectCell = useCallback((r, c) => {
-    if (hasWon) return;
+    if (hasWon || isInspecting) return;
     const cell = grid[r][c];
     if (cell.type !== 'white') return;
     playTap();
     setSelectedCell({ r, c });
-  }, [grid, hasWon]);
+  }, [grid, hasWon, isInspecting]);
 
   // Number input
   const handleNumberInput = useCallback((num) => {
-    if (!selectedCell || hasWon) return;
+    if (!selectedCell || hasWon || isInspecting) return;
     const { r, c } = selectedCell;
     const cell = grid[r][c];
     if (cell.type !== 'white') return;
 
     playTap();
-    setHistory((prev) => [...prev, cloneGrid(grid)]);
 
     setGrid((prevGrid) => {
       const nextGrid = cloneGrid(prevGrid);
@@ -98,68 +104,79 @@ export function KakuroScreen({ onBack }) {
         }
       }
 
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), nextGrid];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
+
       return nextGrid;
     });
-  }, [selectedCell, hasWon, grid, pencilMode]);
+  }, [selectedCell, hasWon, isInspecting, grid, pencilMode, historyIndex]);
 
   // Erase/Clear active cell
   const handleClear = useCallback(() => {
-    if (!selectedCell || hasWon) return;
+    if (!selectedCell || hasWon || isInspecting) return;
     const { r, c } = selectedCell;
     const cell = grid[r][c];
     if (cell.type !== 'white' || (cell.val === null && (!cell.notes || cell.notes.length === 0))) return;
 
     playTap();
-    setHistory((prev) => [...prev, cloneGrid(grid)]);
 
     setGrid((prevGrid) => {
       const nextGrid = cloneGrid(prevGrid);
       nextGrid[r][c].val = null;
       nextGrid[r][c].notes = [];
+
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), nextGrid];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
+
       return nextGrid;
     });
-  }, [selectedCell, hasWon, grid]);
-
-  // Undo
-  const handleUndo = useCallback(() => {
-    if (history.length === 0 || hasWon) return;
-    playTap();
-    const previous = history[history.length - 1];
-    setHistory((prev) => prev.slice(0, prev.length - 1));
-    setGrid(previous);
-  }, [history, hasWon]);
+  }, [selectedCell, hasWon, isInspecting, grid, historyIndex]);
 
   // Reset
   const handleReset = useCallback(() => {
     playTap();
-    setGrid(cloneGrid(puzzle.grid));
-    setHistory([]);
+    const init = cloneGrid(puzzle.grid);
+    setGrid(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setSelectedCell(null);
     setHasWon(false);
   }, [puzzle.grid]);
 
   // Hint
   const handleHint = useCallback(() => {
-    if (hasWon) return;
+    if (hasWon || isInspecting) return;
     const hint = getNextHint(grid);
     if (!hint) return;
 
     playTap();
-    setHistory((prev) => [...prev, cloneGrid(grid)]);
 
     setGrid((prevGrid) => {
       const nextGrid = cloneGrid(prevGrid);
       nextGrid[hint.r][hint.c].val = hint.val;
       nextGrid[hint.r][hint.c].notes = [];
+
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), nextGrid];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
+
       return nextGrid;
     });
     setSelectedCell({ r: hint.r, c: hint.c });
-  }, [hasWon, grid]);
+  }, [hasWon, isInspecting, grid, historyIndex]);
 
   // Keyboard navigation & inputs
   useEffect(() => {
     function handleKeyDown(e) {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
       const key = e.key;
 
       if (key >= '1' && key <= '9') {
@@ -169,9 +186,6 @@ export function KakuroScreen({ onBack }) {
       } else if (key.toLowerCase() === 'p' || key.toLowerCase() === 'n') {
         playTap();
         setPencilMode((prev) => !prev);
-      } else if ((e.ctrlKey || e.metaKey) && key.toLowerCase() === 'z') {
-        e.preventDefault();
-        handleUndo();
       } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
         e.preventDefault();
         const R = puzzle.size;
@@ -201,7 +215,19 @@ export function KakuroScreen({ onBack }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNumberInput, handleClear, handleUndo, hasWon, selectedCell, puzzle.size, grid]);
+  }, [handleNumberInput, handleClear, hasWon, isInspecting, selectedCell, puzzle.size, grid]);
+
+  const difficultyNames = {
+    intro: 'Gentle (4×4)',
+    classic: 'Standard (6×6)',
+    expert: 'Deep (8×8)',
+  };
+
+  const nextTierMap = {
+    intro: 'classic',
+    classic: 'expert',
+    expert: 'intro',
+  };
 
   return (
     <div className="kkr-page game-screen-container">
@@ -241,7 +267,7 @@ export function KakuroScreen({ onBack }) {
           role="grid"
           aria-label="Kakuro Board"
         >
-          {grid.map((row, r) =>
+          {displayedGrid.map((row, r) =>
             row.map((cell, c) => {
               if (cell.type === 'block') {
                 const hasClues = cell.across != null || cell.down != null;
@@ -292,7 +318,7 @@ export function KakuroScreen({ onBack }) {
                 >
                   {cell.val != null ? (
                     <span className="kkr-cell-digit">{cell.val}</span>
-                  ) : cellNotes.length > 0 ? (
+                  ) : cellNotes.length > 0 && !isInspecting ? (
                     <div className="kkr-notes-grid" aria-hidden="true">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                         <span key={`note-${n}`} className="kkr-note-digit">
@@ -319,6 +345,7 @@ export function KakuroScreen({ onBack }) {
               className="kkr-key"
               onClick={() => handleNumberInput(num)}
               aria-label={`Digit ${num}`}
+              disabled={isInspecting || hasWon}
             >
               {num}
             </button>
@@ -329,6 +356,7 @@ export function KakuroScreen({ onBack }) {
             className="kkr-key kkr-key-action"
             onClick={handleClear}
             aria-label="Clear cell"
+            disabled={isInspecting || hasWon}
           >
             ⌫
           </button>
@@ -337,13 +365,17 @@ export function KakuroScreen({ onBack }) {
         {/* Action Toolbar */}
         <GameFooterActions
           onReset={handleReset}
-          onUndo={handleUndo}
           onHint={handleHint}
-          canUndo={history.length > 0 && !hasWon}
-          canHint={!hasWon}
+          canHint={!hasWon && !isInspecting}
           resetLabel="Reset"
-          undoLabel="Undo"
           hintLabel="Hint"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
         >
           <button
             id="kkr-pencil-btn"
@@ -354,6 +386,7 @@ export function KakuroScreen({ onBack }) {
               setPencilMode((prev) => !prev);
             }}
             aria-label="Toggle Pencil Mode"
+            disabled={isInspecting || hasWon}
           >
             <Icon name="pencil" size={16} />
             <span>{pencilMode ? 'Notes On' : 'Notes Off'}</span>
@@ -361,60 +394,22 @@ export function KakuroScreen({ onBack }) {
         </GameFooterActions>
       </div>
 
-      {/* ── Calm Victory Modal ───────────────────────────────── */}
-      {hasWon && (
-        <div className="kkr-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="kkr-modal-card">
-            <div className="kkr-modal-icon">✦</div>
-            <h2 className="kkr-modal-title">Sums in Harmony</h2>
-            <p className="kkr-modal-desc">
-              All cross-sums balanced without repetition. The sanctuary rests in equilibrium.
-            </p>
-            <div className="kkr-modal-actions">
-              {difficulty === 'intro' && (
-                <button
-                  id="kkr-next-level-btn"
-                  type="button"
-                  className="kkr-modal-btn-primary"
-                  onClick={() => {
-                    playTap();
-                    setDifficulty('classic');
-                  }}
-                >
-                  Advance to Classic (6×6)
-                </button>
-              )}
-              {difficulty === 'classic' && (
-                <button
-                  id="kkr-next-level-btn"
-                  type="button"
-                  className="kkr-modal-btn-primary"
-                  onClick={() => {
-                    playTap();
-                    setDifficulty('expert');
-                  }}
-                >
-                  Advance to Expert (8×8)
-                </button>
-              )}
-              <button
-                type="button"
-                className="kkr-modal-btn-secondary"
-                onClick={handleReset}
-              >
-                Replay Board
-              </button>
-              <button
-                type="button"
-                className="kkr-modal-btn-tertiary"
-                onClick={handleBack}
-              >
-                Return to Briefing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={hasWon}
+        title="Sums in Harmony"
+        description="All cross-sums balanced without repetition. The sanctuary rests in equilibrium."
+        icon="✓"
+        stats={[
+          { label: 'Tier', value: difficultyNames[difficulty] || difficulty },
+          { label: 'Moves', value: `${history.length - 1}` },
+        ]}
+        onNext={() => setDifficulty(nextTierMap[difficulty] || 'intro')}
+        nextLabel="Next Tier"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Grid"
+      />
     </div>
   );
 }

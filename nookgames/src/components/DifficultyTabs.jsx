@@ -29,6 +29,7 @@ export function DifficultyTabs({
             role="tab"
             aria-selected={isActive}
             className={`game-diff-tab${isActive ? ' game-diff-tab--active' : ''}`}
+            title={subtitle ? `${label} (${subtitle})` : label}
             onClick={() => {
               playTap()
               onSelectTier(id, idx, tier)
@@ -42,3 +43,5 @@ export function DifficultyTabs({
     </div>
   )
 }
+
+export default DifficultyTabs

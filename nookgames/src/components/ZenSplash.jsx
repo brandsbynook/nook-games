@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from './Icons'
 
 /**
  * ZenSplash — 1.2 s full-screen zen transition before entering a game.

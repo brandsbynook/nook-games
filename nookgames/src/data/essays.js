@@ -205,16 +205,16 @@ export const ESSAYS = [
     companionName: 'Shikaku',
   },
   {
-    id: 'arrow-vectors',
-    title: 'Spatial Working Memory and Clear Vectors',
-    theme: 'Cognitive Science',
+    id: 'lights-out-mod2',
+    title: 'Linear Algebra and Grid State Inversions',
+    theme: 'Discrete Mathematics',
     readTime: '1 min',
     paragraphs: [
-      "Navigating tight paths or crowded rooms relies heavily on your brain's visual-spatial sketchpad.",
-      'Puzzles requiring directional routing train backward deduction. By visualizing where a path must end before plotting where it starts, the mind avoids traps and turns an overwhelming grid into a clear sequence of deliberate movements.',
+      'Every button press in a toggle grid acts as an addition in the binary field GF(2).',
+      'Because every toggle is commutative and its own inverse, the order of moves never matters — only the set of cells activated. Lights Out illustrates how linear algebra turns chaotic cascading toggles into a solvable system of equations.',
     ],
-    companionGameId: 'arrow-puzzle',
-    companionName: 'Arrow Puzzle',
+    companionGameId: 'lights-out',
+    companionName: 'Lights Out',
   },
   {
     id: 'checkers-forced-jumps',

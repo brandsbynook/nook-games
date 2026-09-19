@@ -1,12 +1,10 @@
-import { Icon } from '../icons.jsx'
+import { BackButton } from './BackButton.jsx'
 
-export function PageHeader({ title, backHref }) {
+export function PageHeader({ title, backHref, onBack }) {
   return (
     <header className="page-header subscreen-header" role="banner">
-      {backHref ? (
-        <a className="page-header-back" href={backHref} aria-label="Back">
-          <Icon name="back" size={20} />
-        </a>
+      {backHref || onBack ? (
+        <BackButton backHref={backHref} onClick={onBack} ariaLabel="Back" />
       ) : (
         <span className="page-header-back-spacer" />
       )}
@@ -15,3 +13,5 @@ export function PageHeader({ title, backHref }) {
     </header>
   )
 }
+
+export default PageHeader

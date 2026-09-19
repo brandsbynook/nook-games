@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { BackButton } from '../components/BackButton.jsx'
 import { ZenSplash } from '../components/ZenSplash.jsx'
 import { playTap } from '../utils/audio.js'

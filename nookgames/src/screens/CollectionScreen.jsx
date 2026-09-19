@@ -1,4 +1,4 @@
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { BackButton } from '../components/BackButton.jsx'
 import { GameCard } from '../components/GameCard.jsx'
 

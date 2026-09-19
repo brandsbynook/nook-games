@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Icon } from '../icons.jsx';
-import { BackButton } from '../components/BackButton.jsx';
+import { Icon } from '../components/Icons';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -18,27 +21,33 @@ export function SlitherlinkScreen({ onBack }) {
   const [puzzle, setPuzzle] = useState(() => getTransformedSlitherlink(SLITHERLINK_PUZZLES.intro));
 
   const [edges, setEdges] = useState(() => createEmptyEdges(puzzle.size));
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => [createEmptyEdges(puzzle.size)]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [drawMode, setDrawMode] = useState('line'); // 'line' | 'cross'
   const [hasWon, setHasWon] = useState(false);
 
+  const isInspecting = historyIndex < history.length - 1;
+
   // Safe edges memoized: guarantees dimensions always match puzzle.size
   const activeEdges = useMemo(() => {
+    const current = isInspecting ? (history[historyIndex] || edges) : edges;
     if (
-      edges?.hEdges?.length === puzzle.size + 1 &&
-      edges?.vEdges?.length === puzzle.size &&
-      edges?.hEdges?.[0]?.length === puzzle.size &&
-      edges?.vEdges?.[0]?.length === puzzle.size + 1
+      current?.hEdges?.length === puzzle.size + 1 &&
+      current?.vEdges?.length === puzzle.size &&
+      current?.hEdges?.[0]?.length === puzzle.size &&
+      current?.vEdges?.[0]?.length === puzzle.size + 1
     ) {
-      return edges;
+      return current;
     }
     return createEmptyEdges(puzzle.size);
-  }, [edges, puzzle.size]);
+  }, [edges, history, historyIndex, isInspecting, puzzle.size]);
 
   // Synchronize edges when puzzle size changes
   useEffect(() => {
-    setEdges(createEmptyEdges(puzzle.size));
-    setHistory([]);
+    const init = createEmptyEdges(puzzle.size);
+    setEdges(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setHasWon(false);
     setDrawMode('line');
   }, [puzzle.size]);
@@ -66,10 +75,12 @@ export function SlitherlinkScreen({ onBack }) {
   const handleDifficultyChange = useCallback((nextDiff) => {
     playTap();
     const nextPuzzle = getTransformedSlitherlink(SLITHERLINK_PUZZLES[nextDiff] || SLITHERLINK_PUZZLES.intro);
+    const init = createEmptyEdges(nextPuzzle.size);
     setDifficulty(nextDiff);
     setPuzzle(nextPuzzle);
-    setEdges(createEmptyEdges(nextPuzzle.size));
-    setHistory([]);
+    setEdges(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setHasWon(false);
     setDrawMode('line');
   }, []);
@@ -87,10 +98,8 @@ export function SlitherlinkScreen({ onBack }) {
   // Handle edge interaction
   const handleEdgeAction = useCallback(
     (type, r, c, isSecondary = false) => {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
       playTap();
-
-      setHistory((prev) => [...prev, cloneEdges(activeEdges)]);
 
       setEdges((prevEdges) => {
         const base = (
@@ -112,10 +121,16 @@ export function SlitherlinkScreen({ onBack }) {
           matrix[r][c] = current === 'line' ? 'none' : 'line';
         }
 
+        setHistory((hPrev) => {
+          const nextHist = [...hPrev.slice(0, historyIndex + 1), next];
+          setHistoryIndex(nextHist.length - 1);
+          return nextHist;
+        });
+
         return next;
       });
     },
-    [hasWon, activeEdges, drawMode, puzzle.size]
+    [hasWon, isInspecting, drawMode, puzzle.size, historyIndex]
   );
 
   // Right-click / context menu to place cross
@@ -127,34 +142,25 @@ export function SlitherlinkScreen({ onBack }) {
     [handleEdgeAction]
   );
 
-  // Undo
-  const handleUndo = useCallback(() => {
-    if (history.length === 0 || hasWon) return;
-    playTap();
-    const prev = history[history.length - 1];
-    setHistory((prevHist) => prevHist.slice(0, prevHist.length - 1));
-    setEdges(prev);
-  }, [history, hasWon]);
-
-
   // Reset with fresh reflection transform
   const handleReset = useCallback(() => {
     playTap();
     const newPuzzle = getTransformedSlitherlink(SLITHERLINK_PUZZLES[difficulty] || SLITHERLINK_PUZZLES.intro);
+    const init = createEmptyEdges(newPuzzle.size);
     setPuzzle(newPuzzle);
-    setEdges(createEmptyEdges(newPuzzle.size));
-    setHistory([]);
+    setEdges(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setHasWon(false);
   }, [difficulty]);
 
   // Hint
   const handleHint = useCallback(() => {
-    if (hasWon) return;
+    if (hasWon || isInspecting) return;
     const hint = getNextHint(puzzle.clues, activeEdges, puzzle.solution);
     if (!hint) return;
 
     playTap();
-    setHistory((prev) => [...prev, cloneEdges(activeEdges)]);
 
     setEdges((prevEdges) => {
       const base = (
@@ -168,30 +174,32 @@ export function SlitherlinkScreen({ onBack }) {
       } else {
         if (next.vEdges[hint.r]) next.vEdges[hint.r][hint.c] = hint.target;
       }
+
+      setHistory((hPrev) => {
+        const nextHist = [...hPrev.slice(0, historyIndex + 1), next];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
+
       return next;
     });
-  }, [hasWon, puzzle, activeEdges]);
+  }, [hasWon, isInspecting, puzzle, activeEdges, historyIndex]);
 
   // Keyboard shortcut listener
   useEffect(() => {
     function handleKeyDown(e) {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
       const key = e.key.toLowerCase();
 
       if (key === 'x') {
         playTap();
         setDrawMode((prev) => (prev === 'line' ? 'cross' : 'line'));
-      } else if ((e.ctrlKey || e.metaKey) && key === 'z') {
-        e.preventDefault();
-        handleUndo();
-      } else if (key === 'r' && !e.ctrlKey && !e.metaKey) {
-        handleReset();
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasWon, handleUndo, handleReset]);
+  }, [hasWon, isInspecting]);
 
   // Geometry calculations for SVG
   const N = puzzle.size;
@@ -200,49 +208,33 @@ export function SlitherlinkScreen({ onBack }) {
   const CELL_STEP = (SVG_SIZE - PADDING * 2) / N;
   const DOT_RADIUS = N >= 6 ? 4.5 : 5.5;
 
+  const difficultyLabels = {
+    intro: 'Intro (4×4)',
+    classic: 'Classic (5×5)',
+    hard: 'Hard (6×6)',
+  };
+
+  const nextTierMap = {
+    intro: 'classic',
+    classic: 'hard',
+    hard: 'intro',
+  };
+
   return (
-    <div className="slk-page">
+    <div className="slk-page game-screen-container">
       {/* ── Header ───────────────────────────────────────────── */}
-      <header className="slk-header">
-        <BackButton
-          id="slk-back-btn"
-          className="slk-btn-back"
-          onClick={handleBack}
-          ariaLabel="Back to Briefing"
-          title="Back to Briefing"
-        />
-
-        <h1 className="slk-title">Slitherlink</h1>
-
-        <button
-          id="slk-reset-btn"
-          type="button"
-          className="slk-btn-icon"
-          onClick={handleReset}
-          aria-label="Reset Board"
-        >
-          <Icon name="refresh" size={16} />
-        </button>
-      </header>
+      <GameHeader title="Slitherlink" onBack={handleBack} />
 
       {/* ── Difficulty Tabs ─────────────────────────────────── */}
-      <div className="slk-tabs-container">
-        {[
-          { id: 'intro', label: 'Intro (4×4)' },
-          { id: 'classic', label: 'Classic (5×5)' },
-          { id: 'hard', label: 'Hard (6×6)' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            id={`slk-tab-${tab.id}`}
-            type="button"
-            className={`slk-tab-btn${difficulty === tab.id ? ' slk-tab-btn--active' : ''}`}
-            onClick={() => handleDifficultyChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(d) => handleDifficultyChange(d)}
+        tiers={[
+          { id: 'intro', label: 'Intro', subtitle: '4×4' },
+          { id: 'classic', label: 'Classic', subtitle: '5×5' },
+          { id: 'hard', label: 'Hard', subtitle: '6×6' },
+        ]}
+      />
 
       {/* ── Status Bar ──────────────────────────────────────── */}
       <div className="slk-status-bar">
@@ -460,103 +452,56 @@ export function SlitherlinkScreen({ onBack }) {
 
       {/* ── Footer Controls & Toolbar ───────────────────────── */}
       <div className="slk-controls">
-        <div className="slk-toolbar">
-          <button
-            id="slk-undo-btn"
-            type="button"
-            className="slk-action-btn"
-            onClick={handleUndo}
-            disabled={history.length === 0 || hasWon}
-            aria-label="Undo"
-          >
-            <Icon name="undo" size={14} />
-            <span>Undo</span>
-          </button>
-
+        <GameFooterActions
+          onReset={handleReset}
+          onHint={handleHint}
+          canHint={!hasWon && !isInspecting}
+          resetLabel="Reset"
+          hintLabel="Hint"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        >
           <button
             id="slk-mode-btn"
             type="button"
-            className={`slk-action-btn${
-              drawMode === 'cross'
-                ? ' slk-action-btn--cross-active'
-                : ' slk-action-btn--active'
+            className={`game-action-btn${
+              drawMode === 'cross' ? ' game-action-btn--active' : ''
             }`}
             onClick={() => {
               playTap();
               setDrawMode((prev) => (prev === 'line' ? 'cross' : 'line'));
             }}
             aria-label="Toggle Draw vs Cross Mode"
+            disabled={isInspecting || hasWon}
           >
-            <Icon name="pencil" size={14} />
+            <Icon name="pencil" size={16} />
             <span>{drawMode === 'line' ? 'Draw Line' : 'Mark (×)'}</span>
           </button>
-
-          <button
-            id="slk-hint-btn"
-            type="button"
-            className="slk-action-btn"
-            onClick={handleHint}
-            disabled={hasWon}
-            aria-label="Get Hint"
-          >
-            <Icon name="info" size={14} />
-            <span>Hint</span>
-          </button>
-        </div>
-
-        <div className="slk-help-hint">
-          Tip: Tap to place edge. Press 'X' or toggle button to switch to cross mode. Right-click to cross.
-        </div>
+        </GameFooterActions>
       </div>
 
-      {/* ── Calm Victory Modal ───────────────────────────────── */}
-      {hasWon && (
-        <div className="slk-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="slk-modal-card">
-            <div className="slk-modal-icon">❖</div>
-            <h2 className="slk-modal-title">Loop in Harmony</h2>
-            <p className="slk-modal-desc">
-              The single unbroken loop closes in perfect equilibrium. All clues verified.
-            </p>
-            <div className="slk-modal-actions">
-              {difficulty === 'intro' && (
-                <button
-                  id="slk-next-level-btn"
-                  type="button"
-                  className="slk-modal-btn-primary"
-                  onClick={() => handleDifficultyChange('classic')}
-                >
-                  Advance to Classic (5×5)
-                </button>
-              )}
-              {difficulty === 'classic' && (
-                <button
-                  id="slk-next-level-btn"
-                  type="button"
-                  className="slk-modal-btn-primary"
-                  onClick={() => handleDifficultyChange('hard')}
-                >
-                  Advance to Hard (6×6)
-                </button>
-              )}
-              <button
-                type="button"
-                className="slk-modal-btn-secondary"
-                onClick={handleReset}
-              >
-                Replay Board
-              </button>
-              <button
-                type="button"
-                className="slk-modal-btn-tertiary"
-                onClick={handleBack}
-              >
-                Return to Briefing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={hasWon}
+        title="Loop in Harmony"
+        description="The single unbroken loop closes in perfect equilibrium. All clues verified."
+        icon="❖"
+        stats={[
+          { label: 'Tier', value: difficultyLabels[difficulty] || difficulty },
+          { label: 'Segments', value: `${validation.activeEdgeCount}` },
+          { label: 'Moves', value: `${history.length - 1}` },
+        ]}
+        onNext={() => handleDifficultyChange(nextTierMap[difficulty] || 'intro')}
+        nextLabel="Next Tier"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Loop"
+      />
     </div>
   );
 }

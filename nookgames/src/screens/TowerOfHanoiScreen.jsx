@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { GameHeader } from '../components/GameHeader.jsx';
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
 import { GameFooterActions } from '../components/GameFooterActions.jsx';
-import { Icon } from '../icons.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
+import { Icon } from '../components/Icons';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -19,21 +20,23 @@ export function TowerOfHanoiScreen({ onBack }) {
   const activePreset = getTierPreset(tier);
 
   const [pegs, setPegs] = useState(() => createInitialPegs(activePreset.disks, activePreset.pegs));
+  const [history, setHistory] = useState(() => [createInitialPegs(activePreset.disks, activePreset.pegs)]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedPeg, setSelectedPeg] = useState(null);
-  const [moveCount, setMoveCount] = useState(0);
-  const [history, setHistory] = useState([]);
   const [isSolved, setIsSolved] = useState(false);
-  const [showToast, setShowToast] = useState(false);
   const [invalidPeg, setInvalidPeg] = useState(null);
+
+  const isInspecting = historyIndex < history.length - 1;
+  const displayedPegs = history[historyIndex] || pegs;
 
   const resetGame = useCallback((targetTier = tier) => {
     const preset = getTierPreset(targetTier);
-    setPegs(createInitialPegs(preset.disks, preset.pegs));
+    const init = createInitialPegs(preset.disks, preset.pegs);
+    setPegs(init);
+    setHistory([init]);
+    setHistoryIndex(0);
     setSelectedPeg(null);
-    setMoveCount(0);
-    setHistory([]);
     setIsSolved(false);
-    setShowToast(false);
     setInvalidPeg(null);
   }, [tier]);
 
@@ -60,19 +63,9 @@ export function TowerOfHanoiScreen({ onBack }) {
     resetGame(tier);
   };
 
-  const handleUndo = useCallback(() => {
-    if (history.length === 0 || isSolved) return;
-    playTap();
-    const prevPegs = history[history.length - 1];
-    setHistory((prev) => prev.slice(0, -1));
-    setPegs(prevPegs);
-    setSelectedPeg(null);
-    setMoveCount((prev) => Math.max(0, prev - 1));
-  }, [history, isSolved]);
-
   // Peg interaction
   const handlePegClick = useCallback((pegIndex) => {
-    if (isSolved) return;
+    if (isSolved || isInspecting) return;
 
     // Case 1: No peg selected yet -> Lift top disk if peg not empty
     if (selectedPeg === null) {
@@ -92,19 +85,20 @@ export function TowerOfHanoiScreen({ onBack }) {
     // Case 3: Target peg selected -> Attempt move
     if (isValidMove(selectedPeg, pegIndex, pegs)) {
       playTap();
-      setHistory((prev) => [...prev, pegs]);
       const res = executeMove(selectedPeg, pegIndex, pegs);
       setPegs(res.pegs);
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), res.pegs];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
       setSelectedPeg(null);
-      const nextMoves = moveCount + 1;
-      setMoveCount(nextMoves);
 
       // Win Condition: all disks stacked on any non-origin peg
       if (checkSolved(res.pegs, activePreset.disks)) {
         setIsSolved(true);
         setTimeout(() => {
           playChime();
-          setShowToast(true);
           recordGameSession('tower-of-hanoi', true);
         }, 300);
       }
@@ -115,16 +109,13 @@ export function TowerOfHanoiScreen({ onBack }) {
         setInvalidPeg(null);
       }, 400);
     }
-  }, [isSolved, selectedPeg, pegs, moveCount, activePreset]);
+  }, [isSolved, isInspecting, selectedPeg, pegs, historyIndex, activePreset]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (isSolved) return;
-      if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        handleUndo();
-      } else if (e.key === 'r') {
+      if (isSolved || isInspecting) return;
+      if (e.key === 'r') {
         e.preventDefault();
         handleRestart();
       } else if (['1', '2', '3', '4'].includes(e.key)) {
@@ -138,7 +129,7 @@ export function TowerOfHanoiScreen({ onBack }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSolved, handleUndo, handlePegClick, activePreset]);
+  }, [isSolved, isInspecting, handlePegClick, activePreset]);
 
   // Disk visual attributes
   const getDiskStyle = (diskSize, isLifted) => {
@@ -166,6 +157,12 @@ export function TowerOfHanoiScreen({ onBack }) {
 
   const pegLabels = ['A', 'B', 'C', 'D'].slice(0, activePreset.pegs);
 
+  const nextTierMap = {
+    gentle: 'standard',
+    standard: 'deep',
+    deep: 'gentle',
+  };
+
   return (
     <div className="toh-page game-screen-container">
       <GameHeader title="Tower of Hanoi" onBack={handleBack} />
@@ -185,7 +182,7 @@ export function TowerOfHanoiScreen({ onBack }) {
         <div className="toh-stat-pills">
           <div className="toh-pill">
             <span className="toh-pill-label">MOVES</span>
-            <span className="toh-pill-val">{moveCount}</span>
+            <span className="toh-pill-val">{history.length - 1}</span>
           </div>
           <div className="toh-pill">
             <span className="toh-pill-label">MINIMUM</span>
@@ -209,8 +206,8 @@ export function TowerOfHanoiScreen({ onBack }) {
             gridTemplateColumns: `repeat(${activePreset.pegs}, 1fr)`,
           }}
         >
-          {pegs.map((pegStack, pegIdx) => {
-            const isSelected = selectedPeg === pegIdx;
+          {displayedPegs.map((pegStack, pegIdx) => {
+            const isSelected = selectedPeg === pegIdx && !isInspecting;
             const isInvalid = invalidPeg === pegIdx;
 
             return (
@@ -268,36 +265,37 @@ export function TowerOfHanoiScreen({ onBack }) {
       </div>
 
       {/* ── Action Controls & Footer ──────────────────────────── */}
-      <GameFooterActions
-        onReset={handleRestart}
-        resetLabel="Restart"
-        onUndo={history.length > 0 && !isSolved ? handleUndo : undefined}
-        undoLabel="Undo"
-      >
-        {isSolved ? (
-          <button
-            type="button"
-            className="game-action-btn game-action-btn--primary"
-            onClick={() => {
-              const nextTier =
-                tier === 'gentle' ? 'standard' : tier === 'standard' ? 'deep' : 'gentle';
-              handleTierChange(nextTier);
-            }}
-          >
-            <Icon name="arrow-right" size={16} />
-            <span>Next Tier</span>
-          </button>
-        ) : null}
-      </GameFooterActions>
-
-      {/* ── Completion Toast ─────────────────────────────────── */}
-      <div
-        className={`toh-toast${showToast ? ' toh-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        Order restored across the pillars.
+      <div className="toh-footer-controls">
+        <GameFooterActions
+          onReset={handleRestart}
+          resetLabel="Restart"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        />
       </div>
+
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isSolved}
+        title="Order Restored"
+        description="Every disk rests in quiet harmony on the pillar."
+        icon="✓"
+        stats={[
+          { label: 'Tier', value: TIERS[tier]?.label || tier },
+          { label: 'Moves', value: `${history.length - 1}` },
+          { label: 'Optimal', value: `${activePreset.minMoves}` },
+        ]}
+        onNext={() => handleTierChange(nextTierMap[tier] || 'gentle')}
+        nextLabel="Next Tier"
+        onReplay={handleRestart}
+        replayLabel="Replay"
+        reviewLabel="Review Pillars"
+      />
     </div>
   );
 }

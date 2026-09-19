@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { GameHeader } from '../components/GameHeader.jsx';
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
 import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -23,10 +24,15 @@ export function ArrowPuzzleScreen({ onBack }) {
 
   const [remainingArrows, setRemainingArrows] = useState(() => puzzle.arrows);
   const [history, setHistory] = useState([]);
+  const [snapshots, setSnapshots] = useState(() => [puzzle.arrows]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [flyingArrows, setFlyingArrows] = useState([]);
   const [recoilingArrowId, setRecoilingArrowId] = useState(null);
   const [hasWon, setHasWon] = useState(false);
   const [hoveredArrowId, setHoveredArrowId] = useState(null);
+
+  const isInspecting = historyIndex < snapshots.length - 1;
+  const displayedArrows = snapshots[historyIndex] || remainingArrows;
 
   const recoilTimeoutRef = useRef(null);
   const flightTimeoutsRef = useRef(new Map());
@@ -34,6 +40,8 @@ export function ArrowPuzzleScreen({ onBack }) {
   useEffect(() => {
     setRemainingArrows(puzzle.arrows);
     setHistory([]);
+    setSnapshots([puzzle.arrows]);
+    setHistoryIndex(0);
     setFlyingArrows([]);
     setRecoilingArrowId(null);
     setHasWon(false);
@@ -53,8 +61,8 @@ export function ArrowPuzzleScreen({ onBack }) {
   }, []);
 
   const availableArrowIds = useMemo(() => {
-    return new Set(getAvailableArrowIds(remainingArrows, puzzle.gridBounds));
-  }, [remainingArrows, puzzle.gridBounds]);
+    return new Set(getAvailableArrowIds(displayedArrows, puzzle.gridBounds));
+  }, [displayedArrows, puzzle.gridBounds]);
 
   const handleBack = useCallback((e) => {
     if (e) e.preventDefault();
@@ -87,18 +95,25 @@ export function ArrowPuzzleScreen({ onBack }) {
     playTap();
     setRemainingArrows(puzzle.arrows);
     setHistory([]);
+    setSnapshots([puzzle.arrows]);
+    setHistoryIndex(0);
     setFlyingArrows([]);
     setRecoilingArrowId(null);
     setHasWon(false);
   };
 
   const handleUndo = () => {
-    if (history.length === 0 || hasWon) return;
+    if (history.length === 0 || hasWon || isInspecting) return;
     playTap();
 
     const { nextArrows, nextHistory } = undoMove(history, remainingArrows);
     setRemainingArrows(nextArrows);
     setHistory(nextHistory);
+    setSnapshots((prev) => {
+      const next = prev.slice(0, -1);
+      setHistoryIndex(next.length - 1);
+      return next;
+    });
 
     const restoredArrow = history[history.length - 1];
     if (restoredArrow) {
@@ -110,8 +125,22 @@ export function ArrowPuzzleScreen({ onBack }) {
     }
   };
 
+  const handleStepBack = () => {
+    if (historyIndex > 0) {
+      playTap();
+      setHistoryIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleStepForward = () => {
+    if (historyIndex < snapshots.length - 1) {
+      playTap();
+      setHistoryIndex((prev) => prev + 1);
+    }
+  };
+
   const handleArrowClick = (arrow) => {
-    if (hasWon) return;
+    if (hasWon || isInspecting) return;
 
     const blocked = isArrowBlocked(arrow.id, remainingArrows, puzzle.gridBounds);
 
@@ -142,6 +171,11 @@ export function ArrowPuzzleScreen({ onBack }) {
 
     setHistory((prev) => [...prev, removedArrow]);
     setRemainingArrows(nextArrows);
+    setSnapshots((prev) => {
+      const next = [...prev.slice(0, historyIndex + 1), nextArrows];
+      setHistoryIndex(next.length - 1);
+      return next;
+    });
 
     if (isWon) {
       setTimeout(() => {
@@ -238,16 +272,16 @@ export function ArrowPuzzleScreen({ onBack }) {
         >
           {/* ── Static arrows layer ── */}
           <g className="ap-arrows-layer">
-            {remainingArrows.map((arrow) => {
+            {displayedArrows.map((arrow) => {
               const points     = arrow.points || arrow.path;
               const heading    = getArrowVectorHeading(points);
               const head       = points[points.length - 1];
               const center     = getCellCenter(head[0], head[1]);
               const pathD      = getPathData(points);
               const headPts    = getHeadPoints(center);
-              const isUnblocked = availableArrowIds.has(arrow.id);
-              const isRecoiling = recoilingArrowId === arrow.id;
-              const isHovered   = hoveredArrowId   === arrow.id;
+              const isUnblocked = !isInspecting && availableArrowIds.has(arrow.id);
+              const isRecoiling = !isInspecting && recoilingArrowId === arrow.id;
+              const isHovered   = !isInspecting && hoveredArrowId   === arrow.id;
 
               return (
                 <g
@@ -321,7 +355,9 @@ export function ArrowPuzzleScreen({ onBack }) {
         </svg>
 
         <div className="ap-hint-bar">
-          {remainingArrows.length === 0
+          {isInspecting
+            ? `Inspecting Move (${historyIndex + 1}/${snapshots.length})`
+            : displayedArrows.length === 0
             ? 'All arrows have exited the labyrinth.'
             : 'Tap arrows with clear corridors to launch them.'}
         </div>
@@ -330,45 +366,44 @@ export function ArrowPuzzleScreen({ onBack }) {
       <GameFooterActions
         onReset={handleReset}
         onUndo={handleUndo}
-        canUndo={history.length > 0 && !hasWon}
+        canUndo={history.length > 0 && !hasWon && !isInspecting}
+        onStepBack={handleStepBack}
+        onStepForward={handleStepForward}
+        canStepBack={historyIndex > 0}
+        canStepForward={historyIndex < snapshots.length - 1}
+        stepIndicator={`${historyIndex + 1} / ${snapshots.length}`}
+        isInspecting={isInspecting}
+        onExitInspection={() => setHistoryIndex(snapshots.length - 1)}
         resetLabel="Reset"
         undoLabel="Undo"
       >
         <div className="ap-counter" style={{ margin: '0 4px' }}>
-          <span className="ap-counter-num">{remainingArrows.length}</span>
+          <span className="ap-counter-num">{displayedArrows.length}</span>
           <span className="ap-counter-label">left</span>
         </div>
       </GameFooterActions>
 
-      {hasWon && (
-        <div className="ap-modal-backdrop">
-          <div className="ap-modal-card">
-            <div className="ap-modal-icon">✓</div>
-            <h2 className="ap-modal-title">Labyrinth Cleared</h2>
-            <p className="ap-modal-desc">
-              All {puzzle.arrows.length} entangled arrows successfully unraveled in harmonious sequence.
-            </p>
-            <div className="ap-modal-actions">
-              <button
-                type="button"
-                className="ap-modal-btn-primary"
-                onClick={handleNextLevel}
-              >
-                Next Level
-              </button>
-              <button
-                type="button"
-                className="ap-modal-btn-secondary"
-                onClick={handleReset}
-              >
-                Replay Puzzle
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GameCompletionModal
+        isOpen={hasWon}
+        title="LABYRINTH CLEARED"
+        subtitle={`All ${puzzle.arrows.length} entangled arrows successfully unraveled in harmonious sequence.`}
+        stats={[
+          { label: 'Level', value: `${levelIndex + 1} / ${totalLevels}` },
+          { label: 'Difficulty', value: difficulty.toUpperCase() },
+          { label: 'Moves', value: history.length },
+        ]}
+        primaryAction={{
+          label: 'Next Level',
+          onClick: handleNextLevel,
+        }}
+        secondaryAction={{
+          label: 'Replay Puzzle',
+          onClick: handleReset,
+        }}
+        reviewLabel="Review Grid"
+      />
     </div>
   );
 }
 
-export default ArrowPuzzleScreen;
+export default ArrowPuzzleScreen;

@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   BOARD_TIERS,
   getKnightMoves,
@@ -19,28 +20,34 @@ export function KnightsTourScreen({ onBack }) {
 
   // Move history: array of { r, c }
   const [history, setHistory] = useState([])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [activeHint, setActiveHint] = useState(null)
+
+  const isInspecting = history.length > 0 && historyIndex < history.length - 1
+  const displayedHistory = history.slice(0, historyIndex + 1)
 
   // Visited set and map: 'r,c' -> stepNumber (1-indexed)
   const { visitedSet, visitedMap } = useMemo(() => {
     const set = new Set()
     const map = new Map()
-    history.forEach((pos, idx) => {
+    displayedHistory.forEach((pos, idx) => {
       const key = `${pos.r},${pos.c}`
       set.add(key)
       map.set(key, idx + 1)
     })
     return { visitedSet: set, visitedMap: map }
-  }, [history])
+  }, [displayedHistory])
 
-  const currentPos = history.length > 0 ? history[history.length - 1] : null
-  const visitedCount = history.length
+  const currentPos = displayedHistory.length > 0 ? displayedHistory[displayedHistory.length - 1] : null
+  const visitedCount = displayedHistory.length
 
-  // Valid moves from current position (or any square if game hasn't started)
+  // Valid moves from current position
   const validMoves = useMemo(() => {
-    if (history.length === 0) return []
-    return getKnightMoves(currentPos.r, currentPos.c, size, visitedSet)
-  }, [history.length, currentPos, size, visitedSet])
+    if (history.length === 0 || isInspecting) return []
+    const head = history[history.length - 1]
+    const actualVisitedSet = new Set(history.map((p) => `${p.r},${p.c}`))
+    return getKnightMoves(head.r, head.c, size, actualVisitedSet)
+  }, [history, isInspecting, size])
 
   const validMoveSet = useMemo(() => {
     return new Set(validMoves.map((m) => `${m.r},${m.c}`))
@@ -49,8 +56,8 @@ export function KnightsTourScreen({ onBack }) {
   // Game status: 'playing' | 'won' | 'trapped'
   const gameStatus = useMemo(() => {
     if (history.length === 0) return 'playing'
-    return checkGameStatus(visitedCount, totalSquares, validMoves.length)
-  }, [history.length, visitedCount, totalSquares, validMoves.length])
+    return checkGameStatus(history.length, totalSquares, validMoves.length)
+  }, [history.length, totalSquares, validMoves.length])
 
   // Navigation back
   const handleBack = () => {
@@ -66,6 +73,7 @@ export function KnightsTourScreen({ onBack }) {
   const handleReset = () => {
     playTap()
     setHistory([])
+    setHistoryIndex(0)
     setActiveHint(null)
   }
 
@@ -75,17 +83,20 @@ export function KnightsTourScreen({ onBack }) {
     playTap()
     setTierKey(key)
     setHistory([])
+    setHistoryIndex(0)
     setActiveHint(null)
   }
 
   // Handle square tap
   const handleSquareClick = (r, c) => {
+    if (isInspecting) return
     const key = `${r},${c}`
 
     // Case 1: First placement (game start)
     if (history.length === 0) {
       playTap()
       setHistory([{ r, c }])
+      setHistoryIndex(0)
       setActiveHint(null)
       return
     }
@@ -95,6 +106,7 @@ export function KnightsTourScreen({ onBack }) {
       playTap()
       const nextHistory = [...history, { r, c }]
       setHistory(nextHistory)
+      setHistoryIndex(nextHistory.length - 1)
       setActiveHint(null)
 
       // Check for win
@@ -104,23 +116,19 @@ export function KnightsTourScreen({ onBack }) {
     }
   }
 
-  // Undo move
-  const handleUndo = () => {
-    if (history.length === 0) return
-    playTap()
-    setHistory((prev) => prev.slice(0, -1))
-    setActiveHint(null)
-  }
-
   // Hint button (Warnsdorff's heuristic)
   const handleHint = () => {
-    if (history.length === 0 || gameStatus !== 'playing') return
+    if (history.length === 0 || gameStatus !== 'playing' || isInspecting) return
     playTap()
-    const hint = warnsdorffHint(currentPos, size, visitedSet)
+    const head = history[history.length - 1]
+    const actualVisitedSet = new Set(history.map((p) => `${p.r},${p.c}`))
+    const hint = warnsdorffHint(head, size, actualVisitedSet)
     if (hint) {
       setActiveHint(hint)
     }
   }
+
+  const isGameOver = gameStatus === 'won' || gameStatus === 'trapped'
 
   return (
     <div className="kt-page game-screen-container">
@@ -169,15 +177,15 @@ export function KnightsTourScreen({ onBack }) {
           aria-label={`Knight's Tour ${size}x${size} Grid`}
         >
           {Array.from({ length: size }).map((_, r) =>
-            Array.from({ length: size }).map((_, c) => {
+            Array.from({ length: size }).map((__, c) => {
               const key = `${r},${c}`
               const isLight = (r + c) % 2 === 0
               const isCurrent = currentPos && currentPos.r === r && currentPos.c === c
               const stepNumber = visitedMap.get(key)
               const isVisited = stepNumber !== undefined
               const isValidCandidate =
-                history.length === 0 || (!isVisited && validMoveSet.has(key))
-              const isHint = activeHint && activeHint.r === r && activeHint.c === c
+                !isInspecting && (history.length === 0 || (!isVisited && validMoveSet.has(key)))
+              const isHint = !isInspecting && activeHint && activeHint.r === r && activeHint.c === c
 
               let squareClasses = `kt-square ${isLight ? 'kt-square--light' : 'kt-square--dark'}`
               if (isCurrent) squareClasses += ' kt-square--current'
@@ -192,7 +200,7 @@ export function KnightsTourScreen({ onBack }) {
                   id={`kt-sq-${r}-${c}`}
                   className={squareClasses}
                   onClick={() => handleSquareClick(r, c)}
-                  disabled={isVisited && !isCurrent}
+                  disabled={isInspecting || (isVisited && !isCurrent)}
                   aria-label={`Square ${r + 1}, ${c + 1}${
                     isCurrent
                       ? ': Knight'
@@ -229,71 +237,46 @@ export function KnightsTourScreen({ onBack }) {
         </div>
       </div>
 
-      {/* ── Action Controls (Undo & Hint) ────────────────────── */}
-      <GameFooterActions
-        onReset={handleReset}
-        onUndo={handleUndo}
-        onHint={handleHint}
-        canUndo={history.length > 0}
-        canHint={history.length > 0 && gameStatus === 'playing'}
-        resetLabel="Reset"
-        undoLabel="Undo"
-        hintLabel="Hint"
+      {/* ── Action Controls & Stepper ─────────────────────────── */}
+      <div className="kt-footer-controls">
+        <GameFooterActions
+          onReset={handleReset}
+          onHint={handleHint}
+          canHint={history.length > 0 && gameStatus === 'playing' && !isInspecting}
+          resetLabel="Reset"
+          hintLabel="Hint"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Step ${historyIndex + 1}/${history.length}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        />
+      </div>
+
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isGameOver}
+        title={gameStatus === 'won' ? 'Harmony Achieved' : 'Tour Concluded'}
+        description={
+          gameStatus === 'won'
+            ? 'Full Tour Completed. Every square on the board was visited once and only once.'
+            : `No available jumps remain. The tour rests at step ${history.length} of ${totalSquares}.`
+        }
+        icon={gameStatus === 'won' ? '✓' : '♞'}
+        stats={[
+          { label: 'Visited', value: `${history.length}/${totalSquares}` },
+          { label: 'Board', value: `${size}×${size}` },
+        ]}
+        onNext={handleReset}
+        nextLabel="New Tour"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Tour"
       />
-
-      {/* ── End-of-Game Banners ─────────────────────────────── */}
-      {gameStatus === 'won' && (
-        <div className="kt-modal-backdrop">
-          <div className="kt-modal kt-modal--won">
-            <h2 className="kt-modal-title">HARMONY ACHIEVED</h2>
-            <p className="kt-modal-text">
-              Full Tour Completed. Every square on the board was visited once and only once.
-            </p>
-            <div className="kt-modal-actions">
-              <button
-                id="kt-replay-btn"
-                className="kt-modal-btn-primary"
-                onClick={handleReset}
-              >
-                Replay Tour
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {gameStatus === 'trapped' && (
-        <div className="kt-modal-backdrop">
-          <div className="kt-modal kt-modal--trapped">
-            <h2 className="kt-modal-title">TOUR CONCLUDED</h2>
-            <p className="kt-modal-text">
-              No available jumps remain. The tour rests at step {visitedCount} of{' '}
-              {totalSquares}.
-            </p>
-            <div className="kt-modal-actions">
-              <button
-                id="kt-undo-trapped-btn"
-                className="kt-modal-btn-primary"
-                onClick={handleUndo}
-              >
-                Undo Last Move
-              </button>
-              <button
-                id="kt-restart-trapped-btn"
-                className="kt-modal-btn-secondary"
-                onClick={handleReset}
-              >
-                Start Over
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Footer Quote ────────────────────────────────────── */}
-      <footer className="kt-footer">
-        <p className="kt-quote">Every square, visited once.</p>
-      </footer>
     </div>
   )
 }
+
+export default KnightsTourScreen

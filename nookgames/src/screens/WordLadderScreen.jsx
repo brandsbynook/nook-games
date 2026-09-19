@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { BackButton } from '../components/BackButton.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   WORD_LADDER_PUZZLES,
   isValidWord,
@@ -21,6 +23,7 @@ export function WordLadderScreen() {
 
   // Ladder history array: starts with puzzle.start
   const [ladder, setLadder] = useState(() => [puzzle.start])
+  const [historyIndex, setHistoryIndex] = useState(0)
   // Current buffer being typed
   const [currentInput, setCurrentInput] = useState('')
   // Error message for soft feedback
@@ -29,8 +32,9 @@ export function WordLadderScreen() {
   const [isShaking, setIsShaking] = useState(false)
   // Completion status
   const [isSolved, setIsSolved] = useState(false)
-  // Toast notification
-  const [showToast, setShowToast] = useState(false)
+
+  const isInspecting = historyIndex < ladder.length - 1
+  const displayedLadder = ladder.slice(0, historyIndex + 1)
 
   const ladderEndRef = useRef(null)
   const middleScrollRef = useRef(null)
@@ -38,11 +42,11 @@ export function WordLadderScreen() {
   // Reset when puzzle changes
   useEffect(() => {
     setLadder([puzzle.start])
+    setHistoryIndex(0)
     setCurrentInput('')
     setErrorMessage('')
     setIsShaking(false)
     setIsSolved(false)
-    setShowToast(false)
   }, [puzzle])
 
   // Auto-scroll ladder middle container to bottom when steps or input change
@@ -50,7 +54,7 @@ export function WordLadderScreen() {
     if (ladderEndRef.current) {
       ladderEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-  }, [ladder, currentInput, errorMessage])
+  }, [displayedLadder, currentInput, errorMessage])
 
   // Trigger soft error shake
   const triggerError = useCallback((msg) => {
@@ -70,18 +74,22 @@ export function WordLadderScreen() {
   function handleRestart() {
     playTap()
     setLadder([puzzle.start])
+    setHistoryIndex(0)
     setCurrentInput('')
     setErrorMessage('')
     setIsShaking(false)
     setIsSolved(false)
-    setShowToast(false)
   }
 
   // Handle undo last step
   function handleUndo() {
     if (ladder.length <= 1 || isSolved) return
     playTap()
-    setLadder((prev) => prev.slice(0, -1))
+    setLadder((prev) => {
+      const next = prev.slice(0, -1)
+      setHistoryIndex(next.length - 1)
+      return next
+    })
     setCurrentInput('')
     setErrorMessage('')
   }
@@ -90,6 +98,7 @@ export function WordLadderScreen() {
   function handleRevertToStep(index) {
     if (index >= ladder.length - 1 || isSolved) return
     playTap()
+    setHistoryIndex(index)
     setLadder((prev) => prev.slice(0, index + 1))
     setCurrentInput('')
     setErrorMessage('')
@@ -98,7 +107,7 @@ export function WordLadderScreen() {
   // Handle letter typing
   const handleKeyPress = useCallback(
     (key) => {
-      if (isSolved) return
+      if (isSolved || isInspecting) return
 
       const upperKey = key.toUpperCase()
 
@@ -147,16 +156,14 @@ export function WordLadderScreen() {
         playTap()
         const nextLadder = [...ladder, candidate]
         setLadder(nextLadder)
+        setHistoryIndex(nextLadder.length - 1)
         setCurrentInput('')
         setErrorMessage('')
 
         // Check if target reached
         if (candidate === puzzle.target) {
           setIsSolved(true)
-          setTimeout(() => {
-            playChime()
-            setShowToast(true)
-          }, 300)
+          playChime()
         }
         return
       }
@@ -170,7 +177,7 @@ export function WordLadderScreen() {
         }
       }
     },
-    [currentInput, isSolved, ladder, puzzle.length, puzzle.target, triggerError]
+    [currentInput, isSolved, isInspecting, ladder, puzzle.length, puzzle.target, triggerError]
   )
 
   // Physical keyboard listener
@@ -246,8 +253,8 @@ export function WordLadderScreen() {
       {/* ── Middle Section (Scrollable History & Next Input) ── */}
       <div className="wl-middle-section" ref={middleScrollRef}>
         <div className="wl-ladder">
-          {ladder.map((word, idx) => {
-            const prevWord = idx > 0 ? ladder[idx - 1] : null
+          {displayedLadder.map((word, idx) => {
+            const prevWord = idx > 0 ? displayedLadder[idx - 1] : null
             const diffIdx = prevWord ? getDiffIndex(word, prevWord) : -1
             const isTarget = word === puzzle.target
             const isStart = idx === 0
@@ -281,8 +288,8 @@ export function WordLadderScreen() {
             )
           })}
 
-          {/* Current Input Row (if not solved) */}
-          {!isSolved && (
+          {/* Current Input Row (if not solved and not inspecting past) */}
+          {!isSolved && !isInspecting && (
             <div
               className={`wl-ladder-step wl-ladder-step--active${
                 isShaking ? ' wl-ladder-step--shake' : ''
@@ -320,16 +327,21 @@ export function WordLadderScreen() {
         )}
       </div>
 
-      {/* ── Bottom Section (Fixed Keypad & Undo) ─────────────── */}
+      {/* ── Bottom Section (Fixed Keypad & Actions) ─────────────── */}
       <div className="wl-bottom-section">
-        {/* Undo Action Bar */}
-        {ladder.length > 1 && !isSolved && (
-          <div className="wl-undo-bar">
-            <button className="wl-undo-btn" onClick={handleUndo}>
-              Undo Step ({ladder.length - 1})
-            </button>
-          </div>
-        )}
+        <GameFooterActions
+          onReset={handleRestart}
+          resetLabel="Reset"
+          onUndo={handleUndo}
+          canUndo={ladder.length > 1 && !isSolved && !isInspecting}
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(ladder.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < ladder.length - 1}
+          stepIndicator={ladder.length > 1 ? `Step ${historyIndex + 1}/${ladder.length}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(ladder.length - 1)}
+        />
 
         {/* On-Screen Keyboard */}
         <div className="wl-keyboard" role="group" aria-label="Keyboard">
@@ -343,6 +355,7 @@ export function WordLadderScreen() {
                     className={`wl-kb-key${isSpecial ? ' wl-kb-key--special' : ''}`}
                     onClick={() => handleKeyPress(key)}
                     aria-label={key === 'BACKSPACE' ? 'Backspace' : key}
+                    disabled={isSolved || isInspecting}
                   >
                     {key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? 'SUBMIT' : key}
                   </button>
@@ -353,14 +366,20 @@ export function WordLadderScreen() {
         </div>
       </div>
 
-      {/* ── Completion Toast ─────────────────────────────────── */}
-      <div
-        className={`wl-toast${showToast ? ' wl-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        Meaning connected across words.
-      </div>
+      {/* ── Universal Completion Modal ──────────────────────── */}
+      <GameCompletionModal
+        isOpen={isSolved}
+        title="Ladder Complete"
+        description={`Meaning connected from "${puzzle.start}" to "${puzzle.target}" in ${ladder.length - 1} steps.`}
+        stats={[{ label: 'Total Steps', value: ladder.length - 1 }]}
+        onNext={() => setPuzzleIndex((prev) => (prev + 1) % WORD_LADDER_PUZZLES.length)}
+        nextLabel="Next Ladder"
+        onReplay={handleRestart}
+        replayLabel="Replay"
+        reviewLabel="Review Words"
+      />
     </div>
   )
 }
+
+export default WordLadderScreen

@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Icon } from '../icons.jsx'
+import { Icon } from '../components/Icons'
 import { BackButton } from '../components/BackButton.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import {
   CELL_STATES,
   DIFFICULTY_TIERS,
@@ -25,12 +27,16 @@ export function NonogramScreen({ onBack } = {}) {
   const [puzzle, setPuzzle] = useState(() => loadPuzzle('beginner', initialIndex.current))
   // Current board state (size x size)
   const [grid, setGrid] = useState(() => createEmptyGrid(puzzle.size))
+  // History for inspection
+  const [history, setHistory] = useState(() => [createEmptyGrid(puzzle.size)])
+  const [historyIndex, setHistoryIndex] = useState(0)
   // Game completion state
   const [isSolved, setIsSolved] = useState(false)
   // Deductive check message
   const [checkFeedback, setCheckFeedback] = useState(null)
-  // History for undo
-  const [history, setHistory] = useState([])
+
+  const isInspecting = historyIndex < history.length - 1
+  const displayedGrid = history[historyIndex] || grid
 
   // Dragging state tracking
   const isDraggingRef = useRef(false)
@@ -40,11 +46,13 @@ export function NonogramScreen({ onBack } = {}) {
   // Load new puzzle or switch tier
   const initPuzzle = useCallback((newTier, newIndex) => {
     const loaded = loadPuzzle(newTier, newIndex)
+    const empty = createEmptyGrid(loaded.size)
     setPuzzle(loaded)
-    setGrid(createEmptyGrid(loaded.size))
+    setGrid(empty)
+    setHistory([empty])
+    setHistoryIndex(0)
     setIsSolved(false)
     setCheckFeedback(null)
-    setHistory([])
     isDraggingRef.current = false
   }, [])
 
@@ -77,15 +85,17 @@ export function NonogramScreen({ onBack } = {}) {
   // Reset board
   const handleReset = () => {
     playTap()
-    setGrid(createEmptyGrid(puzzle.size))
+    const empty = createEmptyGrid(puzzle.size)
+    setGrid(empty)
+    setHistory([empty])
+    setHistoryIndex(0)
     setIsSolved(false)
     setCheckFeedback(null)
-    setHistory([])
   }
 
   // Deductive check assistant (pure logic assistance)
   const handleCheck = () => {
-    if (isSolved) return
+    if (isSolved || isInspecting) return
     playTap()
     const result = checkDeductiveErrors(grid, puzzle.solution)
     setCheckFeedback(result)
@@ -93,10 +103,11 @@ export function NonogramScreen({ onBack } = {}) {
 
   // Undo last action
   const handleUndo = () => {
-    if (isSolved || history.length === 0) return
+    if (isSolved || isInspecting || historyIndex === 0) return
     playTap()
-    const prevGrid = history[history.length - 1]
-    setHistory((prev) => prev.slice(0, -1))
+    const prevIdx = historyIndex - 1
+    const prevGrid = history[prevIdx]
+    setHistoryIndex(prevIdx)
     setGrid(prevGrid)
     setCheckFeedback(null)
   }
@@ -117,7 +128,7 @@ export function NonogramScreen({ onBack } = {}) {
 
   // Cell interaction handlers
   const handleCellPointerDown = (r, c, e) => {
-    if (isSolved) return
+    if (isSolved || isInspecting) return
     e.preventDefault()
 
     // Determine target state based on tool mode and initial cell state
@@ -131,13 +142,15 @@ export function NonogramScreen({ onBack } = {}) {
       targetVal = currentVal === CELL_STATES.CROSSED ? CELL_STATES.EMPTY : CELL_STATES.CROSSED
     }
 
-    // Push history before mutating
-    setHistory((prev) => [...prev.slice(-19), grid.map((row) => [...row])])
-
     // Update single cell
     const newGrid = grid.map((row) => [...row])
     newGrid[r][c] = targetVal
     setGrid(newGrid)
+    setHistory((prev) => {
+      const nextHist = [...prev.slice(0, historyIndex + 1), newGrid]
+      setHistoryIndex(nextHist.length - 1)
+      return nextHist
+    })
     setCheckFeedback(null)
     playTap()
 
@@ -155,7 +168,7 @@ export function NonogramScreen({ onBack } = {}) {
   }
 
   const handleCellPointerEnter = (r, c) => {
-    if (!isDraggingRef.current || isSolved) return
+    if (!isDraggingRef.current || isSolved || isInspecting) return
     const key = `${r},${c}`
     if (touchedCellsRef.current.has(key)) return
 
@@ -165,6 +178,11 @@ export function NonogramScreen({ onBack } = {}) {
     setGrid((prev) => {
       const next = prev.map((row) => [...row])
       next[r][c] = targetVal
+      setHistory((hPrev) => {
+        const nextHist = [...hPrev.slice(0, historyIndex + 1), next]
+        setHistoryIndex(nextHist.length - 1)
+        return nextHist
+      })
       if (isPuzzleSolved(next, puzzle.solution)) {
         setIsSolved(true)
         isDraggingRef.current = false
@@ -191,13 +209,13 @@ export function NonogramScreen({ onBack } = {}) {
 
   // Calculate satisfied lines for header dimming
   const satisfiedRows = puzzle.rowClues.map((clues, r) =>
-    isLineSatisfied(grid[r], clues)
+    isLineSatisfied(displayedGrid[r], clues)
   )
 
   const satisfiedCols = puzzle.colClues.map((clues, c) => {
     const col = []
     for (let r = 0; r < puzzle.size; r++) {
-      col.push(grid[r][c])
+      col.push(displayedGrid[r][c])
     }
     return isLineSatisfied(col, clues)
   })
@@ -384,7 +402,7 @@ export function NonogramScreen({ onBack } = {}) {
             role="grid"
             aria-label="Nonogram grid"
           >
-            {grid.map((row, r) =>
+            {displayedGrid.map((row, r) =>
               row.map((cellState, c) => {
                 const isThickRight = (c + 1) % 5 === 0 && c < puzzle.size - 1
                 const isThickBottom = (r + 1) % 5 === 0 && r < puzzle.size - 1
@@ -413,6 +431,7 @@ export function NonogramScreen({ onBack } = {}) {
                         ? 'Crossed'
                         : 'Empty'
                     }`}
+                    disabled={isInspecting}
                   >
                     {cellState === CELL_STATES.CROSSED && !isSolved && (
                       <span className="ng-cell-cross">×</span>
@@ -427,50 +446,66 @@ export function NonogramScreen({ onBack } = {}) {
 
       {/* ── Dual-Action Control Dock ─────────────────────────── */}
       <footer className="ng-dock">
-        {isSolved ? (
-          <div className="ng-solved-card">
-            <div className="ng-solved-info">
-              <span className="ng-solved-badge">Revealed</span>
-              <h2 className="ng-solved-name">{puzzle.title}</h2>
-            </div>
-            <button
-              id="ng-next-btn"
-              className="ng-next-btn"
-              onClick={handleNextPuzzle}
-            >
-              Next Puzzle
-            </button>
-          </div>
-        ) : (
-          <div className="ng-controls-row">
-            <button
-              type="button"
-              className={`ng-tool-btn${toolMode === 'fill' ? ' ng-tool-btn--active' : ''}`}
-              onClick={() => {
-                playTap()
-                setToolMode('fill')
-              }}
-              aria-pressed={toolMode === 'fill'}
-            >
-              <span className="ng-tool-icon ng-tool-icon--fill" />
-              <span>Fill</span>
-            </button>
+        <div className="ng-controls-row">
+          <button
+            type="button"
+            className={`ng-tool-btn${toolMode === 'fill' ? ' ng-tool-btn--active' : ''}`}
+            onClick={() => {
+              playTap()
+              setToolMode('fill')
+            }}
+            aria-pressed={toolMode === 'fill'}
+            disabled={isInspecting || isSolved}
+          >
+            <span className="ng-tool-icon ng-tool-icon--fill" />
+            <span>Fill</span>
+          </button>
 
-            <button
-              type="button"
-              className={`ng-tool-btn${toolMode === 'cross' ? ' ng-tool-btn--active' : ''}`}
-              onClick={() => {
-                playTap()
-                setToolMode('cross')
-              }}
-              aria-pressed={toolMode === 'cross'}
-            >
-              <span className="ng-tool-icon ng-tool-icon--cross">×</span>
-              <span>Mark</span>
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            className={`ng-tool-btn${toolMode === 'cross' ? ' ng-tool-btn--active' : ''}`}
+            onClick={() => {
+              playTap()
+              setToolMode('cross')
+            }}
+            aria-pressed={toolMode === 'cross'}
+            disabled={isInspecting || isSolved}
+          >
+            <span className="ng-tool-icon ng-tool-icon--cross">×</span>
+            <span>Mark</span>
+          </button>
+        </div>
+
+        <GameFooterActions
+          onReset={handleReset}
+          resetLabel="Restart"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Step ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        />
       </footer>
+
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isSolved}
+        title={puzzle.title}
+        description="The hidden picture has revealed itself in full clarity."
+        icon="✓"
+        stats={[
+          { label: 'Tier', value: tier },
+          { label: 'Grid', value: `${puzzle.size}×${puzzle.size}` },
+          { label: 'Actions', value: `${history.length - 1}` },
+        ]}
+        onNext={handleNextPuzzle}
+        nextLabel="Next Puzzle"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Art"
+      />
     </div>
   )
 }

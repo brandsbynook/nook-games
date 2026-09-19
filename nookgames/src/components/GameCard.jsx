@@ -1,4 +1,4 @@
-import { Icon } from '../icons.jsx'
+import { Icon } from './Icons'
 import { playTap } from '../utils/audio.js'
 
 export function GameCard({ game }) {

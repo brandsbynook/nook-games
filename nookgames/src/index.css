@@ -1,15 +1,15 @@
 :root {
-  /* ── Atmosphere Sanctuary Palette (Midnight Default) ─── */
-  --bg-sanctuary:           #0e0e11;
-  --surface-card:           #16161b;
-  --text-primary:           #e4e4e7;
-  --text-muted:             #8e8e99;
-  --border-subtle:          rgba(255, 255, 255, 0.08);
+  /* ── Artisan Monograph Sanctuary Palette (Warm Ivory & Muted Stone) ─── */
+  --bg-sanctuary:           #0e0d0c;
+  --surface-card:           #161513;
+  --text-primary:           #f3efe6;  /* warm soft ivory */
+  --text-muted:             #938e83;  /* gentle muted stone */
+  --border-subtle:          rgba(243, 239, 230, 0.08);
 
   /* ── Core Semantic Colours ────────────────────────────── */
   --color-bg:               var(--bg-sanctuary);
   --color-surface:          var(--surface-card);
-  --color-surface-elevated: var(--surface-card);
+  --color-surface-elevated: #1e1c19;
   --color-text:             var(--text-primary);
   --color-text-secondary:   var(--text-muted);
   --color-text-muted:       var(--text-muted);
@@ -38,9 +38,10 @@
   --font-size-lg:  1.0625rem;   /* 17px */
   --font-size-xl:  1.25rem;     /* 20px */
 
-  /* ── Typefaces ───────────────────────────────────────── */
+  /* ── Signature Typefaces ─────────────────────────────── */
+  --font-display:  'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-serif:    'Cormorant Garamond', 'Playfair Display', Georgia, serif;
   --font-ui:       'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif:    'Playfair Display', 'Georgia', 'Times New Roman', serif;
   --font-mono:     'SF Mono', 'Fira Code', ui-monospace, monospace;
 
   /* ── Chrome ──────────────────────────────────────────── */

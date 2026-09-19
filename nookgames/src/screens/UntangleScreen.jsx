@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Icon } from '../icons.jsx'
-import { BackButton } from '../components/BackButton.jsx'
+import { Icon } from '../components/Icons'
+import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
+import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   DIFFICULTY_PRESETS,
   generatePlanarGraph,
@@ -34,11 +36,14 @@ export function UntangleScreen({ onBack } = {}) {
     return generatePlanarGraph(preset)
   })
   const [nodes, setNodes] = useState(() => graphData.nodes)
+  const [history, setHistory] = useState(() => [graphData.nodes.map((n) => ({ ...n }))])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [activeNodeId, setActiveNodeId] = useState(null)
-  const [moveCount, setMoveCount] = useState(0)
   const [isSolved, setIsSolved] = useState(false)
-  const [showToast, setShowToast] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+
+  const isInspecting = historyIndex < history.length - 1
+  const displayedNodes = isInspecting && history[historyIndex] ? history[historyIndex] : nodes
 
   const svgRef = useRef(null)
   const activeNodeIdRef = useRef(null)
@@ -72,11 +77,11 @@ export function UntangleScreen({ onBack } = {}) {
     const newGraph = generatePlanarGraph(preset)
     setGraphData(newGraph)
     setNodes(newGraph.nodes)
+    setHistory([newGraph.nodes.map((n) => ({ ...n }))])
+    setHistoryIndex(0)
     activeNodeIdRef.current = null
     setActiveNodeId(null)
-    setMoveCount(0)
     setIsSolved(false)
-    setShowToast(false)
     setIsAnimating(false)
   }, [])
 
@@ -109,11 +114,11 @@ export function UntangleScreen({ onBack } = {}) {
     }
     const resetNodes = graphData.initialPositions.map((p) => ({ ...p }))
     setNodes(resetNodes)
+    setHistory([resetNodes])
+    setHistoryIndex(0)
     activeNodeIdRef.current = null
     setActiveNodeId(null)
-    setMoveCount(0)
     setIsSolved(false)
-    setShowToast(false)
     setIsAnimating(false)
   }
 
@@ -123,21 +128,20 @@ export function UntangleScreen({ onBack } = {}) {
     startNewPuzzle(difficulty)
   }
 
-  // Calculate intersections for current node layout
-  const intersectionResult = checkIntersections(nodes, graphData.edges)
+  // Calculate intersections for displayed node layout
+  const intersectionResult = checkIntersections(displayedNodes, graphData.edges)
   const { count: crossingCount, intersectingEdges, isSolved: currentIsSolved } = intersectionResult
 
   // Check for newly solved state
   useEffect(() => {
-    if (currentIsSolved && !isSolved) {
+    if (currentIsSolved && !isSolved && !isInspecting) {
       setIsSolved(true)
       const timer = setTimeout(() => {
         playChime()
-        setShowToast(true)
       }, 250)
       return () => clearTimeout(timer)
     }
-  }, [currentIsSolved, isSolved])
+  }, [currentIsSolved, isSolved, isInspecting])
 
   // Coordinate projection from client pointer event into SVG coordinate space
   const getSvgCoordinates = useCallback((e) => {
@@ -175,7 +179,7 @@ export function UntangleScreen({ onBack } = {}) {
 
   // Pointer down on a node
   const handlePointerDown = (e, nodeId) => {
-    if (isSolved || isAnimating) return
+    if (isSolved || isAnimating || isInspecting) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -203,7 +207,7 @@ export function UntangleScreen({ onBack } = {}) {
 
   // Pointer move handler (recalculates intersections in real time)
   const handlePointerMove = useCallback((e) => {
-    if (activeNodeIdRef.current === null) return
+    if (activeNodeIdRef.current === null || isInspecting) return
     e.preventDefault()
 
     const raw = getSvgCoordinates(e)
@@ -214,7 +218,7 @@ export function UntangleScreen({ onBack } = {}) {
         n.id === activeNodeIdRef.current ? { ...n, x: clamped.x, y: clamped.y } : n
       )
     )
-  }, [getSvgCoordinates])
+  }, [getSvgCoordinates, isInspecting])
 
   // Pointer up handler
   const handlePointerUp = useCallback(() => {
@@ -238,12 +242,16 @@ export function UntangleScreen({ onBack } = {}) {
     if (dragStartPos.current) {
       const curr = nodesRef.current.find((n) => n.id === draggedId)
       if (curr && Math.hypot(curr.x - dragStartPos.current.x, curr.y - dragStartPos.current.y) > 6) {
-        setMoveCount((prev) => prev + 1)
         playTap()
+        setHistory((prev) => {
+          const nextHist = [...prev.slice(0, historyIndex + 1), nodesRef.current.map((n) => ({ ...n }))]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
       }
     }
     dragStartPos.current = null
-  }, [])
+  }, [historyIndex])
 
   // Global window pointer listeners as a reliable fallback for high-speed multi-touch/mouse moves
   useEffect(() => {
@@ -260,7 +268,7 @@ export function UntangleScreen({ onBack } = {}) {
 
   // Hint button: pick one node causing crossings and animate toward its solved coordinate
   const handleHint = () => {
-    if (isSolved || isAnimating) return
+    if (isSolved || isAnimating || isInspecting) return
     playTap()
 
     const solutions = graphData.solutionPositions || graphData.solvedPositions || []
@@ -323,7 +331,11 @@ export function UntangleScreen({ onBack } = {}) {
       } else {
         animFrameRef.current = null
         setIsAnimating(false)
-        setMoveCount((m) => m + 1)
+        setHistory((prev) => {
+          const nextHist = [...prev.slice(0, historyIndex + 1), nodesRef.current.map((n) => ({ ...n }))]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
       }
     }
 
@@ -332,7 +344,7 @@ export function UntangleScreen({ onBack } = {}) {
 
   // Show Solution / Reveal Harmony: smoothly animate all nodes to untangled positions
   const handleShowSolution = () => {
-    if (isSolved || isAnimating) return
+    if (isSolved || isAnimating || isInspecting) return
     playTap()
 
     const solutions = graphData.solutionPositions || graphData.solvedPositions || []
@@ -367,6 +379,11 @@ export function UntangleScreen({ onBack } = {}) {
       } else {
         animFrameRef.current = null
         setIsAnimating(false)
+        setHistory((prev) => {
+          const nextHist = [...prev.slice(0, historyIndex + 1), nodesRef.current.map((n) => ({ ...n }))]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
       }
     }
 
@@ -376,32 +393,9 @@ export function UntangleScreen({ onBack } = {}) {
   const currentPreset = DIFFICULTY_PRESETS.find((p) => p.id === difficulty) || DIFFICULTY_PRESETS[0]
 
   return (
-    <div className="unt-page">
+    <div className="unt-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <div className="unt-top-bar">
-        <BackButton
-          id="unt-back-btn"
-          className="unt-back-btn"
-          onClick={handleBack}
-          ariaLabel="Back to Briefing"
-          title="Back to Briefing"
-        />
-
-        <div className="unt-header-center">
-          <h1 className="unt-title">Untangle</h1>
-        </div>
-
-        <button
-          id="unt-restart-btn"
-          className="unt-restart-btn"
-          onClick={handleRestart}
-          aria-label="Reset Puzzle"
-          title="Reset"
-          disabled={isAnimating}
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </div>
+      <GameHeader title="Untangle" onBack={handleBack} />
 
       {/* ── Standard Difficulty Tabs ─────────────────────────── */}
       <DifficultyTabs
@@ -413,19 +407,19 @@ export function UntangleScreen({ onBack } = {}) {
       {/* ── Status & Info Header ─────────────────────────────── */}
       <div className="unt-status-card">
         <div className="unt-stat-pills">
-          <div className={`unt-pill${isSolved ? ' unt-pill--solved' : ''}`}>
+          <div className={`unt-pill${crossingCount === 0 ? ' unt-pill--solved' : ''}`}>
             <span className="unt-pill-label">Crossings</span>
             <span className="unt-pill-val">
-              {isSolved ? '0 (Untangled)' : `${crossingCount} remaining`}
+              {crossingCount === 0 ? '0 (Untangled)' : `${crossingCount} remaining`}
             </span>
           </div>
           <div className="unt-pill">
             <span className="unt-pill-label">Moves</span>
-            <span className="unt-pill-val">{moveCount}</span>
+            <span className="unt-pill-val">{history.length - 1}</span>
           </div>
         </div>
         <p className="unt-status-tagline">
-          {isSolved
+          {crossingCount === 0
             ? 'Every knot has a geometry of release.'
             : 'Amber lines cross. Move any node anywhere until every line turns white.'}
         </p>
@@ -437,7 +431,7 @@ export function UntangleScreen({ onBack } = {}) {
           id="unt-hint-btn"
           className="unt-helper-btn"
           onClick={handleHint}
-          disabled={isSolved || isAnimating}
+          disabled={isSolved || isAnimating || isInspecting}
           title="Animate one tangled node toward its calm position"
         >
           <Icon name="pencil" size={13} />
@@ -447,7 +441,7 @@ export function UntangleScreen({ onBack } = {}) {
           id="unt-solution-btn"
           className="unt-helper-btn unt-helper-btn--solution"
           onClick={handleShowSolution}
-          disabled={isSolved || isAnimating}
+          disabled={isSolved || isAnimating || isInspecting}
           title="Smoothly untangle all nodes to reveal planar harmony"
         >
           <Icon name="spatial" size={13} />
@@ -460,7 +454,7 @@ export function UntangleScreen({ onBack } = {}) {
         <div className="unt-board-frame">
           <svg
             ref={svgRef}
-            className={`unt-svg${isSolved ? ' unt-svg--solved' : ''}`}
+            className={`unt-svg${crossingCount === 0 ? ' unt-svg--solved' : ''}`}
             viewBox="0 0 400 400"
             role="application"
             style={{ touchAction: 'none' }}
@@ -484,11 +478,11 @@ export function UntangleScreen({ onBack } = {}) {
             {/* Edges Layer */}
             <g className="unt-edges-group">
               {graphData.edges.map((edge, index) => {
-                const p1 = nodes.find((n) => n.id === edge.u)
-                const p2 = nodes.find((n) => n.id === edge.v)
+                const p1 = displayedNodes.find((n) => n.id === edge.u)
+                const p2 = displayedNodes.find((n) => n.id === edge.v)
                 if (!p1 || !p2) return null
 
-                const isConflicted = !isSolved && intersectingEdges.has(index)
+                const isConflicted = crossingCount > 0 && intersectingEdges.has(index)
 
                 return (
                   <line
@@ -498,7 +492,7 @@ export function UntangleScreen({ onBack } = {}) {
                     x2={p2.x}
                     y2={p2.y}
                     className={`unt-edge ${
-                      isSolved
+                      crossingCount === 0
                         ? 'unt-edge--solved'
                         : isConflicted
                         ? 'unt-edge--conflicted'
@@ -511,7 +505,7 @@ export function UntangleScreen({ onBack } = {}) {
 
             {/* Nodes Layer */}
             <g className="unt-nodes-group">
-              {nodes.map((node) => {
+              {displayedNodes.map((node) => {
                 const isDragging = activeNodeId === node.id
 
                 return (
@@ -519,7 +513,7 @@ export function UntangleScreen({ onBack } = {}) {
                     key={node.id}
                     transform={`translate(${node.x}, ${node.y})`}
                     className={`unt-node-group ${
-                      isSolved
+                      crossingCount === 0
                         ? 'unt-node-group--solved'
                         : isDragging
                         ? 'unt-node-group--dragging'
@@ -538,7 +532,7 @@ export function UntangleScreen({ onBack } = {}) {
                     <circle
                       r={isDragging ? 15 : 13}
                       className="unt-node-body"
-                      filter={isSolved ? 'url(#unt-glow)' : undefined}
+                      filter={crossingCount === 0 ? 'url(#unt-glow)' : undefined}
                     />
 
                     {/* Minimalist central core pip */}
@@ -551,36 +545,38 @@ export function UntangleScreen({ onBack } = {}) {
         </div>
       </div>
 
-      {/* ── Microcopy below board ── */}
-      <div className="unt-microcopy-wrap">
-        <p className="unt-board-microcopy">
-          {isSolved
-            ? 'Every knot has a geometry of release.'
-            : 'Amber lines cross. Move nodes until every line turns white.'}
-        </p>
+      {/* ── Footer Actions & Stepper ──────────────────────────── */}
+      <div className="unt-footer-controls">
+        <GameFooterActions
+          onReset={handleRestart}
+          resetLabel="Restart"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        />
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────── */}
-      <div className="unt-footer">
-        {isSolved ? (
-          <button id="unt-next-btn" className="unt-next-btn" onClick={handleNewGame}>
-            New Puzzle
-          </button>
-        ) : (
-          <span className="unt-footer-quote">
-            Euler’s planar harmony — separate the tangled lines into quiet clarity.
-          </span>
-        )}
-      </div>
-
-      {/* ── Completion Toast ─────────────────────────────────── */}
-      <div
-        className={`unt-toast${showToast ? ' unt-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        Every knot has a geometry of release.
-      </div>
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isSolved}
+        title="Planar Harmony"
+        description="Every tangled knot has found its geometry of release."
+        icon="✓"
+        stats={[
+          { label: 'Tier', value: currentPreset.label },
+          { label: 'Nodes', value: `${currentPreset.nodeCount}` },
+          { label: 'Moves', value: `${history.length - 1}` },
+        ]}
+        onNext={handleNewGame}
+        nextLabel="New Graph"
+        onReplay={handleRestart}
+        replayLabel="Replay"
+        reviewLabel="Review Graph"
+      />
     </div>
   )
 }

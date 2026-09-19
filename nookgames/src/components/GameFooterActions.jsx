@@ -1,4 +1,4 @@
-import { Icon } from '../icons.jsx'
+import { Icon } from './Icons'
 import { playTap } from '../utils/audio.js'
 
 export function GameFooterActions({
@@ -6,8 +6,15 @@ export function GameFooterActions({
   onUndo,
   onHint,
   onNewGame,
+  onStepBack,
+  onStepForward,
   canUndo = true,
   canHint = true,
+  canStepBack = false,
+  canStepForward = false,
+  stepIndicator = null,
+  isInspecting = false,
+  onExitInspection = null,
   resetLabel = 'Reset',
   undoLabel = 'Undo',
   hintLabel = 'Hint',
@@ -15,71 +22,135 @@ export function GameFooterActions({
   children,
   className = '',
 }) {
+  const hasStepper = typeof onStepBack === 'function' || typeof onStepForward === 'function';
+
   return (
-    <div className={`game-footer-actions ${className}`.trim()} role="toolbar" aria-label="Game controls">
-      {onReset && (
-        <button
-          type="button"
-          className="game-action-btn"
-          onClick={() => {
-            playTap()
-            onReset()
-          }}
-          aria-label={resetLabel}
-        >
-          <Icon name="restart" size={16} />
-          <span>{resetLabel}</span>
-        </button>
+    <div className={`game-footer-actions-wrapper ${isInspecting ? 'game-footer-actions-wrapper--inspecting' : ''}`}>
+      {isInspecting && (
+        <div className="game-inspection-banner">
+          <span className="game-inspection-text">
+            Viewing history {stepIndicator ? `(${stepIndicator})` : ''} &bull; Read-only
+          </span>
+          {onExitInspection && (
+            <button
+              type="button"
+              className="game-inspection-return-btn"
+              onClick={() => {
+                playTap();
+                onExitInspection();
+              }}
+            >
+              Return to Live &rsaquo;
+            </button>
+          )}
+        </div>
       )}
 
-      {onUndo && (
-        <button
-          type="button"
-          className="game-action-btn"
-          onClick={() => {
-            playTap()
-            onUndo()
-          }}
-          disabled={!canUndo}
-          aria-label={undoLabel}
-        >
-          <Icon name="undo" size={16} />
-          <span>{undoLabel}</span>
-        </button>
-      )}
+      <div className={`game-footer-actions ${className}`.trim()} role="toolbar" aria-label="Game controls">
+        {onReset && (
+          <button
+            type="button"
+            className="game-action-btn"
+            onClick={() => {
+              playTap()
+              onReset()
+            }}
+            aria-label={resetLabel}
+          >
+            <Icon name="restart" size={16} />
+            <span>{resetLabel}</span>
+          </button>
+        )}
 
-      {onHint && (
-        <button
-          type="button"
-          className="game-action-btn"
-          onClick={() => {
-            playTap()
-            onHint()
-          }}
-          disabled={!canHint}
-          aria-label={hintLabel}
-        >
-          <Icon name="hint" size={16} />
-          <span>{hintLabel}</span>
-        </button>
-      )}
+        {hasStepper && (
+          <div className="game-history-stepper" role="group" aria-label="Move history navigation">
+            <button
+              type="button"
+              className="game-step-btn"
+              onClick={() => {
+                playTap()
+                onStepBack?.()
+              }}
+              disabled={!canStepBack}
+              aria-label="Previous State"
+              title="Previous State (‹)"
+            >
+              ‹
+            </button>
 
-      {onNewGame && (
-        <button
-          type="button"
-          className="game-action-btn"
-          onClick={() => {
-            playTap()
-            onNewGame()
-          }}
-          aria-label={newGameLabel}
-        >
-          <Icon name="sparkles" size={16} />
-          <span>{newGameLabel}</span>
-        </button>
-      )}
+            {stepIndicator && (
+              <span className={`game-step-indicator ${isInspecting ? 'active' : ''}`}>
+                {stepIndicator}
+              </span>
+            )}
 
-      {children}
+            <button
+              type="button"
+              className="game-step-btn"
+              onClick={() => {
+                playTap()
+                onStepForward?.()
+              }}
+              disabled={!canStepForward}
+              aria-label="Next State"
+              title="Next State (›)"
+            >
+              ›
+            </button>
+          </div>
+        )}
+
+        {onUndo && (
+          <button
+            type="button"
+            className="game-action-btn"
+            onClick={() => {
+              playTap()
+              onUndo()
+            }}
+            disabled={!canUndo}
+            aria-label={undoLabel}
+          >
+            <Icon name="undo" size={16} />
+            <span>{undoLabel}</span>
+          </button>
+        )}
+
+        {onHint && (
+          <button
+            type="button"
+            className="game-action-btn"
+            onClick={() => {
+              playTap()
+              onHint()
+            }}
+            disabled={!canHint}
+            aria-label={hintLabel}
+          >
+            <Icon name="hint" size={16} />
+            <span>{hintLabel}</span>
+          </button>
+        )}
+
+        {onNewGame && (
+          <button
+            type="button"
+            className="game-action-btn"
+            onClick={() => {
+              playTap()
+              onNewGame()
+            }}
+            aria-label={newGameLabel}
+          >
+            <Icon name="sparkles" size={16} />
+            <span>{newGameLabel}</span>
+          </button>
+        )}
+
+        {children}
+      </div>
     </div>
   )
 }
+
+export default GameFooterActions

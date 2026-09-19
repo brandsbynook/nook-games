@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Icon } from '../icons.jsx';
-import { BackButton } from '../components/BackButton.jsx';
+import { Icon } from '../components/Icons';
+import { GameHeader } from '../components/GameHeader.jsx';
+import { DifficultyTabs } from '../components/DifficultyTabs.jsx';
+import { GameFooterActions } from '../components/GameFooterActions.jsx';
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -20,7 +23,8 @@ export function ShikakuScreen({ onBack }) {
 
   // Committed rooms: array of { id, r1, r2, c1, c2, val, clue }
   const [committedRooms, setCommittedRooms] = useState([]);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Selection state
   const [corner1, setCorner1] = useState(null); // { r, c }
@@ -31,6 +35,9 @@ export function ShikakuScreen({ onBack }) {
   // Status & win state
   const [hasWon, setHasWon] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const isInspecting = historyIndex < history.length - 1;
+  const displayedRooms = history[historyIndex] || committedRooms;
 
   const gridRef = useRef(null);
   const pointerStartPosRef = useRef(null);
@@ -49,7 +56,8 @@ export function ShikakuScreen({ onBack }) {
   useEffect(() => {
     setPuzzle(getTransformedShikaku(SHIKAKU_PUZZLES[difficulty] || SHIKAKU_PUZZLES.easy));
     setCommittedRooms([]);
-    setHistory([]);
+    setHistory([[]]);
+    setHistoryIndex(0);
     setCorner1(null);
     setCorner2(null);
     setIsPointerDown(false);
@@ -63,7 +71,8 @@ export function ShikakuScreen({ onBack }) {
     playTap();
     setPuzzle(getTransformedShikaku(SHIKAKU_PUZZLES[difficulty] || SHIKAKU_PUZZLES.easy));
     setCommittedRooms([]);
-    setHistory([]);
+    setHistory([[]]);
+    setHistoryIndex(0);
     setCorner1(null);
     setCorner2(null);
     setIsPointerDown(false);
@@ -104,27 +113,37 @@ export function ShikakuScreen({ onBack }) {
         clue,
       };
 
-      setHistory((prev) => [...prev, committedRooms]);
-      setCommittedRooms((prev) => [...prev, newRoom]);
+      const nextRooms = [...committedRooms, newRoom];
+      setCommittedRooms(nextRooms);
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), nextRooms];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
       playTap();
       setCorner1(null);
       setCorner2(null);
       setIsPointerDown(false);
     },
-    [committedRooms]
+    [committedRooms, historyIndex]
   );
 
   // Remove a committed room
   const removeRoom = useCallback(
     (roomId) => {
       playTap();
-      setHistory((prev) => [...prev, committedRooms]);
-      setCommittedRooms((prev) => prev.filter((rm) => rm.id !== roomId));
+      const nextRooms = committedRooms.filter((rm) => rm.id !== roomId);
+      setCommittedRooms(nextRooms);
+      setHistory((prev) => {
+        const nextHist = [...prev.slice(0, historyIndex + 1), nextRooms];
+        setHistoryIndex(nextHist.length - 1);
+        return nextHist;
+      });
       setCorner1(null);
       setCorner2(null);
       showError('Room removed.');
     },
-    [committedRooms, showError]
+    [committedRooms, historyIndex, showError]
   );
 
   // Undo
@@ -141,7 +160,7 @@ export function ShikakuScreen({ onBack }) {
 
   // Hint
   const handleHint = useCallback(() => {
-    if (hasWon) return;
+    if (hasWon || isInspecting) return;
     const nextRoom = getNextHintRoom(puzzle.solution, committedRooms);
     if (!nextRoom) {
       showError('All rooms are placed.');
@@ -170,8 +189,13 @@ export function ShikakuScreen({ onBack }) {
       isHint: true,
     };
 
-    setHistory((prev) => [...prev, committedRooms]);
-    setCommittedRooms([...remainingRooms, newRoom]);
+    const nextRooms = [...remainingRooms, newRoom];
+    setCommittedRooms(nextRooms);
+    setHistory((prev) => {
+      const nextHist = [...prev.slice(0, historyIndex + 1), nextRooms];
+      setHistoryIndex(nextHist.length - 1);
+      return nextHist;
+    });
     setHintedRoomId(hintId);
     setCorner1(null);
     setCorner2(null);
@@ -179,7 +203,7 @@ export function ShikakuScreen({ onBack }) {
     setTimeout(() => {
       setHintedRoomId(null);
     }, 2000);
-  }, [hasWon, puzzle.solution, committedRooms, showError]);
+  }, [hasWon, isInspecting, puzzle.solution, committedRooms, historyIndex, showError]);
 
   // Cell from pointer coordinate
   const getCellFromCoords = useCallback(
@@ -203,7 +227,7 @@ export function ShikakuScreen({ onBack }) {
   // Pointer Down
   const handlePointerDown = useCallback(
     (e) => {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
       const cell = getCellFromCoords(e.clientX, e.clientY);
       if (!cell) return;
 
@@ -253,13 +277,13 @@ export function ShikakuScreen({ onBack }) {
         }
       }
     },
-    [hasWon, getCellFromCoords, committedRooms, corner1, puzzle.clues, commitRoom, showError]
+    [hasWon, isInspecting, getCellFromCoords, committedRooms, corner1, puzzle.clues, commitRoom, showError]
   );
 
   // Pointer Move
   const handlePointerMove = useCallback(
     (e) => {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
       const cell = getCellFromCoords(e.clientX, e.clientY);
       if (!cell) return;
 
@@ -270,13 +294,13 @@ export function ShikakuScreen({ onBack }) {
         setCorner2(cell);
       }
     },
-    [hasWon, getCellFromCoords, isPointerDown, corner1]
+    [hasWon, isInspecting, getCellFromCoords, isPointerDown, corner1]
   );
 
   // Pointer Up
   const handlePointerUp = useCallback(
     (e) => {
-      if (hasWon) return;
+      if (hasWon || isInspecting) return;
 
       const downPos = pointerStartPosRef.current;
       const dist = downPos
@@ -321,6 +345,7 @@ export function ShikakuScreen({ onBack }) {
     },
     [
       hasWon,
+      isInspecting,
       isPointerDown,
       corner1,
       corner2,
@@ -341,7 +366,7 @@ export function ShikakuScreen({ onBack }) {
     const width = bounds.c2 - bounds.c1 + 1;
     const height = bounds.r2 - bounds.r1 + 1;
     const area = width * height;
-    const validation = validateRoom(bounds, puzzle.clues, committedRooms);
+    const validation = validateRoom(bounds, puzzle.clues, displayedRooms);
 
     return {
       bounds,
@@ -350,77 +375,52 @@ export function ShikakuScreen({ onBack }) {
       area,
       valid: validation.valid,
     };
-  }, [corner1, corner2, puzzle.clues, committedRooms]);
+  }, [corner1, corner2, puzzle.clues, displayedRooms]);
 
   // Back handler
   const handleBack = useCallback(() => {
     playTap();
-    window.location.hash = '#/briefing/shikaku';
     if (typeof onBack === 'function') {
       onBack();
+    } else {
+      window.location.hash = '#/briefing/shikaku';
     }
   }, [onBack]);
 
+  const difficultyNames = {
+    easy: 'Easy (6×6)',
+    medium: 'Medium (8×8)',
+    hard: 'Hard (10×10)',
+  };
+
+  const nextTierMap = {
+    easy: 'medium',
+    medium: 'hard',
+    hard: 'easy',
+  };
+
   return (
-    <div className="shk-page">
+    <div className="shk-page game-screen-container">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="shk-header">
-        <BackButton
-          id="shk-back-btn"
-          className="shk-btn-back"
-          onClick={handleBack}
-          ariaLabel="Back to Briefing"
-          title="Back to Briefing"
-        />
-
-        <div className="shk-header-center">
-          <h1 className="shk-title">Shikaku</h1>
-        </div>
-
-        <button
-          id="shk-reset-btn"
-          type="button"
-          className="shk-btn-icon"
-          onClick={handleReset}
-          aria-label="Reset Board"
-          title="Reset Board"
-        >
-          <Icon name="restart" size={18} />
-        </button>
-      </header>
+      <GameHeader title="Shikaku" onBack={handleBack} />
 
       {/* ── Difficulty Tabs ───────────────────────────────────── */}
-      <div className="shk-tabs-container">
-        {[
-          { key: 'easy', label: 'Easy (6×6)' },
-          { key: 'medium', label: 'Medium (8×8)' },
-          { key: 'hard', label: 'Hard (10×10)' },
-        ].map((tab) => {
-          const active = difficulty === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              className={`shk-tab-btn ${active ? 'shk-tab-btn--active' : ''}`}
-              onClick={() => {
-                if (difficulty !== tab.key) {
-                  playTap();
-                  setDifficulty(tab.key);
-                }
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      <DifficultyTabs
+        currentTier={difficulty}
+        onSelectTier={(tab) => setDifficulty(tab)}
+        tiers={[
+          { id: 'easy', label: 'Easy', subtitle: '6×6' },
+          { id: 'medium', label: 'Medium', subtitle: '8×8' },
+          { id: 'hard', label: 'Hard', subtitle: '10×10' },
+        ]}
+      />
 
       {/* ── Status Pill & Error Bar ───────────────────────────── */}
       <div className="shk-status-bar">
         <div className="shk-pill">
           <span className="shk-pill-label">Rooms</span>
           <span className="shk-pill-val">
-            {committedRooms.length} / {puzzle.clues.length}
+            {displayedRooms.length} / {puzzle.clues.length}
           </span>
         </div>
 
@@ -450,7 +450,7 @@ export function ShikakuScreen({ onBack }) {
           {Array.from({ length: puzzle.gridSize }).map((_, r) =>
             Array.from({ length: puzzle.gridSize }).map((__, c) => {
               const clue = puzzle.clues.find((cl) => cl.r === r && cl.c === c);
-              const covered = clue ? isClueCovered(clue, committedRooms) : false;
+              const covered = clue ? isClueCovered(clue, displayedRooms) : false;
               const isCorner1 = corner1 && corner1.r === r && corner1.c === c;
 
               return (
@@ -471,7 +471,7 @@ export function ShikakuScreen({ onBack }) {
           )}
 
           {/* Committed Rooms */}
-          {committedRooms.map((rm) => {
+          {displayedRooms.map((rm) => {
             const widthPct = ((rm.c2 - rm.c1 + 1) / puzzle.gridSize) * 100;
             const heightPct = ((rm.r2 - rm.r1 + 1) / puzzle.gridSize) * 100;
             const topPct = (rm.r1 / puzzle.gridSize) * 100;
@@ -488,13 +488,13 @@ export function ShikakuScreen({ onBack }) {
                   width: `${widthPct}%`,
                   height: `${heightPct}%`,
                 }}
-                title="Tap to remove room"
+                title={isInspecting ? undefined : "Tap to remove room"}
               />
             );
           })}
 
           {/* Active Selection Preview Box */}
-          {activeRect && (
+          {activeRect && !isInspecting && (
             <div
               className={`shk-preview-box ${activeRect.valid ? 'shk-preview--valid' : 'shk-preview--invalid'}`}
               style={{
@@ -514,107 +514,54 @@ export function ShikakuScreen({ onBack }) {
       </div>
 
       {/* ── Bottom Actions ────────────────────────────────────── */}
-      <footer className="shk-toolbar">
-        <button
-          id="shk-undo-btn"
-          type="button"
-          className="shk-action-btn"
-          onClick={handleUndo}
-          disabled={history.length === 0 || hasWon}
-          aria-label="Undo Room"
+      <footer className="shk-controls">
+        <GameFooterActions
+          onReset={handleReset}
+          onHint={handleHint}
+          canHint={!hasWon && !isInspecting && committedRooms.length < puzzle.clues.length}
+          resetLabel="Reset"
+          hintLabel="Hint"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Step ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
         >
-          <Icon name="undo" size={16} />
-          <span>Undo</span>
-        </button>
-
-        {corner1 && (
-          <button
-            type="button"
-            className="shk-action-btn shk-cancel-btn"
-            onClick={() => {
-              playTap();
-              setCorner1(null);
-              setCorner2(null);
-            }}
-          >
-            Cancel
-          </button>
-        )}
-
-        <button
-          id="shk-hint-btn"
-          type="button"
-          className="shk-action-btn"
-          onClick={handleHint}
-          disabled={hasWon || committedRooms.length === puzzle.clues.length}
-          aria-label="Get Hint"
-        >
-          <Icon name="pencil" size={16} />
-          <span>Hint</span>
-        </button>
+          {corner1 && !isInspecting && (
+            <button
+              type="button"
+              className="game-action-btn"
+              onClick={() => {
+                playTap();
+                setCorner1(null);
+                setCorner2(null);
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </GameFooterActions>
       </footer>
 
-      {/* ── Calm Victory Dialog ───────────────────────────────── */}
-      {hasWon && (
-        <div className="shk-modal-backdrop">
-          <div className="shk-modal-card">
-            <div className="shk-modal-icon">❖</div>
-            <h2 className="shk-modal-title">Grid in Harmony</h2>
-            <p className="shk-modal-desc">
-              All {puzzle.clues.length} rooms carved in pure proportion. Every cell balanced without overlap.
-            </p>
-            <div className="shk-modal-actions">
-              {difficulty === 'easy' && (
-                <button
-                  type="button"
-                  className="shk-modal-btn-primary"
-                  onClick={() => {
-                    playTap();
-                    setDifficulty('medium');
-                  }}
-                >
-                  Medium (8×8)
-                </button>
-              )}
-              {difficulty === 'medium' && (
-                <button
-                  type="button"
-                  className="shk-modal-btn-primary"
-                  onClick={() => {
-                    playTap();
-                    setDifficulty('hard');
-                  }}
-                >
-                  Hard (10×10)
-                </button>
-              )}
-              {difficulty === 'hard' && (
-                <button
-                  type="button"
-                  className="shk-modal-btn-primary"
-                  onClick={handleReset}
-                >
-                  Replay Hard
-                </button>
-              )}
-              <button
-                type="button"
-                className="shk-modal-btn-secondary"
-                onClick={handleReset}
-              >
-                Replay Level
-              </button>
-              <button
-                type="button"
-                className="shk-modal-btn-tertiary"
-                onClick={handleBack}
-              >
-                Briefing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={hasWon}
+        title="Grid in Harmony"
+        description={`All ${puzzle.clues.length} rooms carved in pure proportion. Every cell balanced without overlap.`}
+        icon="❖"
+        stats={[
+          { label: 'Tier', value: difficultyNames[difficulty] || difficulty },
+          { label: 'Rooms', value: `${puzzle.clues.length}` },
+          { label: 'Actions', value: `${history.length - 1}` },
+        ]}
+        onNext={() => setDifficulty(nextTierMap[difficulty] || 'easy')}
+        nextLabel="Next Tier"
+        onReplay={handleReset}
+        replayLabel="Replay"
+        reviewLabel="Review Grid"
+      />
     </div>
   );
 }

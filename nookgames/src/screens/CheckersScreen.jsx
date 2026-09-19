@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Icon } from '../icons.jsx'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   initBoard,
   cloneBoard,
@@ -25,8 +25,17 @@ export function CheckersScreen({ onBack }) {
   const [multiJumpPiece, setMultiJumpPiece] = useState(null) // { r, c } | null
   const [isBotThinking, setIsBotThinking] = useState(false)
   const [lastMove, setLastMove] = useState(null) // { from: {r, c}, to: {r, c} } | null
-  const [history, setHistory] = useState([])
   const [winner, setWinner] = useState(null) // 'player' | 'bot' | null
+
+  // History stepper
+  const [snapshots, setSnapshots] = useState(() => [
+    { board: initBoard(), turn: 'white', lastMove: null },
+  ])
+  const [historyIndex, setHistoryIndex] = useState(0)
+  const isInspecting = historyIndex < snapshots.length - 1
+  const displayedState = snapshots[historyIndex] || { board, turn, lastMove }
+  const displayBoard = displayedState.board
+  const displayLastMove = displayedState.lastMove
 
   const botTimerRef = useRef(null)
 
@@ -45,11 +54,11 @@ export function CheckersScreen({ onBack }) {
   }, [winner])
 
   // Piece counts
-  const counts = useMemo(() => countPieces(board), [board])
+  const counts = useMemo(() => countPieces(displayBoard), [displayBoard])
 
   // Legal moves for selected piece
   const { legalSteps, legalCaptures } = useMemo(() => {
-    if (!selectedPos || turn !== 'white' || isBotThinking || winner) {
+    if (!selectedPos || turn !== 'white' || isBotThinking || winner || isInspecting) {
       return { legalSteps: [], legalCaptures: [] }
     }
 
@@ -62,7 +71,7 @@ export function CheckersScreen({ onBack }) {
 
     const { steps, captures } = getLegalMovesForPiece(board, selectedPos.r, selectedPos.c)
     return { legalSteps: steps, legalCaptures: captures }
-  }, [board, selectedPos, turn, isBotThinking, winner, multiJumpPiece])
+  }, [board, selectedPos, turn, isBotThinking, winner, multiJumpPiece, isInspecting])
 
   const targetMap = useMemo(() => {
     const map = new Map()
@@ -73,9 +82,9 @@ export function CheckersScreen({ onBack }) {
 
   // Check if player has mandatory captures anywhere on board
   const playerMustCapture = useMemo(() => {
-    if (turn !== 'white' || isBotThinking || winner) return false
+    if (turn !== 'white' || isBotThinking || winner || isInspecting) return false
     return hasAnyCaptures(board, 'white')
-  }, [board, turn, isBotThinking, winner])
+  }, [board, turn, isBotThinking, winner, isInspecting])
 
   // Navigation back
   const handleBack = () => {
@@ -99,13 +108,14 @@ export function CheckersScreen({ onBack }) {
     setMultiJumpPiece(null)
     setIsBotThinking(false)
     setLastMove(null)
-    setHistory([])
     setWinner(null)
+    setSnapshots([{ board: newBoard, turn: 'white', lastMove: null }])
+    setHistoryIndex(0)
   }
 
   // Execute bot turn
   const executeBotTurn = useCallback(
-    (currentBoard) => {
+    (currentBoard, playerMove) => {
       setIsBotThinking(true)
 
       botTimerRef.current = setTimeout(() => {
@@ -143,8 +153,15 @@ export function CheckersScreen({ onBack }) {
 
         playTap()
         setBoard(activeBoard)
-        setLastMove({ from: lastFrom, to: lastTo })
+        const botLastMove = { from: lastFrom, to: lastTo }
+        setLastMove(botLastMove)
         setIsBotThinking(false)
+
+        setSnapshots((prev) => {
+          const next = [...prev, { board: activeBoard, turn: 'white', lastMove: botLastMove }]
+          setHistoryIndex(next.length - 1)
+          return next
+        })
 
         // Check if white player won/lost after bot move
         const winCheck = checkWinner(activeBoard)
@@ -163,7 +180,7 @@ export function CheckersScreen({ onBack }) {
 
   // Handle square clicks
   const handleSquareClick = (r, c) => {
-    if (turn !== 'white' || isBotThinking || winner) return
+    if (turn !== 'white' || isBotThinking || winner || isInspecting) return
 
     const piece = board[r][c]
     const key = `${r},${c}`
@@ -190,33 +207,34 @@ export function CheckersScreen({ onBack }) {
       const from = selectedPos
       const to = { r, c }
 
-      // Save previous state for undo
-      const priorState = {
-        board: cloneBoard(board),
-        turn: 'white',
-        lastMove,
-        winner: null,
-      }
-
       const res = applyMove(board, from, to)
       playTap()
 
       setBoard(res.nextBoard)
-      setLastMove({ from, to })
+      const currentMove = { from, to }
+      setLastMove(currentMove)
 
       // Check if multi-jump continuation is available
       if (res.canMultiJump) {
         setMultiJumpPiece(to)
         setSelectedPos(to)
-        // Add to history stack
-        setHistory((prev) => [...prev, priorState])
+        setSnapshots((prev) => {
+          const next = [...prev.slice(0, historyIndex + 1), { board: res.nextBoard, turn: 'white', lastMove: currentMove }]
+          setHistoryIndex(next.length - 1)
+          return next
+        })
         return
       }
 
       // Turn completed
       setMultiJumpPiece(null)
       setSelectedPos(null)
-      setHistory((prev) => [...prev, priorState])
+
+      setSnapshots((prev) => {
+        const next = [...prev.slice(0, historyIndex + 1), { board: res.nextBoard, turn: 'black', lastMove: currentMove }]
+        setHistoryIndex(next.length - 1)
+        return next
+      })
 
       // Check winner
       const winCheck = checkWinner(res.nextBoard)
@@ -227,20 +245,25 @@ export function CheckersScreen({ onBack }) {
         }
       } else {
         setTurn('black')
-        executeBotTurn(res.nextBoard)
+        executeBotTurn(res.nextBoard, currentMove)
       }
     }
   }
 
-  // Handle Undo: rolls back both player's move and bot's reply
+  // Handle Undo: rolls back snapshots
   const handleUndo = () => {
-    if (isBotThinking || history.length === 0) return
+    if (isBotThinking || snapshots.length <= 1) return
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
 
-    // Revert to earliest state before the last round
-    const restored = history[history.length - 1]
-    setHistory((prev) => prev.slice(0, -1))
+    // Roll back to 2 states prior if possible (player + bot), or 1 state
+    const stepBackCount = snapshots.length >= 3 ? 2 : 1
+    const newSnapshots = snapshots.slice(0, -stepBackCount)
+    if (newSnapshots.length === 0) return
+
+    const restored = newSnapshots[newSnapshots.length - 1]
+    setSnapshots(newSnapshots)
+    setHistoryIndex(newSnapshots.length - 1)
     setBoard(restored.board)
     setTurn(restored.turn)
     setLastMove(restored.lastMove)
@@ -248,6 +271,20 @@ export function CheckersScreen({ onBack }) {
     setMultiJumpPiece(null)
     setIsBotThinking(false)
     setWinner(null)
+  }
+
+  const handleStepBack = () => {
+    if (historyIndex > 0) {
+      playTap()
+      setHistoryIndex((prev) => prev - 1)
+    }
+  }
+
+  const handleStepForward = () => {
+    if (historyIndex < snapshots.length - 1) {
+      playTap()
+      setHistoryIndex((prev) => prev + 1)
+    }
   }
 
   return (
@@ -287,7 +324,9 @@ export function CheckersScreen({ onBack }) {
           >
             <span className="chk-turn-dot" />
             <span className="chk-turn-text">
-              {winner
+              {isInspecting
+                ? `Inspecting (${historyIndex + 1}/${snapshots.length})`
+                : winner
                 ? 'Match Concluded'
                 : isBotThinking
                 ? 'Contemplating...'
@@ -319,14 +358,14 @@ export function CheckersScreen({ onBack }) {
           {Array.from({ length: BOARD_SIZE }).map((_, r) =>
             Array.from({ length: BOARD_SIZE }).map((_, c) => {
               const isDark = (r + c) % 2 === 1
-              const piece = board[r][c]
-              const isSelected = selectedPos && selectedPos.r === r && selectedPos.c === c
-              const isTarget = targetMap.has(`${r},${c}`)
+              const piece = displayBoard[r][c]
+              const isSelected = !isInspecting && selectedPos && selectedPos.r === r && selectedPos.c === c
+              const isTarget = !isInspecting && targetMap.has(`${r},${c}`)
               const targetInfo = targetMap.get(`${r},${c}`)
               const isLastMoveSquare =
-                lastMove &&
-                ((lastMove.from.r === r && lastMove.from.c === c) ||
-                  (lastMove.to.r === r && lastMove.to.c === c))
+                displayLastMove &&
+                ((displayLastMove.from.r === r && displayLastMove.from.c === c) ||
+                  (displayLastMove.to.r === r && displayLastMove.to.c === c))
 
               let squareClasses = `chk-square ${isDark ? 'chk-square--dark' : 'chk-square--light'}`
               if (isSelected) squareClasses += ' chk-square--selected'
@@ -338,7 +377,7 @@ export function CheckersScreen({ onBack }) {
                   id={`chk-sq-${r}-${c}`}
                   className={squareClasses}
                   onClick={() => handleSquareClick(r, c)}
-                  disabled={!isDark}
+                  disabled={!isDark || isInspecting}
                   aria-label={`Row ${r + 1}, Column ${c + 1}${
                     piece
                       ? `: ${piece.player === 'white' ? 'White' : 'Black'} ${
@@ -375,38 +414,43 @@ export function CheckersScreen({ onBack }) {
       </div>
 
       {/* ── Action Controls ─────────────────────────────────── */}
-      <GameFooterActions
-        onReset={handleReset}
-        onUndo={handleUndo}
-        canUndo={!isBotThinking && history.length > 0}
-        resetLabel="Reset"
-        undoLabel="Undo"
-      />
+      <div className="chk-footer-controls">
+        <GameFooterActions
+          onReset={handleReset}
+          onUndo={handleUndo}
+          canUndo={!isBotThinking && snapshots.length > 1 && !isInspecting}
+          onStepBack={handleStepBack}
+          onStepForward={handleStepForward}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < snapshots.length - 1}
+          stepIndicator={`${historyIndex + 1} / ${snapshots.length}`}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(snapshots.length - 1)}
+          resetLabel="Reset"
+          undoLabel="Undo"
+        />
+      </div>
 
       {/* ── Game Over Modal ─────────────────────────────────── */}
-      {winner && (
-        <div className="chk-modal-backdrop">
-          <div className={`chk-modal ${winner === 'player' ? 'chk-modal--won' : 'chk-modal--lost'}`}>
-            <h2 className="chk-modal-title">
-              {winner === 'player' ? 'HARMONY RESTORED' : 'THE BOARD CLAIMS REST'}
-            </h2>
-            <p className="chk-modal-text">
-              {winner === 'player'
-                ? 'All opposing pieces flanked and neutralized. Stillness achieved.'
-                : 'The system has claimed the diagonal corridors. Return to quiet contemplation.'}
-            </p>
-            <div className="chk-modal-actions">
-              <button
-                id="chk-replay-btn"
-                className="chk-modal-btn-primary"
-                onClick={handleReset}
-              >
-                Play Again
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GameCompletionModal
+        isOpen={!!winner}
+        title={winner === 'player' ? 'HARMONY RESTORED' : 'THE BOARD CLAIMS REST'}
+        subtitle={
+          winner === 'player'
+            ? 'All opposing pieces flanked and neutralized. Stillness achieved.'
+            : 'The system has claimed the diagonal corridors. Return to quiet contemplation.'
+        }
+        stats={[
+          { label: 'Result', value: winner === 'player' ? 'Victory' : 'Defeat' },
+          { label: 'White Pieces', value: `${counts.white} (♔${counts.whiteKings})` },
+          { label: 'Black Pieces', value: `${counts.black} (♔${counts.blackKings})` },
+        ]}
+        primaryAction={{
+          label: 'Play Again',
+          onClick: handleReset,
+        }}
+        reviewLabel="Review Board"
+      />
 
       {/* ── Footer Quote ────────────────────────────────────── */}
       <footer className="chk-footer">
@@ -415,3 +459,4 @@ export function CheckersScreen({ onBack }) {
     </div>
   )
 }
+

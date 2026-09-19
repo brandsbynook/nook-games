@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   initGameTiles,
   moveTiles,
@@ -33,10 +34,14 @@ export function Game2048Screen({ onBack }) {
       return 0
     }
   })
-  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState(() => [{ tiles: initGameTiles(gridSize), score: 0 }])
+  const [historyIndex, setHistoryIndex] = useState(0)
   const [hasWon, setHasWon] = useState(false)
   const [isGameOver, setIsGameOver] = useState(false)
-  const [toastMessage, setToastMessage] = useState(null)
+
+  const isInspecting = historyIndex < history.length - 1
+  const displayedTiles = (isInspecting && history[historyIndex] ? history[historyIndex].tiles : tiles)
+  const displayedScore = (isInspecting && history[historyIndex] ? history[historyIndex].score : score)
 
   const boardRef = useRef(null)
   const touchStartRef = useRef(null)
@@ -48,25 +53,16 @@ export function Game2048Screen({ onBack }) {
     }
   }, [])
 
-  const showToast = useCallback((msg, duration = 3000) => {
-    setToastMessage(msg)
-    if (duration > 0) {
-      setTimeout(() => {
-        setToastMessage((curr) => (curr === msg ? null : curr))
-      }, duration)
-    }
-  }, [])
-
   const handleRestart = useCallback((size = gridSize) => {
     playTap()
     if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
     const newTiles = initGameTiles(size)
     setTiles(newTiles)
     setScore(0)
-    setHistory([])
+    setHistory([{ tiles: newTiles, score: 0 }])
+    setHistoryIndex(0)
     setHasWon(false)
     setIsGameOver(false)
-    setToastMessage(null)
   }, [gridSize])
 
   const handleTierChange = useCallback((tierId) => {
@@ -75,39 +71,14 @@ export function Game2048Screen({ onBack }) {
     handleRestart(newSize)
   }, [handleRestart])
 
-  const handleUndo = useCallback(() => {
-    if (history.length === 0) return
-    playTap()
-    if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
-    const lastState = history[history.length - 1]
-    setHistory((prev) => prev.slice(0, -1))
-    setTiles(
-      lastState.tiles.map((t) => ({
-        ...t,
-        previousPosition: null,
-        isNew: false,
-        isMerged: false,
-        isDeleting: false,
-      }))
-    )
-    setScore(lastState.score)
-    setIsGameOver(false)
-    setToastMessage(null)
-  }, [history])
-
   const handleMove = useCallback(
     (direction) => {
-      if (isGameOver) return
+      if (isGameOver || isInspecting) return
 
       const { nextTiles, scoreGained, changed } = moveTiles(tiles, direction, gridSize)
       if (!changed) return
 
       playTap()
-
-      setHistory((prev) => [
-        ...prev.slice(-30),
-        { tiles: tiles.filter((t) => !t.isDeleting), score },
-      ])
 
       const nextScore = score + scoreGained
       setScore(nextScore)
@@ -122,6 +93,15 @@ export function Game2048Screen({ onBack }) {
 
       const { nextTiles: withSpawn } = spawnRandomTileInTiles(nextTiles, gridSize)
       setTiles(withSpawn)
+
+      setHistory((prev) => {
+        const nextHist = [
+          ...prev.slice(0, historyIndex + 1),
+          { tiles: withSpawn.filter((t) => !t.isDeleting), score: nextScore },
+        ]
+        setHistoryIndex(nextHist.length - 1)
+        return nextHist
+      })
 
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current)
       cleanupTimeoutRef.current = setTimeout(() => {
@@ -140,23 +120,20 @@ export function Game2048Screen({ onBack }) {
         recordGameSession('2048', true)
         setTimeout(() => {
           playChime()
-          showToast(`Form achieved: ${targetGoal}`, 4000)
         }, 200)
       }
 
       if (!hasValidMoves(finalGrid, gridSize)) {
         setIsGameOver(true)
         recordGameSession('2048', hasWon || wonThisTurn)
-        setTimeout(() => {
-          showToast('Space filled in quiet stillness.', 0)
-        }, 300)
       }
     },
-    [tiles, score, bestScore, isGameOver, hasWon, showToast, targetGoal, gridSize]
+    [tiles, score, bestScore, isGameOver, isInspecting, hasWon, targetGoal, gridSize, historyIndex]
   )
 
   useEffect(() => {
     function handleKeyDown(e) {
+      if (isInspecting) return
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault()
       }
@@ -169,14 +146,12 @@ export function Game2048Screen({ onBack }) {
         handleMove('up')
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         handleMove('down')
-      } else if (e.key === 'z' || e.key === 'Z' || e.key === 'u' || e.key === 'U') {
-        handleUndo()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleMove, handleUndo])
+  }, [handleMove, isInspecting])
 
   const handleTouchStart = (e) => {
     if (e.touches && e.touches.length === 1) {
@@ -269,7 +244,7 @@ export function Game2048Screen({ onBack }) {
         <div className="g2048-stat-pills">
           <div className="g2048-pill">
             <span className="g2048-pill-label">SCORE</span>
-            <span className="g2048-pill-val">{score}</span>
+            <span className="g2048-pill-val">{displayedScore}</span>
           </div>
           <div className="g2048-pill">
             <span className="g2048-pill-label">BEST</span>
@@ -324,28 +299,48 @@ export function Game2048Screen({ onBack }) {
               pointerEvents: 'none',
             }}
           >
-            {tiles.map((tile) => (
+            {displayedTiles.map((tile) => (
               <Tile key={tile.id} tile={tile} size={gridSize} />
             ))}
           </div>
         </div>
       </div>
 
-      <GameFooterActions
-        onReset={() => handleRestart(gridSize)}
-        onUndo={handleUndo}
-        canUndo={history.length > 0}
-        resetLabel="Reset"
-        undoLabel="Undo"
-      />
-
-      <div
-        className={`g2048-toast${toastMessage ? ' g2048-toast--visible' : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        {toastMessage}
+      <div className="g2048-footer-controls">
+        <GameFooterActions
+          onReset={() => handleRestart(gridSize)}
+          resetLabel="Restart"
+          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+          onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+          canStepBack={historyIndex > 0}
+          canStepForward={historyIndex < history.length - 1}
+          stepIndicator={history.length > 1 ? `Move ${historyIndex}/${history.length - 1}` : null}
+          isInspecting={isInspecting}
+          onExitInspection={() => setHistoryIndex(history.length - 1)}
+        />
       </div>
+
+      {/* ── Universal Completion Modal ── */}
+      <GameCompletionModal
+        isOpen={isGameOver || hasWon}
+        title={hasWon ? `Harmonious ${targetGoal}` : 'Space Filled'}
+        description={
+          hasWon
+            ? `Target tile of ${targetGoal} successfully formed.`
+            : 'No more valid slides available on the lattice.'
+        }
+        icon={hasWon ? '✓' : '❖'}
+        stats={[
+          { label: 'Score', value: `${score}` },
+          { label: 'Best', value: `${bestScore}` },
+          { label: 'Moves', value: `${history.length - 1}` },
+        ]}
+        onNext={() => handleRestart(gridSize)}
+        nextLabel="New Board"
+        onReplay={() => handleRestart(gridSize)}
+        replayLabel="Replay"
+        reviewLabel="Review Board"
+      />
     </div>
   )
 }

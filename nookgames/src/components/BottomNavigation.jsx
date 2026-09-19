@@ -1,4 +1,4 @@
-import { Icon } from '../icons.jsx'
+import { Icon } from './Icons'
 
 const tabs = [
   { id: 'home', label: 'Home', href: '#/' },

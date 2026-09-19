@@ -1,5 +1,5 @@
 import { useTheme } from '../context/ThemeContext.jsx'
-import { Icon } from '../icons.jsx'
+import { Icon } from './Icons'
 
 export function Header() {
   const { openAtmosphere } = useTheme()

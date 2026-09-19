@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
+import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   createInitialBoard,
   cloneBoard,
@@ -20,16 +21,28 @@ export function ReversiScreen({ onBack }) {
   const [isAiThinking, setIsAiThinking] = useState(false)
   const [lastMove, setLastMove] = useState(null)
   const [recentlyFlipped, setRecentlyFlipped] = useState([])
-  const [history, setHistory] = useState([])
   const [statusMessage, setStatusMessage] = useState('')
   const [isGameOver, setIsGameOver] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
 
+  // Snapshots for non-destructive history inspection
+  const [snapshots, setSnapshots] = useState(() => [
+    { board: createInitialBoard(), turn: 'W', lastMove: null, recentlyFlipped: [] },
+  ])
+  const [historyIndex, setHistoryIndex] = useState(0)
+  const isInspecting = historyIndex < snapshots.length - 1
+  const displayedState = snapshots[historyIndex] || { board, turn, lastMove, recentlyFlipped }
+  const displayBoard = displayedState.board
+  const displayScores = countStones(displayBoard)
+  const displayLastMove = displayedState.lastMove
+  const displayRecentlyFlipped = displayedState.recentlyFlipped
+
   const aiTimerRef = useRef(null)
 
   const scores = countStones(board)
-  const validMoves = turn === 'W' && !isGameOver && !isAiThinking ? getValidMoves(board, 'W') : []
+  const validMoves =
+    turn === 'W' && !isGameOver && !isAiThinking && !isInspecting ? getValidMoves(board, 'W') : []
   const validMoveMap = new Set(validMoves.map((m) => `${m.row},${m.col}`))
 
   // Show temporary toast message
@@ -57,34 +70,41 @@ export function ReversiScreen({ onBack }) {
   const handleRestart = useCallback(() => {
     playTap()
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
-    setBoard(createInitialBoard())
+    const initial = createInitialBoard()
+    setBoard(initial)
     setTurn('W')
     setIsAiThinking(false)
     setLastMove(null)
     setRecentlyFlipped([])
-    setHistory([])
     setStatusMessage('')
     setIsGameOver(false)
     setShowToast(false)
+    setSnapshots([{ board: initial, turn: 'W', lastMove: null, recentlyFlipped: [] }])
+    setHistoryIndex(0)
   }, [])
 
   // Handle Undo
   const handleUndo = useCallback(() => {
-    if (history.length === 0 || isAiThinking) return
+    if (snapshots.length <= 1 || isAiThinking) return
     playTap()
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current)
 
-    const lastState = history[history.length - 1]
-    setHistory((prev) => prev.slice(0, -1))
-    setBoard(lastState.board)
-    setTurn(lastState.turn)
-    setLastMove(lastState.lastMove)
-    setRecentlyFlipped(lastState.recentlyFlipped)
+    const stepBackCount = snapshots.length >= 3 ? 2 : 1
+    const newSnapshots = snapshots.slice(0, -stepBackCount)
+    if (newSnapshots.length === 0) return
+
+    const restored = newSnapshots[newSnapshots.length - 1]
+    setSnapshots(newSnapshots)
+    setHistoryIndex(newSnapshots.length - 1)
+    setBoard(restored.board)
+    setTurn(restored.turn)
+    setLastMove(restored.lastMove)
+    setRecentlyFlipped(restored.recentlyFlipped)
     setIsAiThinking(false)
     setIsGameOver(false)
     setStatusMessage('')
     setShowToast(false)
-  }, [history, isAiThinking])
+  }, [snapshots, isAiThinking])
 
   // End game handler
   const checkGameOver = useCallback(
@@ -98,11 +118,11 @@ export function ReversiScreen({ onBack }) {
         const playerWon = finalCounts.white > finalCounts.dark
         recordGameSession('reversi', playerWon)
 
-        let endMsg = `Balance achieved. White: ${finalCounts.white} — Dark: ${finalCounts.dark}`
+        let endMsg = `Balance achieved. White: ${finalCounts.white} - Dark: ${finalCounts.dark}`
         if (finalCounts.white > finalCounts.dark) {
-          endMsg = `Territory resolved in quiet harmony. White: ${finalCounts.white} — Dark: ${finalCounts.dark}`
+          endMsg = `Territory resolved in quiet harmony. White: ${finalCounts.white} - Dark: ${finalCounts.dark}`
         } else if (finalCounts.dark > finalCounts.white) {
-          endMsg = `Quiet Companion claims the board. Dark: ${finalCounts.dark} — White: ${finalCounts.white}`
+          endMsg = `Quiet Companion claims the board. Dark: ${finalCounts.dark} - White: ${finalCounts.white}`
         }
         setStatusMessage(endMsg)
         setTimeout(() => {
@@ -146,9 +166,24 @@ export function ReversiScreen({ onBack }) {
           if (result) {
             playTap()
             setBoard(result.nextBoard)
-            setLastMove({ row: bestMove.row, col: bestMove.col })
+            const aiMovePos = { row: bestMove.row, col: bestMove.col }
+            setLastMove(aiMovePos)
             setRecentlyFlipped(result.flippedCoords)
             setIsAiThinking(false)
+
+            setSnapshots((prev) => {
+              const next = [
+                ...prev,
+                {
+                  board: result.nextBoard,
+                  turn: 'W',
+                  lastMove: aiMovePos,
+                  recentlyFlipped: result.flippedCoords,
+                },
+              ]
+              setHistoryIndex(next.length - 1)
+              return next
+            })
 
             // Check if game over or if white must pass
             if (!checkGameOver(result.nextBoard)) {
@@ -181,27 +216,31 @@ export function ReversiScreen({ onBack }) {
 
   // Player Move Handler
   function handleCellClick(row, col) {
-    if (turn !== 'W' || isAiThinking || isGameOver) return
+    if (turn !== 'W' || isAiThinking || isGameOver || isInspecting) return
     if (!validMoveMap.has(`${row},${col}`)) return
-
-    // Save snapshot before player's move for undo
-    setHistory((prev) => [
-      ...prev.slice(-30),
-      {
-        board: cloneBoard(board),
-        turn: 'W',
-        lastMove,
-        recentlyFlipped,
-      },
-    ])
 
     const result = applyMove(board, row, col, 'W')
     if (!result) return
 
     playTap()
     setBoard(result.nextBoard)
-    setLastMove({ row, col })
+    const playerMovePos = { row, col }
+    setLastMove(playerMovePos)
     setRecentlyFlipped(result.flippedCoords)
+
+    setSnapshots((prev) => {
+      const next = [
+        ...prev.slice(0, historyIndex + 1),
+        {
+          board: result.nextBoard,
+          turn: 'B',
+          lastMove: playerMovePos,
+          recentlyFlipped: result.flippedCoords,
+        },
+      ]
+      setHistoryIndex(next.length - 1)
+      return next
+    })
 
     // Check game over
     if (checkGameOver(result.nextBoard)) return
@@ -209,6 +248,20 @@ export function ReversiScreen({ onBack }) {
     // Pass turn to AI
     setTurn('B')
     executeAiTurn(result.nextBoard)
+  }
+
+  const handleStepBack = () => {
+    if (historyIndex > 0) {
+      playTap()
+      setHistoryIndex((prev) => prev - 1)
+    }
+  }
+
+  const handleStepForward = () => {
+    if (historyIndex < snapshots.length - 1) {
+      playTap()
+      setHistoryIndex((prev) => prev + 1)
+    }
   }
 
   return (
@@ -236,18 +289,20 @@ export function ReversiScreen({ onBack }) {
           <div className={`rev-pill rev-pill--white${turn === 'W' && !isGameOver ? ' rev-pill--active' : ''}`}>
             <span className="rev-pill-stone rev-pill-stone--white" />
             <span className="rev-pill-label">White</span>
-            <span className="rev-pill-count">{scores.white}</span>
+            <span className="rev-pill-count">{displayScores.white}</span>
           </div>
 
           <div className={`rev-pill rev-pill--dark${turn === 'B' && !isGameOver ? ' rev-pill--active' : ''}`}>
             <span className="rev-pill-stone rev-pill-stone--dark" />
             <span className="rev-pill-label">Dark</span>
-            <span className="rev-pill-count">{scores.dark}</span>
+            <span className="rev-pill-count">{displayScores.dark}</span>
           </div>
         </div>
 
         <p className="rev-turn-tagline">
-          {isGameOver
+          {isInspecting
+            ? `Inspecting (${historyIndex + 1}/${snapshots.length})`
+            : isGameOver
             ? statusMessage
             : isAiThinking
             ? 'Quiet Companion is considering...'
@@ -260,19 +315,19 @@ export function ReversiScreen({ onBack }) {
       {/* ── 8x8 Reversi Board Container ──────────────────────── */}
       <div className="rev-board-wrap">
         <div className="rev-board" role="grid" aria-label="Reversi 8x8 Board">
-          {board.map((rowArr, r) => (
+          {displayBoard.map((rowArr, r) => (
             <div key={`row-${r}`} className="rev-row" role="row">
               {rowArr.map((cell, c) => {
-                const isValid = validMoveMap.has(`${r},${c}`)
-                const isLast = lastMove && lastMove.row === r && lastMove.col === c
-                const isFlipped = recentlyFlipped.some(([fr, fc]) => fr === r && fc === c)
+                const isValid = !isInspecting && validMoveMap.has(`${r},${c}`)
+                const isLast = displayLastMove && displayLastMove.row === r && displayLastMove.col === c
+                const isFlipped = displayRecentlyFlipped.some(([fr, fc]) => fr === r && fc === c)
 
                 return (
                   <button
                     key={`cell-${r}-${c}`}
                     className={`rev-cell${isValid ? ' rev-cell--valid' : ''}`}
                     onClick={() => handleCellClick(r, c)}
-                    disabled={!isValid || turn !== 'W' || isAiThinking || isGameOver}
+                    disabled={!isValid || turn !== 'W' || isAiThinking || isGameOver || isInspecting}
                     aria-label={`Row ${r + 1}, Column ${c + 1}: ${
                       cell === 'W' ? 'White' : cell === 'B' ? 'Dark' : isValid ? 'Valid move' : 'Empty'
                     }`}
@@ -297,7 +352,14 @@ export function ReversiScreen({ onBack }) {
       <GameFooterActions
         onReset={handleRestart}
         onUndo={handleUndo}
-        canUndo={history.length > 0 && !isAiThinking}
+        canUndo={snapshots.length > 1 && !isAiThinking && !isInspecting}
+        onStepBack={handleStepBack}
+        onStepForward={handleStepForward}
+        canStepBack={historyIndex > 0}
+        canStepForward={historyIndex < snapshots.length - 1}
+        stepIndicator={`${historyIndex + 1} / ${snapshots.length}`}
+        isInspecting={isInspecting}
+        onExitInspection={() => setHistoryIndex(snapshots.length - 1)}
         resetLabel="Reset"
         undoLabel="Undo"
       />
@@ -318,8 +380,38 @@ export function ReversiScreen({ onBack }) {
       >
         {toastMessage}
       </div>
+
+      {/* ── Game Over Modal ─────────────────────────────────── */}
+      <GameCompletionModal
+        isOpen={isGameOver}
+        title={
+          scores.white > scores.dark
+            ? 'HARMONY ACHIEVED'
+            : scores.white === scores.dark
+            ? 'PERFECT BALANCE'
+            : 'TERRITORY RESOLVED'
+        }
+        subtitle={
+          scores.white > scores.dark
+            ? 'White stones have claimed tranquil dominion over the board.'
+            : scores.white === scores.dark
+            ? 'Equal stones rest across the board in timeless poise.'
+            : 'Quiet Companion has claimed the board. Return to quiet contemplation.'
+        }
+        stats={[
+          { label: 'White Stones', value: scores.white },
+          { label: 'Dark Stones', value: scores.dark },
+          { label: 'Difficulty', value: difficulty.toUpperCase() },
+        ]}
+        primaryAction={{
+          label: 'Play Again',
+          onClick: handleRestart,
+        }}
+        reviewLabel="Review Board"
+      />
     </div>
   )
 }
 
 export default ReversiScreen
+
