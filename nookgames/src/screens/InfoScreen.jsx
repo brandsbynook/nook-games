@@ -50,7 +50,7 @@ export function InfoScreen() {
           <div className="info-card-body">
             <h2 className="info-card-title">Offline &amp; Private</h2>
             <p className="info-card-text">
-              100% of your gameplay, progress, settings, and daily essays live entirely
+              100% of your gameplay, progress, settings, and curated Editor's Pick essays live entirely
               on your device. There are no accounts, no servers, no analytics, and no
               third-party trackers of any kind. Nook has never transmitted a single byte
               of your data anywhere. It works fully offline from day one.

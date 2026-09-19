@@ -228,8 +228,8 @@ export const collections = [
   {
     id: 'cipher',
     title: 'Cipher',
-    description: 'Decipher clues. Crack patterns.',
-    tagline: 'Decipher clues. Crack patterns.',
+    description: 'Unravel patterns through quiet reasoning.',
+    tagline: 'Unravel patterns through quiet reasoning.',
     icon: 'cipher',
     games: [
       {
