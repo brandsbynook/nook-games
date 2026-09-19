@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { App as CapApp } from '@capacitor/app'
 import { AppShell } from './components/AppShell.jsx'
 import { getCollection, getGame } from './data/catalogue.js'
 import { BriefingScreen } from './screens/BriefingScreen.jsx'
@@ -439,6 +440,110 @@ function AppContent() {
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
+
+  // ── Android Native Back Button (Hardware / Gesture) ───────────────
+  useEffect(() => {
+    let listenerHandle = null
+
+    const setupBackButton = async () => {
+      try {
+        listenerHandle = await CapApp.addListener('backButton', () => {
+          if (showBreak) {
+            setShowBreak(false)
+            elapsedRef.current = 0
+            return
+          }
+
+          const currentRoute = parseRoute()
+          const rawHash = window.location.hash.replace(/^#\/?/, '').split('?')[0] || ''
+          const path = rawHash.replace(/^\/+/, '')
+          const parts = path.split('/').filter(Boolean)
+
+          // 1. Root / Home -> Allow exit
+          if (currentRoute.name === 'home' || parts.length === 0 || parts[0] === 'home') {
+            CapApp.exitApp()
+            return
+          }
+
+          // 2. Playable active game screen -> Navigate back to briefing or collection/home
+          if (currentRoute.name.startsWith('play-') || parts[0] === 'play' || parts[0] === 'game') {
+            let gameId = ''
+            if (currentRoute.name.startsWith('play-')) {
+              gameId = currentRoute.name.replace(/^play-/, '')
+            } else if (parts[0] === 'play' && parts[1]) {
+              gameId = parts[1].toLowerCase()
+            } else if (parts[0] === 'game' && parts[1]) {
+              gameId = parts[1].toLowerCase()
+            } else if (parts[0]) {
+              gameId = parts[0].toLowerCase()
+            }
+
+            const match = gameId ? getGame(gameId) : null
+            if (match) {
+              window.location.hash = `#/briefing/${match.game.id}`
+            } else if (window.history.length > 1) {
+              window.history.back()
+            } else {
+              window.location.hash = '#/home'
+            }
+            return
+          }
+
+          // 3. Briefing screen -> Navigate back to parent collection
+          if (currentRoute.name === 'briefing' || parts[0] === 'briefing') {
+            const gameId = currentRoute.id || parts[1]
+            const match = gameId ? getGame(gameId) : null
+            if (match?.collection?.id) {
+              window.location.hash = `#/collection/${match.collection.id}`
+            } else if (window.history.length > 1) {
+              window.history.back()
+            } else {
+              window.location.hash = '#/home'
+            }
+            return
+          }
+
+          // 4. Collection / Category screen -> Navigate to home
+          if (currentRoute.name === 'collection' || parts[0] === 'collection' || parts[0] === 'category') {
+            window.location.hash = '#/home'
+            return
+          }
+
+          // 5. Editor's pick screen -> Navigate to home
+          if (currentRoute.name === 'editors-pick' || parts[0] === 'editors-pick' || parts[0] === 'editor-pick') {
+            window.location.hash = '#/home'
+            return
+          }
+
+          // 6. Sub-screens (progress, info, settings) -> Navigate to home
+          if (
+            ['progress', 'info', 'settings'].includes(currentRoute.name) ||
+            ['progress', 'info', 'settings'].includes(parts[0])
+          ) {
+            window.location.hash = '#/home'
+            return
+          }
+
+          // 7. General fallback
+          if (window.history.length > 1) {
+            window.history.back()
+          } else {
+            window.location.hash = '#/home'
+          }
+        })
+      } catch (err) {
+        console.warn('Capacitor backButton listener not supported in this runtime', err)
+      }
+    }
+
+    setupBackButton()
+
+    return () => {
+      if (listenerHandle) {
+        listenerHandle.remove()
+      }
+    }
+  }, [showBreak])
 
   const navActive =
     route.name === 'progress' ||

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import {
   CELL_STATES,
   DIFFICULTY_TIERS,
@@ -205,15 +206,13 @@ export function NonogramScreen({ onBack } = {}) {
     <div className="ng-page">
       {/* ── Top Header Bar ──────────────────────────────────── */}
       <header className="ng-top-bar">
-        <button
+        <BackButton
           id="ng-back-btn"
           className="ng-action-btn"
           onClick={handleBack}
-          aria-label="Back to Briefing"
+          ariaLabel="Back to Briefing"
           title="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+        />
 
         <div className="ng-header-center">
           <h1 className="ng-title">Nonogram</h1>

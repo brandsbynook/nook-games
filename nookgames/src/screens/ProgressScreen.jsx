@@ -119,9 +119,8 @@ export function ProgressScreen() {
             <MetricCard label="Games Played" value={gamesPlayed} />
             <MetricCard label="Win Rate" value={winRate(gamesPlayed, gamesWon)} />
             <MetricCard
-              label="Explored"
+              label="Games Explored"
               value={`${exploredCount(byGame)} / 20`}
-              sub="games"
             />
           </div>
 

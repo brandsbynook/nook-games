@@ -1,14 +1,9 @@
 import { getDailyEssay } from '../data/essays.js'
 import { playTap } from '../utils/audio.js'
+import { BackButton } from '../components/BackButton.jsx'
 
 export function EditorPickScreen() {
   const essay = getDailyEssay()
-
-  function handleBack(e) {
-    e.preventDefault()
-    playTap()
-    window.location.hash = '/'
-  }
 
   function handleCompanion(e) {
     e.preventDefault()
@@ -20,14 +15,13 @@ export function EditorPickScreen() {
     <div className="ep-page">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="ep-header">
-        <button
+        <BackButton
           id="ep-back-btn"
           className="ep-back-btn"
-          onClick={handleBack}
-          aria-label="Back to Home"
-        >
-          ←
-        </button>
+          to="#/home"
+          ariaLabel="Back to Home"
+          title="Back to Home"
+        />
         <span className="ep-header-title">Editor's Pick</span>
         <span className="ep-header-spacer" aria-hidden="true" />
       </div>
@@ -76,3 +70,5 @@ export function EditorPickScreen() {
     </div>
   )
 }
+
+export default EditorPickScreen

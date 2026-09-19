@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '../icons.jsx';
+import { BackButton } from '../components/BackButton.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -203,16 +204,13 @@ export function SlitherlinkScreen({ onBack }) {
     <div className="slk-page">
       {/* ── Header ───────────────────────────────────────────── */}
       <header className="slk-header">
-        <button
+        <BackButton
           id="slk-back-btn"
-          type="button"
           className="slk-btn-back"
           onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={14} />
-          <span>Briefing</span>
-        </button>
+          ariaLabel="Back to Briefing"
+          title="Back to Briefing"
+        />
 
         <h1 className="slk-title">Slitherlink</h1>
 

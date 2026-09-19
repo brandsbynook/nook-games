@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Icon } from '../icons.jsx';
+import { BackButton } from '../components/BackButton.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
@@ -364,16 +365,13 @@ export function ShikakuScreen({ onBack }) {
     <div className="shk-page">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="shk-header">
-        <button
+        <BackButton
           id="shk-back-btn"
-          type="button"
           className="shk-btn-back"
           onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={18} />
-          <span>Back</span>
-        </button>
+          ariaLabel="Back to Briefing"
+          title="Back to Briefing"
+        />
 
         <div className="shk-header-center">
           <h1 className="shk-title">Shikaku</h1>

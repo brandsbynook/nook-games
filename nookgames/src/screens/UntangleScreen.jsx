@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import {
   DIFFICULTY_PRESETS,
@@ -378,14 +379,13 @@ export function UntangleScreen({ onBack } = {}) {
     <div className="unt-page">
       {/* ── Top Bar ─────────────────────────────────────────── */}
       <div className="unt-top-bar">
-        <button
+        <BackButton
           id="unt-back-btn"
           className="unt-back-btn"
           onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+          ariaLabel="Back to Briefing"
+          title="Back to Briefing"
+        />
 
         <div className="unt-header-center">
           <h1 className="unt-title">Untangle</h1>

@@ -1,17 +1,12 @@
 import { useState, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import { ZenSplash } from '../components/ZenSplash.jsx'
 import { playTap } from '../utils/audio.js'
 import { setLastActiveGame } from '../utils/storage.js'
 
 export function BriefingScreen({ game, collection }) {
   const [showZen, setShowZen] = useState(false)
-
-  function handleBack(e) {
-    e.preventDefault()
-    playTap()
-    window.location.hash = `#/collection/${collection.id}`
-  }
 
   function handlePlay(e) {
     e.preventDefault()
@@ -35,14 +30,13 @@ export function BriefingScreen({ game, collection }) {
     <div className="bs-page">
       {/* ── Top bar: Left slim back chevron + centered game title ── */}
       <div className="bs-topbar">
-        <button
+        <BackButton
           id="bs-back-btn"
           className="bs-back-btn"
-          onClick={handleBack}
-          aria-label={`Back to ${collection.title}`}
-        >
-          <Icon name="back" size={20} />
-        </button>
+          to={`#/collection/${collection.id}`}
+          ariaLabel={`Back to ${collection.title}`}
+          title={`Back to ${collection.title}`}
+        />
         <div className="bs-topbar-center">
           <span className="bs-topbar-title">{game.title}</span>
         </div>
@@ -109,3 +103,5 @@ export function BriefingScreen({ game, collection }) {
     </div>
   )
 }
+
+export default BriefingScreen

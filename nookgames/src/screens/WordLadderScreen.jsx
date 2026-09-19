@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import {
   WORD_LADDER_PUZZLES,
   isValidWord,
@@ -194,14 +195,13 @@ export function WordLadderScreen() {
       <div className="wl-top-section">
         {/* Header Bar */}
         <div className="wl-header">
-          <button
+          <BackButton
             id="wl-back-btn"
             className="wl-back-btn"
             onClick={handleBack}
-            aria-label="Back to Briefing"
-          >
-            <Icon name="back" size={20} />
-          </button>
+            ariaLabel="Back to Briefing"
+            title="Back to Briefing"
+          />
 
           <div className="wl-header-center">
             <h1 className="wl-title">Word Ladder</h1>

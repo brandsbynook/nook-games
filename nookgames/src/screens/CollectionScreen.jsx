@@ -1,29 +1,21 @@
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import { GameCard } from '../components/GameCard.jsx'
-import { playTap } from '../utils/audio.js'
 
 export function CollectionScreen({ collection, category = collection }) {
   const activeCategory = category || collection || {}
-
-  function handleBack(e) {
-    if (e) e.preventDefault()
-    playTap()
-    window.location.hash = '#/home'
-  }
 
   return (
     <div className="cs-page page">
       {/* ── Top Navigation Bar ───────────────────────────────── */}
       <header className="cs-header category-header">
-        <button
+        <BackButton
           id="category-back-btn"
           className="cs-back-btn"
-          onClick={handleBack}
-          aria-label="Back to home"
+          to="#/home"
+          ariaLabel="Back to home"
           title="Back to home"
-        >
-          <Icon name="back" size={20} />
-        </button>
+        />
 
         <span className="cs-header-title">
           {activeCategory.title || activeCategory.name}
@@ -58,3 +50,5 @@ export function CollectionScreen({ collection, category = collection }) {
     </div>
   )
 }
+
+export default CollectionScreen

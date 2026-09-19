@@ -7864,25 +7864,7 @@
   margin-bottom: 12px;
 }
 
-.shk-btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid #262626;
-  border-radius: 6px;
-  color: #888;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
 
-.shk-btn-back:hover {
-  color: #eaeaea;
-  border-color: #444;
-  background: #181818;
-}
 
 .shk-title {
   font-size: 1.15rem;
@@ -8793,25 +8775,7 @@
   margin-bottom: 12px;
 }
 
-.slk-btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid #262626;
-  border-radius: 6px;
-  color: #888;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
 
-.slk-btn-back:hover {
-  color: #eaeaea;
-  border-color: #444;
-  background: #181818;
-}
 
 .slk-title {
   font-size: 1.15rem;
@@ -10686,7 +10650,8 @@ main > .page-content {
   margin-bottom: auto !important;
 }
 
-/* 5. Unified Back Buttons - Perfectly Centered on Exact Horizontal Eye-Line */
+/* 5. Unified Back Buttons - Comfortable 44x44px Touch Target & Eyeline Centering */
+.nook-back-btn,
 .page-header-back,
 .cs-back-btn,
 .bs-back-btn,
@@ -10714,42 +10679,72 @@ main > .page-content {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--color-text, #ffffff) !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
   box-sizing: border-box !important;
   line-height: 1 !important;
   vertical-align: middle !important;
   flex-shrink: 0 !important;
+  transition: opacity 0.15s ease, transform 0.1s ease, background-color 0.15s ease !important;
 }
 
-/* Square Icon Back Buttons */
-.page-header-back,
-.cs-back-btn,
-.bs-back-btn,
-.sdk-back-btn,
-.wl-back-btn,
-.rev-back-btn,
-.fp-back-btn,
-.toh-back-btn,
-.g2048-back-btn,
-.unt-back-btn,
-.ap-back-btn,
-.ep-back-btn,
-#chess-back-btn,
-#chk-back-btn,
-#kt-back-btn,
-#mm-back-btn,
-#ng-back-btn,
-#ag-back-btn,
-#gmk-back-btn,
-#cw-back-btn,
-#ol-back-btn {
-  width: 36px !important;
-  min-width: 36px !important;
-  padding: 0 !important;
+.nook-back-btn:hover,
+.page-header-back:hover,
+.cs-back-btn:hover,
+.bs-back-btn:hover,
+.sdk-back-btn:hover,
+.wl-back-btn:hover,
+.rev-back-btn:hover,
+.fp-back-btn:hover,
+.toh-back-btn:hover,
+.g2048-back-btn:hover,
+.unt-back-btn:hover,
+.ap-back-btn:hover,
+.shk-btn-back:hover,
+.slk-btn-back:hover,
+.ep-back-btn:hover {
+  opacity: 0.8 !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.nook-back-btn:active,
+.page-header-back:active,
+.cs-back-btn:active,
+.bs-back-btn:active,
+.sdk-back-btn:active,
+.wl-back-btn:active,
+.rev-back-btn:active,
+.fp-back-btn:active,
+.toh-back-btn:active,
+.g2048-back-btn:active,
+.unt-back-btn:active,
+.ap-back-btn:active,
+.shk-btn-back:active,
+.slk-btn-back:active,
+.ep-back-btn:active {
+  transform: scale(0.92) !important;
+  opacity: 0.6 !important;
+}
+
+.nook-back-btn-label {
+  margin-left: 0.25rem;
+  font-family: var(--font-ui, system-ui, -apple-system, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: currentColor;
 }
 
 /* Symmetrical Header Spacers (Guarantees Title Centering on No-Action Screens) */
@@ -10760,10 +10755,10 @@ main > .page-content {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
   margin: 0 !important;
   padding: 0 !important;
   flex-shrink: 0 !important;

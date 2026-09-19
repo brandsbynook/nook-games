@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Icon } from '../icons.jsx'
+import { BackButton } from '../components/BackButton.jsx'
 import {
   DIFFICULTY_PRESETS,
   generateSolvableGrid,
@@ -87,14 +88,13 @@ export function LightsOutScreen({ onBack }) {
     <div className="lo-page">
       {/* ── Top Bar ─────────────────────────────────────────── */}
       <div className="lo-top-bar">
-        <button
+        <BackButton
           id="lo-back-btn"
           className="lo-back-btn"
           onClick={handleBack}
-          aria-label="Back to Briefing"
-        >
-          <Icon name="back" size={20} />
-        </button>
+          ariaLabel="Back to Briefing"
+          title="Back to Briefing"
+        />
 
         <div className="lo-header-center">
           <h1 className="lo-title">Lights Out</h1>
