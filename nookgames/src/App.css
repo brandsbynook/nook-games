@@ -10187,7 +10187,7 @@ main > .page-content {
   100% { opacity: 1; transform: scale(1.15); }
 }
 
-/* ── Board Container & Sizing (Aspect-ratio 1/1 & width min(88vw, 360px)) ── */
+/* ── Board Container & Sizing ── */
 .gmk-board-container {
   flex: 1;
   display: flex;
@@ -10532,9 +10532,9 @@ main > .page-content {
 
 /* 1. Global Layout Variables */
 :root {
-  --screen-top-pad: max(28px, env(safe-area-inset-top, 28px));
-  --game-header-height: 56px;
-  --board-size: min(84vw, 350px);
+  --screen-top-pad: max(12px, env(safe-area-inset-top, 12px));
+  --game-header-height: 52px;
+  --board-size: min(88vw, 360px);
 }
 
 /* 2. Unified Page Container Top Spacing & Flex Alignment */
@@ -10566,45 +10566,35 @@ main > .page-content {
   justify-content: flex-start !important;
 }
 
-/* 3. Standardize Every Header Bar Across ALL Game Screens */
+/* 3. Uniform Subscreen & Game Screen Headers */
 .page-header,
 .subscreen-header,
+.game-screen-header,
 .cs-header,
 .bs-topbar,
-.sdk-header,
-.wl-header,
-.rev-top-bar,
-.fp-header,
-.toh-top-bar,
-.g2048-top-bar,
-.unt-top-bar,
-.mm-top-bar,
+.ep-header,
 .ng-top-bar,
-.ag-top-bar,
-.cw-header,
-.ol-header,
-.ap-header,
-.chess-top-bar,
-.kt-top-bar,
-.chk-top-bar,
+.lo-top-bar,
+.unt-top-bar,
+.wl-header,
 .shk-header,
-.kkr-header,
 .slk-header,
+.sdk-header,
 .gmk-top-bar,
-.ep-header {
+.kkr-header {
   position: relative !important;
-  min-height: 56px !important;
-  height: 56px !important;
+  min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 0 16px !important;
+  padding: env(safe-area-inset-top, 0px) 16px 0 16px !important;
   box-sizing: border-box !important;
   margin-top: 0 !important;
-  margin-bottom: 14px !important;
+  margin-bottom: 8px !important;
+  flex-shrink: 0 !important;
 }
 
-/* 4. Natural Vertical Centering for Board/Puzzle Wrappers & Play Units */
+/* 4. Natural Vertical Centering & Flex-1 for Board/Puzzle Wrappers & Play Units */
 .rev-board-wrap,
 .g2048-board-wrap,
 .unt-board-wrap,
@@ -10620,34 +10610,43 @@ main > .page-content {
 .slk-board-outer,
 .gmk-board-container,
 .toh-play-area,
-.mm-board-scroll,
-.fp-grid-wrap {
-  margin: auto 0 !important;
-  margin-top: auto !important;
-  margin-bottom: auto !important;
+.lo-board-wrap,
+.fp-grid-wrap,
+.sdk-grid-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 /* Group boards with controls into compact play units */
 .mm-board-scroll {
-  margin-bottom: 8px !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 50dvh !important;
+  overflow-y: auto !important;
+  margin: 0 auto 8px auto !important;
+  width: 100% !important;
+  max-width: 360px !important;
 }
+
 .mm-dock {
   margin-bottom: auto !important;
 }
 
 .kkr-board-outer {
-  margin-bottom: 12px !important;
-}
-.kkr-controls {
-  margin-bottom: auto !important;
+  margin-bottom: 8px !important;
 }
 
 .slk-board-outer,
 .slk-board-wrapper {
-  margin-bottom: 12px !important;
-}
-.slk-controls {
-  margin-bottom: auto !important;
+  margin-bottom: 8px !important;
 }
 
 /* 5. Unified Back Buttons - Comfortable 44x44px Touch Target & Eyeline Centering */
@@ -10830,6 +10829,474 @@ main > .page-content {
   justify-content: center !important;
 }
 
+/* 8. Standardize Square Board Sizing Across All Screens (Dynamic Viewport Scaling) */
+.sdk-grid,
+.cw-grid,
+.fp-grid,
+.rev-board,
+.g2048-board,
+.unt-board-frame,
+.ng-board,
+.ng-picross-board,
+.ap-svg,
+.ap-grid-svg,
+.chess-board,
+.kt-board,
+.chk-board,
+.shk-board-grid,
+.shk-grid-svg,
+.kkr-board-grid,
+.slk-board-wrapper,
+.slk-svg,
+.gmk-board,
+.ol-svg,
+.lo-grid {
+  max-width: min(90vw, 360px) !important;
+  max-height: 52dvh !important;
+  width: min(90vw, 360px, 52dvh) !important;
+  height: min(90vw, 360px, 52dvh) !important;
+  aspect-ratio: 1 / 1 !important;
+  box-sizing: border-box !important;
+  margin: 0 auto !important;
+}
+
+/* Non-Square Games Sizing & Alignment */
+.toh-play-area {
+  width: 100% !important;
+  max-width: min(92vw, 420px) !important;
+  max-height: 52dvh !important;
+  margin: auto auto !important;
+}
+
+.toh-pillars-container {
+  width: 100% !important;
+  height: min(200px, 38dvh) !important;
+  max-height: 38dvh !important;
+}
+
+.ag-discovery-board,
+.wl-middle-section,
+.wl-ladder {
+  max-width: min(88vw, 360px) !important;
+  max-height: 48dvh !important;
+  margin: auto auto !important;
+}
+
+/* ── Scoped Sudoku Header & Difficulty Bar ── */
+.sdk-page .sdk-header {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
+  padding: env(safe-area-inset-top, 0px) 16px 0 16px !important;
+}
+
+.sdk-page .sdk-header-center {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+.sdk-page .sdk-header-title {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
+}
+
+/* ── Scoped Nonogram Header ── */
+.ng-page .ng-top-bar {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: calc(52px + env(safe-area-inset-top, 0px)) !important;
+  padding: env(safe-area-inset-top, 0px) 16px 0 16px !important;
+}
+
+.ng-page .ng-header-center {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  pointer-events: none !important;
+}
+
+.ng-page .ng-title {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
+}
+
+/* ── Scoped Arrow Puzzle Layout & Toolbar ── */
+.ap-page {
+  box-sizing: border-box;
+}
+
+.ap-page .ap-toolbar {
+  position: relative;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding: 0 16px;
+  z-index: 5;
+}
+
+/* ── Scoped Sub-Bars for Word Ladder, Tower of Hanoi & Anagrams ── */
+.wl-presets-bar, .toh-presets-bar, .ag-status-sub {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.wl-page .wl-presets-bar {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 8px auto 4px auto !important;
+  width: 100% !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
+}
+
+.ag-status-sub {
+  font-size: 13px !important;
+  color: #888888 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UNIFORM SURFACE BACKGROUND (#0e0e11) ACROSS ALL 20 GAME SCREENS
+   (Full 100dvh framing, no overflow)
+   ═══════════════════════════════════════════════════════════════════ */
+.ap-page,
+.g2048-page,
+.toh-page,
+.rev-page,
+.wl-page,
+.sdk-page,
+.ng-page,
+.ag-page,
+.mm-page,
+.unt-page,
+.cw-container,
+.ol-container,
+.shk-page,
+.kkr-page,
+.slk-page,
+.gmk-page,
+.fp-page,
+.cs-page,
+.chess-page,
+.kt-page,
+.chk-page,
+.lo-page,
+.game-screen-container,
+.game-page {
+  background-color: #0e0e11 !important;
+  background: #0e0e11 !important;
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding-left: env(safe-area-inset-left, 0px) !important;
+  padding-right: env(safe-area-inset-right, 0px) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STANDARDIZED 3-TIER DIFFICULTY PILL / TAB BAR
+   ═══════════════════════════════════════════════════════════════════ */
+.game-diff-bar,
+.ng-difficulty-bar,
+.sdk-difficulty-bar,
+.mm-difficulty-bar,
+.ag-difficulty-bar,
+.chess-difficulty-bar {
+  width: calc(100% - 32px) !important;
+  max-width: 400px !important;
+  margin: 0 auto 12px auto !important;
+  display: flex !important;
+  gap: 6px !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+  background: #15151a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 9999px !important;
+  flex-shrink: 0 !important;
+}
+
+.game-diff-tab,
+.ng-diff-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  padding: 6px 4px !important;
+  text-align: center !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 9999px !important;
+  color: #8a8a93 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  transition: all 0.18s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.game-diff-tab:hover,
+.ng-diff-btn:hover {
+  color: #e0e0e6 !important;
+}
+
+.game-diff-tab--active,
+.ng-diff-btn--active {
+  background: #23232b !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+.game-diff-tab-label {
+  display: block !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  letter-spacing: 0.01em !important;
+  max-width: 100% !important;
+}
+
+.game-diff-tab-sub {
+  display: block !important;
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+  opacity: 0.65 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 360px) {
+  .game-diff-bar,
+  .ng-difficulty-bar,
+  .sdk-difficulty-bar,
+  .mm-difficulty-bar,
+  .ag-difficulty-bar,
+  .chess-difficulty-bar {
+    width: calc(100% - 24px) !important;
+    padding: 3px !important;
+    gap: 4px !important;
+  }
+  .game-diff-tab,
+  .ng-diff-btn {
+    padding: 5px 2px !important;
+  }
+  .game-diff-tab-label {
+    font-size: 11px !important;
+  }
+  .game-diff-tab-sub {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STANDARDIZED ACTION TRIGGERS & FOOTERS (Safe Area Insets)
+   ═══════════════════════════════════════════════════════════════════ */
+.game-footer-actions,
+.game-bottom-bar,
+.lo-controls,
+.slk-controls,
+.shk-controls,
+.unt-controls,
+.ng-bottom-controls,
+.wl-bottom-actions,
+.cw-actions,
+.mm-dock,
+.sdk-controls,
+.rev-controls,
+.toh-controls,
+.g2048-controls,
+.chess-actions,
+.chk-actions,
+.kt-actions,
+.gmk-actions,
+.ag-actions,
+.ap-actions,
+.fp-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding-top: 10px !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px) !important;
+  margin-bottom: 8px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  margin-top: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.game-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  background: #17171d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  color: #e2e2e8 !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.game-action-btn:hover:not(:disabled) {
+  background: #22222a !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.game-action-btn:active:not(:disabled) {
+  transform: scale(0.97) !important;
+}
+
+.game-action-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+.game-action-btn svg {
+  stroke-width: 2 !important;
+}
+
+.game-header-actions-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 40px;
+}spacer,
+.bs-topbar-spacer,
+.ep-header-spacer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* 6. Center Title Wrappers */
+.bs-topbar-center,
+.wl-header-center,
+.fp-header-center,
+.toh-header-center,
+.g2048-header-center,
+.unt-header-center,
+.mm-header-center,
+.ag-header-center,
+.shk-header-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  position: static !important;
+}
+
+/* 7. Standardized Header Titles - Vertically Centered, Natural Title Case & Clean Typography */
+.page-header-title,
+.cs-header-title,
+.bs-topbar-title,
+.wl-header-title,
+.wl-title,
+.rev-title,
+.fp-header-title,
+.toh-title,
+.g2048-title,
+.unt-title,
+.mm-title,
+.ag-title,
+.cw-title,
+.ol-title,
+.ap-title,
+.chess-title,
+.kt-title,
+.chk-title,
+.shk-title,
+.kkr-title,
+.slk-title,
+.gmk-title,
+.ep-header-title,
+.page-header h1,
+.page-header h2,
+.subscreen-header h1,
+.subscreen-header h2 {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  text-align: center !important;
+  pointer-events: none !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  font-family: inherit !important;
+  line-height: 1.2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* 8. Standardize Square Board Sizing Across All Screens */
 .sdk-grid,
 .cw-grid,
@@ -10899,13 +11366,6 @@ main > .page-content {
   color: #ffffff !important;
   text-transform: capitalize !important;
   font-family: inherit !important;
-}
-
-.sdk-page .sdk-difficulty-bar {
-  display: flex !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  padding: 8px 0 !important;
 }
 
 /* ── Scoped Nonogram Header ── */
@@ -10981,153 +11441,6 @@ main > .page-content {
 .ag-status-sub {
   font-size: 13px !important;
   color: #888888 !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   UNIFORM SURFACE BACKGROUND (#0e0e11) ACROSS ALL 20 GAME SCREENS
-   ═══════════════════════════════════════════════════════════════════ */
-.ap-page,
-.g2048-page,
-.toh-page,
-.rev-page,
-.wl-page,
-.sdk-page,
-.ng-page,
-.ag-page,
-.mm-page,
-.unt-page,
-.cw-container,
-.ol-container,
-.shk-page,
-.kkr-page,
-.slk-page,
-.gmk-page,
-.fp-page,
-.cs-page,
-.chess-page,
-.kt-page,
-.chk-page,
-.game-screen-container {
-  background-color: #0e0e11 !important;
-  background: #0e0e11 !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   STANDARDIZED 3-TIER DIFFICULTY PILL / TAB BAR
-   ═══════════════════════════════════════════════════════════════════ */
-.game-diff-bar {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  background: #15151a !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 9999px !important;
-  padding: 4px !important;
-  margin: 0 auto 16px auto !important;
-  width: fit-content !important;
-  max-width: calc(100% - 32px) !important;
-  box-sizing: border-box !important;
-}
-
-.game-diff-tab {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 9999px !important;
-  padding: 6px 16px !important;
-  color: #8a8a93 !important;
-  font-family: inherit !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.02em !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  transition: all 0.18s ease !important;
-  white-space: nowrap !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-
-.game-diff-tab:hover {
-  color: #e0e0e6 !important;
-}
-
-.game-diff-tab--active {
-  background: #23232b !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
-}
-
-.game-diff-tab-label {
-  display: inline-block !important;
-}
-
-.game-diff-tab-sub {
-  font-size: 10px !important;
-  opacity: 0.65 !important;
-  margin-left: 2px !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   STANDARDIZED ACTION TRIGGERS & FOOTERS
-   ═══════════════════════════════════════════════════════════════════ */
-.game-footer-actions {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 10px !important;
-  padding: 12px 16px !important;
-  margin-top: auto !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.game-action-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  min-height: 40px !important;
-  height: 40px !important;
-  padding: 0 16px !important;
-  background: #17171d !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 10px !important;
-  color: #e2e2e8 !important;
-  font-family: inherit !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.01em !important;
-  cursor: pointer !important;
-  transition: all 0.18s ease !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-
-.game-action-btn:hover:not(:disabled) {
-  background: #22222a !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.game-action-btn:active:not(:disabled) {
-  transform: scale(0.97) !important;
-}
-
-.game-action-btn:disabled {
-  opacity: 0.35 !important;
-  cursor: not-allowed !important;
-}
-
-.game-action-btn svg {
-  stroke-width: 2 !important;
 }
 
 .game-header-actions-slot {
