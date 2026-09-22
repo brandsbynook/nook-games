@@ -7,16 +7,16 @@ import { GameCompletionModal } from '../components/GameCompletionModal.jsx';
 import { playTap, playChime } from '../utils/audio.js';
 import { recordGameSession } from '../utils/storage.js';
 import {
-  KAKURO_PUZZLES,
   cloneGrid,
   validateRuns,
   checkWin,
-  getNextHint
+  getNextHint,
+  getRandomKakuro
 } from '../utils/kakuroLogic.js';
 
 export function KakuroScreen({ onBack }) {
   const [difficulty, setDifficulty] = useState('intro');
-  const puzzle = useMemo(() => KAKURO_PUZZLES[difficulty] || KAKURO_PUZZLES.intro, [difficulty]);
+  const [puzzle, setPuzzle] = useState(() => getRandomKakuro('intro'));
 
   const [grid, setGrid] = useState(() => cloneGrid(puzzle.grid));
   const [history, setHistory] = useState(() => [cloneGrid(puzzle.grid)]);
@@ -31,16 +31,30 @@ export function KakuroScreen({ onBack }) {
   // Validate runs whenever displayedGrid changes
   const validation = useMemo(() => validateRuns(displayedGrid), [displayedGrid]);
 
-  // Reset state when difficulty changes
-  useEffect(() => {
-    const init = cloneGrid(puzzle.grid);
+  const handleDifficultyChange = useCallback((diff) => {
+    setDifficulty(diff);
+    const newPuzzle = getRandomKakuro(diff);
+    setPuzzle(newPuzzle);
+    const init = cloneGrid(newPuzzle.grid);
     setGrid(init);
     setHistory([init]);
     setHistoryIndex(0);
     setSelectedCell(null);
     setHasWon(false);
     setPencilMode(false);
-  }, [puzzle]);
+  }, []);
+
+  const handleNewPuzzle = useCallback(() => {
+    const newPuzzle = getRandomKakuro(difficulty);
+    setPuzzle(newPuzzle);
+    const init = cloneGrid(newPuzzle.grid);
+    setGrid(init);
+    setHistory([init]);
+    setHistoryIndex(0);
+    setSelectedCell(null);
+    setHasWon(false);
+    setPencilMode(false);
+  }, [difficulty]);
 
   // Check victory condition
   useEffect(() => {
@@ -237,7 +251,7 @@ export function KakuroScreen({ onBack }) {
       {/* ── Difficulty Tabs ─────────────────────────────────── */}
       <DifficultyTabs
         currentTier={difficulty}
-        onSelectTier={(diff) => setDifficulty(diff)}
+        onSelectTier={handleDifficultyChange}
         tiers={[
           { id: 'intro', label: 'Gentle', subtitle: '4×4' },
           { id: 'classic', label: 'Standard', subtitle: '6×6' },
@@ -404,10 +418,10 @@ export function KakuroScreen({ onBack }) {
           { label: 'Tier', value: difficultyNames[difficulty] || difficulty },
           { label: 'Moves', value: `${history.length - 1}` },
         ]}
-        onNext={() => setDifficulty(nextTierMap[difficulty] || 'intro')}
+        onNext={() => handleDifficultyChange(nextTierMap[difficulty] || 'intro')}
         nextLabel="Next Tier"
-        onReplay={handleReset}
-        replayLabel="Replay"
+        onReplay={handleNewPuzzle}
+        replayLabel="New Puzzle"
         reviewLabel="Review Grid"
       />
     </div>

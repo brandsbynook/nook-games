@@ -282,21 +282,20 @@ export function GomokuScreen({ onBack }) {
     return count
   }, [displayBoard])
 
+  const [touchPreview, setTouchPreview] = useState(null)
+
   return (
     <div className="gmk-page game-screen-container">
-      {/* ── Top Bar ─────────────────────────────────────────── */}
+      {/* ── Header ───────────────────────────────────────────── */}
       <GameHeader title="Gomoku" onBack={handleBack} />
 
-      {/* ── Difficulty Tabs ─────────────────────────────────── */}
+      {/* ── Difficulty Bar ───────────────────────────────────── */}
       <DifficultyTabs
         currentTier={difficulty}
-        onSelectTier={(diff) => {
-          setDifficulty(diff)
-          restartGame()
-        }}
+        onSelectTier={handleDifficultyChange}
         tiers={[
-          { id: 'gentle', label: 'Gentle', subtitle: 'Casual' },
-          { id: 'standard', label: 'Standard', subtitle: 'Tactical' },
+          { id: 'gentle', label: 'Gentle', subtitle: 'Novice' },
+          { id: 'standard', label: 'Standard', subtitle: 'Adept' },
           { id: 'deep', label: 'Deep', subtitle: 'Master' },
         ]}
       />
@@ -379,13 +378,24 @@ export function GomokuScreen({ onBack }) {
               row.map((cell, c) => {
                 const isWinning = winningSet.has(`${r},${c}`)
                 const isLast = displayLastMove && displayLastMove.r === r && displayLastMove.c === c
+                const isPreview = touchPreview && touchPreview.r === r && touchPreview.c === c && !cell && !isBotThinking && !winner && !isInspecting
 
                 return (
                   <button
                     key={`cell-${r}-${c}`}
                     id={`gmk-cell-${r}-${c}`}
-                    className={`gmk-cell ${cell ? 'gmk-cell--occupied' : ''}`}
-                    onClick={() => handleCellClick(r, c)}
+                    className={`gmk-cell ${cell ? 'gmk-cell--occupied' : ''}${isPreview ? ' gmk-cell--preview' : ''}`}
+                    onClick={() => {
+                      setTouchPreview(null)
+                      handleCellClick(r, c)
+                    }}
+                    onPointerDown={() => {
+                      if (!cell && !isBotThinking && !winner && !isInspecting) {
+                        setTouchPreview({ r, c })
+                      }
+                    }}
+                    onPointerUp={() => setTouchPreview(null)}
+                    onPointerCancel={() => setTouchPreview(null)}
                     disabled={Boolean(cell || isBotThinking || winner || isInspecting)}
                     aria-label={`Intersection ${r + 1}, ${c + 1}${
                       cell === 'B' ? ': Black stone' : cell === 'W' ? ': White stone' : ': Empty'
@@ -400,6 +410,7 @@ export function GomokuScreen({ onBack }) {
                         {isLast && <span className="gmk-stone-marker" />}
                       </span>
                     )}
+                    {isPreview && <span className="gmk-stone-ghost" aria-hidden="true" />}
                   </button>
                 )
               })

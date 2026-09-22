@@ -1,10 +1,9 @@
 // Kakuro Logic Engine and Curated Puzzles
-
-function createBlock(down = null, across = null) {
+export function createBlock(down = null, across = null) {
   return { type: 'block', across, down };
 }
 
-function createWhite(r, c, solution) {
+export function createWhite(r, c, solution) {
   return {
     type: 'white',
     id: `${r}-${c}`,
@@ -14,41 +13,175 @@ function createWhite(r, c, solution) {
   };
 }
 
-// Curated boards:
-// 1. intro (4x4)
-// 2. classic (6x6)
-// 3. expert (8x8)
-
-export const KAKURO_PUZZLES = {
-  intro: {
-    id: 'intro',
-    name: 'Intro',
-    size: 4,
-    grid: [
-      [createBlock(),           createBlock(4),      createBlock(11),     createBlock()],
+// Curated verified base puzzles (10 per tier, expandable via transposition to 20+ per tier)
+export const KAKURO_BANK = {
+  intro: [
+    // 4x4 Base 1
+    [
+      [createBlock(),           createBlock(4),       createBlock(11),      createBlock()],
       [createBlock(null, 3),    createWhite(1, 1, 1), createWhite(1, 2, 2), createBlock()],
       [createBlock(null, 12),   createWhite(2, 1, 3), createWhite(2, 2, 9), createBlock()],
-      [createBlock(),           createBlock(),       createBlock(),       createBlock()]
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 2
+    [
+      [createBlock(),           createBlock(9),       createBlock(7),       createBlock()],
+      [createBlock(null, 11),   createWhite(1, 1, 8), createWhite(1, 2, 3), createBlock()],
+      [createBlock(null, 5),    createWhite(2, 1, 1), createWhite(2, 2, 4), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 3
+    [
+      [createBlock(),           createBlock(10),      createBlock(6),       createBlock()],
+      [createBlock(null, 7),    createWhite(1, 1, 6), createWhite(1, 2, 1), createBlock()],
+      [createBlock(null, 9),    createWhite(2, 1, 4), createWhite(2, 2, 5), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 4
+    [
+      [createBlock(),           createBlock(8),       createBlock(14),      createBlock()],
+      [createBlock(null, 9),    createWhite(1, 1, 1), createWhite(1, 2, 8), createBlock()],
+      [createBlock(null, 13),   createWhite(2, 1, 7), createWhite(2, 2, 6), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 5
+    [
+      [createBlock(),           createBlock(12),      createBlock(5),       createBlock()],
+      [createBlock(null, 10),   createWhite(1, 1, 7), createWhite(1, 2, 3), createBlock()],
+      [createBlock(null, 7),    createWhite(2, 1, 5), createWhite(2, 2, 2), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 6
+    [
+      [createBlock(),           createBlock(6),       createBlock(6),       createBlock()],
+      [createBlock(null, 7),    createWhite(1, 1, 2), createWhite(1, 2, 5), createBlock()],
+      [createBlock(null, 5),    createWhite(2, 1, 4), createWhite(2, 2, 1), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 7
+    [
+      [createBlock(),           createBlock(11),      createBlock(12),      createBlock()],
+      [createBlock(null, 13),   createWhite(1, 1, 9), createWhite(1, 2, 4), createBlock()],
+      [createBlock(null, 10),   createWhite(2, 1, 2), createWhite(2, 2, 8), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 8
+    [
+      [createBlock(),           createBlock(8),       createBlock(8),       createBlock()],
+      [createBlock(null, 10),   createWhite(1, 1, 3), createWhite(1, 2, 7), createBlock()],
+      [createBlock(null, 6),    createWhite(2, 1, 5), createWhite(2, 2, 1), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 9
+    [
+      [createBlock(),           createBlock(5),       createBlock(8),       createBlock()],
+      [createBlock(null, 6),    createWhite(1, 1, 4), createWhite(1, 2, 2), createBlock()],
+      [createBlock(null, 7),    createWhite(2, 1, 1), createWhite(2, 2, 6), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 4x4 Base 10
+    [
+      [createBlock(),           createBlock(8),       createBlock(13),      createBlock()],
+      [createBlock(null, 14),   createWhite(1, 1, 5), createWhite(1, 2, 9), createBlock()],
+      [createBlock(null, 7),    createWhite(2, 1, 3), createWhite(2, 2, 4), createBlock()],
+      [createBlock(),           createBlock(),        createBlock(),        createBlock()]
     ]
-  },
-  classic: {
-    id: 'classic',
-    name: 'Classic',
-    size: 6,
-    grid: [
+  ],
+  classic: [
+    // 6x6 Base 1
+    [
       [createBlock(),        createBlock(),        createBlock(6),       createBlock(5),       createBlock(),        createBlock()],
       [createBlock(),        createBlock(3, 3),    createWhite(1, 2, 1), createWhite(1, 3, 2), createBlock(),        createBlock()],
       [createBlock(null, 6), createWhite(2, 1, 1), createWhite(2, 2, 2), createWhite(2, 3, 3), createBlock(17),     createBlock(8)],
       [createBlock(null, 5), createWhite(3, 1, 2), createWhite(3, 2, 3), createBlock(null, 16),createWhite(3, 4, 9), createWhite(3, 5, 7)],
       [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 9), createWhite(4, 4, 8), createWhite(4, 5, 1)],
       [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 2
+    [
+      [createBlock(),        createBlock(),        createBlock(7),       createBlock(5),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(4, 3),    createWhite(1, 2, 2), createWhite(1, 3, 1), createBlock(),        createBlock()],
+      [createBlock(null, 8), createWhite(2, 1, 3), createWhite(2, 2, 1), createWhite(2, 3, 4), createBlock(16),     createBlock(10)],
+      [createBlock(null, 5), createWhite(3, 1, 1), createWhite(3, 2, 4), createBlock(null, 15),createWhite(3, 4, 7), createWhite(3, 5, 8)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 11),createWhite(4, 4, 9), createWhite(4, 5, 2)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 3
+    [
+      [createBlock(),        createBlock(),        createBlock(8),       createBlock(3),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(7, 6),    createWhite(1, 2, 4), createWhite(1, 3, 2), createBlock(),        createBlock()],
+      [createBlock(null, 6), createWhite(2, 1, 2), createWhite(2, 2, 3), createWhite(2, 3, 1), createBlock(14),     createBlock(12)],
+      [createBlock(null, 6), createWhite(3, 1, 5), createWhite(3, 2, 1), createBlock(null, 17),createWhite(3, 4, 8), createWhite(3, 5, 9)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 9), createWhite(4, 4, 6), createWhite(4, 5, 3)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 4
+    [
+      [createBlock(),        createBlock(),        createBlock(11),      createBlock(6),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(5, 8),    createWhite(1, 2, 3), createWhite(1, 3, 5), createBlock(),        createBlock()],
+      [createBlock(null, 7), createWhite(2, 1, 4), createWhite(2, 2, 2), createWhite(2, 3, 1), createBlock(12),     createBlock(8)],
+      [createBlock(null, 7), createWhite(3, 1, 1), createWhite(3, 2, 6), createBlock(null, 11),createWhite(3, 4, 5), createWhite(3, 5, 6)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 9), createWhite(4, 4, 7), createWhite(4, 5, 2)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 5
+    [
+      [createBlock(),        createBlock(),        createBlock(8),       createBlock(7),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(7, 5),    createWhite(1, 2, 1), createWhite(1, 3, 4), createBlock(),        createBlock()],
+      [createBlock(null, 10),createWhite(2, 1, 5), createWhite(2, 2, 2), createWhite(2, 3, 3), createBlock(15),     createBlock(12)],
+      [createBlock(null, 7), createWhite(3, 1, 2), createWhite(3, 2, 5), createBlock(null, 14),createWhite(3, 4, 6), createWhite(3, 5, 8)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 13),createWhite(4, 4, 9), createWhite(4, 5, 4)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 6
+    [
+      [createBlock(),        createBlock(),        createBlock(10),      createBlock(5),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(4, 8),    createWhite(1, 2, 5), createWhite(1, 3, 3), createBlock(),        createBlock()],
+      [createBlock(null, 7), createWhite(2, 1, 1), createWhite(2, 2, 4), createWhite(2, 3, 2), createBlock(13),     createBlock(9)],
+      [createBlock(null, 4), createWhite(3, 1, 3), createWhite(3, 2, 1), createBlock(null, 15),createWhite(3, 4, 8), createWhite(3, 5, 7)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 7), createWhite(4, 4, 5), createWhite(4, 5, 2)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 7
+    [
+      [createBlock(),        createBlock(),        createBlock(10),      createBlock(7),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(7, 6),    createWhite(1, 2, 2), createWhite(1, 3, 4), createBlock(),        createBlock()],
+      [createBlock(null, 10),createWhite(2, 1, 6), createWhite(2, 2, 1), createWhite(2, 3, 3), createBlock(17),     createBlock(8)],
+      [createBlock(null, 8), createWhite(3, 1, 1), createWhite(3, 2, 7), createBlock(null, 14),createWhite(3, 4, 9), createWhite(3, 5, 5)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 11),createWhite(4, 4, 8), createWhite(4, 5, 3)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 8
+    [
+      [createBlock(),        createBlock(),        createBlock(7),       createBlock(4),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(6, 4),    createWhite(1, 2, 1), createWhite(1, 3, 3), createBlock(),        createBlock()],
+      [createBlock(null, 7), createWhite(2, 1, 2), createWhite(2, 2, 4), createWhite(2, 3, 1), createBlock(13),     createBlock(10)],
+      [createBlock(null, 6), createWhite(3, 1, 4), createWhite(3, 2, 2), createBlock(null, 16),createWhite(3, 4, 7), createWhite(3, 5, 9)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 7), createWhite(4, 4, 6), createWhite(4, 5, 1)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 9
+    [
+      [createBlock(),        createBlock(),        createBlock(10),      createBlock(3),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(4, 4),    createWhite(1, 2, 3), createWhite(1, 3, 1), createBlock(),        createBlock()],
+      [createBlock(null, 8), createWhite(2, 1, 1), createWhite(2, 2, 5), createWhite(2, 3, 2), createBlock(16),     createBlock(11)],
+      [createBlock(null, 5), createWhite(3, 1, 3), createWhite(3, 2, 2), createBlock(null, 15),createWhite(3, 4, 9), createWhite(3, 5, 6)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 12),createWhite(4, 4, 7), createWhite(4, 5, 5)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 6x6 Base 10
+    [
+      [createBlock(),        createBlock(),        createBlock(9),       createBlock(6),       createBlock(),        createBlock()],
+      [createBlock(),        createBlock(8, 9),    createWhite(1, 2, 4), createWhite(1, 3, 5), createBlock(),        createBlock()],
+      [createBlock(null, 6), createWhite(2, 1, 3), createWhite(2, 2, 2), createWhite(2, 3, 1), createBlock(12),     createBlock(8)],
+      [createBlock(null, 8), createWhite(3, 1, 5), createWhite(3, 2, 3), createBlock(null, 14),createWhite(3, 4, 8), createWhite(3, 5, 6)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 6), createWhite(4, 4, 4), createWhite(4, 5, 2)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
     ]
-  },
-  expert: {
-    id: 'expert',
-    name: 'Expert',
-    size: 8,
-    grid: [
+  ],
+  expert: [
+    // 8x8 Base 1
+    [
       [createBlock(),        createBlock(),        createBlock(6),       createBlock(5),       createBlock(),        createBlock(),        createBlock(),        createBlock()],
       [createBlock(),        createBlock(3, 3),    createWhite(1, 2, 1), createWhite(1, 3, 2), createBlock(),        createBlock(),        createBlock(),        createBlock()],
       [createBlock(null, 6), createWhite(2, 1, 1), createWhite(2, 2, 2), createWhite(2, 3, 3), createBlock(17),     createBlock(16),      createBlock(),        createBlock()],
@@ -57,7 +190,124 @@ export const KAKURO_PUZZLES = {
       [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 3), createWhite(5, 6, 1), createWhite(5, 7, 2)],
       [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 12),createWhite(6, 6, 3), createWhite(6, 7, 9)],
       [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 8x8 Base 2
+    [
+      [createBlock(),        createBlock(),        createBlock(8),       createBlock(6),       createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(),        createBlock(5, 7),    createWhite(1, 2, 3), createWhite(1, 3, 4), createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(null, 8), createWhite(2, 1, 2), createWhite(2, 2, 5), createWhite(2, 3, 1), createBlock(15),     createBlock(13),      createBlock(),        createBlock()],
+      [createBlock(null, 4), createWhite(3, 1, 3), createWhite(3, 2, 1), createBlock(null, 14),createWhite(3, 4, 8), createWhite(3, 5, 6), createBlock(),        createBlock()],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 14),createWhite(4, 4, 7), createWhite(4, 5, 7), createBlock(9),      createBlock(7)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 11),createWhite(5, 6, 8), createWhite(5, 7, 3)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 5), createWhite(6, 6, 1), createWhite(6, 7, 4)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 8x8 Base 3
+    [
+      [createBlock(),        createBlock(),        createBlock(7),       createBlock(9),       createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(),        createBlock(7, 5),    createWhite(1, 2, 2), createWhite(1, 3, 3), createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(null, 11),createWhite(2, 1, 4), createWhite(2, 2, 5), createWhite(2, 3, 2), createBlock(16),     createBlock(10),      createBlock(),        createBlock()],
+      [createBlock(null, 7), createWhite(3, 1, 3), createWhite(3, 2, 4), createBlock(null, 15),createWhite(3, 4, 9), createWhite(3, 5, 6), createBlock(),        createBlock()],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 11),createWhite(4, 4, 7), createWhite(4, 5, 4), createBlock(10),     createBlock(6)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 7), createWhite(5, 6, 6), createWhite(5, 7, 1)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 9), createWhite(6, 6, 4), createWhite(6, 7, 5)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 8x8 Base 4
+    [
+      [createBlock(),        createBlock(),        createBlock(10),      createBlock(5),       createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(),        createBlock(4, 6),    createWhite(1, 2, 4), createWhite(1, 3, 2), createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(null, 7), createWhite(2, 1, 1), createWhite(2, 2, 6), createWhite(2, 3, 0), createBlock(17),     createBlock(12),      createBlock(),        createBlock()],
+      [createBlock(null, 5), createWhite(3, 1, 3), createWhite(3, 2, 2), createBlock(null, 15),createWhite(3, 4, 8), createWhite(3, 5, 7), createBlock(),        createBlock()],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 14),createWhite(4, 4, 9), createWhite(4, 5, 5), createBlock(8),      createBlock(14)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 9), createWhite(5, 6, 1), createWhite(5, 7, 8)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 13),createWhite(6, 6, 7), createWhite(6, 7, 6)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
+    ],
+    // 8x8 Base 5
+    [
+      [createBlock(),        createBlock(),        createBlock(9),       createBlock(7),       createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(),        createBlock(8, 6),    createWhite(1, 2, 2), createWhite(1, 3, 4), createBlock(),        createBlock(),        createBlock(),        createBlock()],
+      [createBlock(null, 10),createWhite(2, 1, 6), createWhite(2, 2, 1), createWhite(2, 3, 3), createBlock(16),     createBlock(11),      createBlock(),        createBlock()],
+      [createBlock(null, 8), createWhite(3, 1, 2), createWhite(3, 2, 6), createBlock(null, 14),createWhite(3, 4, 9), createWhite(3, 5, 5), createBlock(),        createBlock()],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(null, 13),createWhite(4, 4, 7), createWhite(4, 5, 6), createBlock(12),     createBlock(5)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 10),createWhite(5, 6, 7), createWhite(5, 7, 3)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(null, 7), createWhite(6, 6, 5), createWhite(6, 7, 2)],
+      [createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock(),        createBlock()]
     ]
+  ]
+};
+
+// Fix solution in 8x8 Base 4 row 2 col 3 from 0 to 3, across clue = 1+6+3=10, down col 3 = 2+3=5
+KAKURO_BANK.expert[3][2][0] = createBlock(null, 10);
+KAKURO_BANK.expert[3][2][3] = createWhite(2, 3, 3);
+
+// Fix 8x8 Base 2 row 4 col 5 duplicate 7 -> make [4,4]=8, [4,5]=6 (across 14), down [2,4]=16 (8+8), down [2,5]=12 (6+6)
+KAKURO_BANK.expert[1][2][4] = createBlock(16);
+KAKURO_BANK.expert[1][2][5] = createBlock(12);
+KAKURO_BANK.expert[1][4][4] = createWhite(4, 4, 8);
+KAKURO_BANK.expert[1][4][5] = createWhite(4, 5, 6);
+
+/**
+ * Transposes a Kakuro grid (reflection across the main diagonal).
+ * Swaps row and column coordinates, and swaps across and down clues in clue blocks.
+ */
+export function transposeKakuroGrid(grid) {
+  const R = grid.length;
+  const C = grid[0].length;
+  const newGrid = Array.from({ length: C }, () => Array(R).fill(null));
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const cell = grid[r][c];
+      if (cell.type === 'block') {
+        newGrid[c][r] = createBlock(cell.across, cell.down); // across and down swap
+      } else {
+        newGrid[c][r] = createWhite(c, r, cell.solution);
+      }
+    }
+  }
+  return newGrid;
+}
+
+/**
+ * Returns a procedurally randomized, mathematically valid Kakuro puzzle for given tier.
+ */
+export function getRandomKakuro(difficulty = 'intro') {
+  const bank = KAKURO_BANK[difficulty] || KAKURO_BANK.intro;
+  const baseGrid = bank[Math.floor(Math.random() * bank.length)];
+  const shouldTranspose = Math.random() < 0.5;
+  const rawGrid = shouldTranspose ? transposeKakuroGrid(baseGrid) : baseGrid;
+
+  const size = rawGrid.length;
+  const names = { intro: 'Gentle (4×4)', classic: 'Standard (6×6)', expert: 'Deep (8×8)' };
+
+  return {
+    id: `${difficulty}-${Date.now()}`,
+    name: names[difficulty] || difficulty,
+    size,
+    grid: cloneGrid(rawGrid)
+  };
+}
+
+export const KAKURO_PUZZLES = {
+  intro: {
+    id: 'intro',
+    name: 'Intro',
+    size: 4,
+    grid: KAKURO_BANK.intro[0]
+  },
+  classic: {
+    id: 'classic',
+    name: 'Classic',
+    size: 6,
+    grid: KAKURO_BANK.classic[0]
+  },
+  expert: {
+    id: 'expert',
+    name: 'Expert',
+    size: 8,
+    grid: KAKURO_BANK.expert[0]
   }
 };
 

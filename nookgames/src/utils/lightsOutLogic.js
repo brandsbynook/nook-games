@@ -5,9 +5,9 @@
 export const GRID_SIZE = 5
 
 export const DIFFICULTY_PRESETS = [
-  { id: 'gentle', label: 'Gentle', subtitle: '3 moves', moves: 3 },
-  { id: 'standard', label: 'Standard', subtitle: '5 moves', moves: 5 },
-  { id: 'deep', label: 'Deep', subtitle: '8 moves', moves: 8 },
+  { id: 'gentle', label: 'Gentle', subtitle: '3', moves: 3 },
+  { id: 'standard', label: 'Standard', subtitle: '5', moves: 5 },
+  { id: 'deep', label: 'Deep', subtitle: '7', moves: 7 },
 ]
 
 /**

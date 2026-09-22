@@ -26,25 +26,6 @@ export function GameFooterActions({
 
   return (
     <div className={`game-footer-actions-wrapper ${isInspecting ? 'game-footer-actions-wrapper--inspecting' : ''}`}>
-      {isInspecting && (
-        <div className="game-inspection-banner">
-          <span className="game-inspection-text">
-            Viewing history {stepIndicator ? `(${stepIndicator})` : ''} &bull; Read-only
-          </span>
-          {onExitInspection && (
-            <button
-              type="button"
-              className="game-inspection-return-btn"
-              onClick={() => {
-                playTap();
-                onExitInspection();
-              }}
-            >
-              Return to Live &rsaquo;
-            </button>
-          )}
-        </div>
-      )}
 
       <div className={`game-footer-actions ${className}`.trim()} role="toolbar" aria-label="Game controls">
         {onReset && (

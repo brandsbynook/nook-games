@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -81,14 +81,14 @@ export function FifteenPuzzleScreen() {
   const [difficulty, setDifficulty] = useState('standard')
   const size = difficulty === 'gentle' ? 3 : difficulty === 'deep' ? 5 : 4
 
-  const [tiles, setTiles] = useState(() => generateSolvable(4))
   const [history, setHistory] = useState(() => [generateSolvable(4)])
   const [historyIndex, setHistoryIndex] = useState(0)
   const [solved, setSolved] = useState(false)
   const [lastMoved, setLastMoved] = useState(null)
 
   const isInspecting = historyIndex < history.length - 1
-  const displayedTiles = history[historyIndex] || tiles
+  const currentTiles = history[history.length - 1]
+  const displayedTiles = history[historyIndex] || currentTiles
 
   function handleBack(e) {
     e?.preventDefault?.()
@@ -100,7 +100,6 @@ export function FifteenPuzzleScreen() {
     setDifficulty(diff)
     const newSize = diff === 'gentle' ? 3 : diff === 'deep' ? 5 : 4
     const newTiles = generateSolvable(newSize)
-    setTiles(newTiles)
     setHistory([newTiles])
     setHistoryIndex(0)
     setSolved(false)
@@ -109,21 +108,17 @@ export function FifteenPuzzleScreen() {
 
   function handleTap(idx) {
     if (solved || isInspecting) return
-    const blank = blankIndex(tiles)
+    const blank = blankIndex(currentTiles)
     if (!isAdjacentToBlank(idx, blank, size)) return
 
     playTap()
     setLastMoved(idx)
 
-    const next = [...tiles]
+    const next = [...currentTiles]
     next[blank] = next[idx]
     next[idx] = 0
-    setTiles(next)
-    setHistory((prev) => {
-      const nextHist = [...prev.slice(0, historyIndex + 1), next]
-      setHistoryIndex(nextHist.length - 1)
-      return nextHist
-    })
+    setHistory((prev) => [...prev, next])
+    setHistoryIndex((prev) => prev + 1)
 
     if (checkIsSolved(next, size)) {
       setSolved(true)
@@ -136,7 +131,6 @@ export function FifteenPuzzleScreen() {
   const handleShuffle = useCallback(() => {
     playTap()
     const newTiles = generateSolvable(size)
-    setTiles(newTiles)
     setHistory([newTiles])
     setHistoryIndex(0)
     setSolved(false)

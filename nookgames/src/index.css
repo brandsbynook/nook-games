@@ -125,26 +125,21 @@ html.theme-clay,
 }
 *::-webkit-scrollbar { display: none; }
 
-html, body {
+html, body, #root {
   margin: 0;
+  padding: 0;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow-x: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   background: var(--bg-sanctuary);
   color: var(--text-primary);
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 #root {
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: stretch;
-  background: var(--bg-sanctuary);
-  color: var(--text-primary);
 }
 
 .app-container,

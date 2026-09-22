@@ -41,23 +41,23 @@ export function KnightsTourScreen({ onBack }) {
   const currentPos = displayedHistory.length > 0 ? displayedHistory[displayedHistory.length - 1] : null
   const visitedCount = displayedHistory.length
 
-  // Valid moves from current position
-  const validMoves = useMemo(() => {
-    if (history.length === 0 || isInspecting) return []
+  // Valid moves from the LIVE tip of the tour
+  const liveValidMoves = useMemo(() => {
+    if (history.length === 0) return []
     const head = history[history.length - 1]
     const actualVisitedSet = new Set(history.map((p) => `${p.r},${p.c}`))
     return getKnightMoves(head.r, head.c, size, actualVisitedSet)
-  }, [history, isInspecting, size])
+  }, [history, size])
 
-  const validMoveSet = useMemo(() => {
-    return new Set(validMoves.map((m) => `${m.r},${m.c}`))
-  }, [validMoves])
+  const liveValidMoveSet = useMemo(() => {
+    return new Set(liveValidMoves.map((m) => `${m.r},${m.c}`))
+  }, [liveValidMoves])
 
-  // Game status: 'playing' | 'won' | 'trapped'
+  // Game status: 'playing' | 'won' | 'trapped' evaluated strictly against the LIVE tip of the tour
   const gameStatus = useMemo(() => {
     if (history.length === 0) return 'playing'
-    return checkGameStatus(history.length, totalSquares, validMoves.length)
-  }, [history.length, totalSquares, validMoves.length])
+    return checkGameStatus(history.length, totalSquares, liveValidMoves.length)
+  }, [history.length, totalSquares, liveValidMoves.length])
 
   // Navigation back
   const handleBack = () => {
@@ -102,7 +102,7 @@ export function KnightsTourScreen({ onBack }) {
     }
 
     // Case 2: Move knight to valid unvisited square
-    if (gameStatus === 'playing' && validMoveSet.has(key)) {
+    if (gameStatus === 'playing' && liveValidMoveSet.has(key)) {
       playTap()
       const nextHistory = [...history, { r, c }]
       setHistory(nextHistory)
@@ -128,7 +128,7 @@ export function KnightsTourScreen({ onBack }) {
     }
   }
 
-  const isGameOver = gameStatus === 'won' || gameStatus === 'trapped'
+  const isGameOver = !isInspecting && (gameStatus === 'won' || gameStatus === 'trapped')
 
   return (
     <div className="kt-page game-screen-container">
@@ -184,7 +184,7 @@ export function KnightsTourScreen({ onBack }) {
               const stepNumber = visitedMap.get(key)
               const isVisited = stepNumber !== undefined
               const isValidCandidate =
-                !isInspecting && (history.length === 0 || (!isVisited && validMoveSet.has(key)))
+                !isInspecting && (history.length === 0 || (!isVisited && liveValidMoveSet.has(key)))
               const isHint = !isInspecting && activeHint && activeHint.r === r && activeHint.c === c
 
               let squareClasses = `kt-square ${isLight ? 'kt-square--light' : 'kt-square--dark'}`

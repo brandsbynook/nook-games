@@ -2100,6 +2100,7 @@
   width: 100%;
   max-width: 320px;
   aspect-ratio: 1 / 1;
+  touch-action: manipulation;
 }
 
 .fp-tile {
@@ -2117,10 +2118,12 @@
   transition: background 0.1s ease, transform 0.13s ease, opacity 0.13s ease;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.fp-tile--blank { background: #0f0f0f; border-color: #1a1a1a; }
-.fp-tile--movable { cursor: pointer; background: #242424; border-color: #3a3a3a; }
+.fp-tile--blank { background: #0f0f0f; border-color: #1a1a1a; pointer-events: none; }
+.fp-tile--movable { cursor: pointer; background: #242424; border-color: #3a3a3a; pointer-events: auto; }
 .fp-tile--movable:hover { background: #2e2e2e; transform: scale(0.97); }
 .fp-tile--movable:active { transform: scale(0.93); }
 .fp-tile--just-moved { animation: fp-slide 0.13s ease; }
@@ -7702,10 +7705,10 @@
 
 .chk-board {
   aspect-ratio: 1 / 1 !important;
-  width: min(84vw, 360px) !important;
-  height: min(84vw, 360px) !important;
-  max-width: min(84vw, 360px) !important;
-  max-height: min(84vw, 360px) !important;
+  width: min(80vw, 340px) !important;
+  height: min(80vw, 340px) !important;
+  max-width: min(80vw, 340px) !important;
+  max-height: min(80vw, 340px, 48dvh) !important;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
@@ -7751,8 +7754,8 @@
 }
 
 .chk-piece {
-  width: 74%;
-  height: 74%;
+  width: 70%;
+  height: 70%;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -10397,6 +10400,17 @@ main > .page-content {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   outline: none;
+  touch-action: manipulation;
+}
+
+/* Minimum 36x36px touch hit target */
+.gmk-cell::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  min-width: 36px;
+  min-height: 36px;
+  z-index: 1;
 }
 
 .gmk-cell:not(:disabled):hover::after {
@@ -10404,8 +10418,27 @@ main > .page-content {
   width: 32%;
   height: 32%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   pointer-events: none;
+}
+
+/* Touch & hover preview ghost stone + reticle */
+.gmk-stone-ghost {
+  position: absolute;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(60, 60, 65, 0.7), rgba(15, 15, 18, 0.85));
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35), inset 0 0 4px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  z-index: 5;
+  animation: gmkPreviewPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes gmkPreviewPulse {
+  from { transform: scale(0.92); opacity: 0.8; }
+  to   { transform: scale(1.04); opacity: 1; }
 }
 
 /* ── Stones ── */
@@ -11148,19 +11181,22 @@ main > .page-content {
 .kt-page,
 .chk-page,
 .lo-page,
+.ladder-page,
+.ap-page,
 .game-screen-container,
 .game-page {
   background-color: #0e0e11 !important;
   background: #0e0e11 !important;
-  min-height: 100dvh !important;
   height: 100dvh !important;
   max-height: 100dvh !important;
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
+  justify-content: space-between !important;
   overflow: hidden !important;
   padding-left: env(safe-area-inset-left, 0px) !important;
   padding-right: env(safe-area-inset-right, 0px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -11293,12 +11329,13 @@ main > .page-content {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 10px !important;
-  padding-top: 10px !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px) !important;
-  margin-bottom: 8px !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  padding-top: 4px !important;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 4px)) !important;
+  margin-bottom: 0 !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
   margin-top: auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -12076,7 +12113,7 @@ main > .page-content {
 
 .lo-board {
   width: 100%;
-  max-width: min(80vw, 340px);
+  max-width: min(84vw, 42dvh);
   aspect-ratio: 1 / 1;
   display: grid;
   grid-template-rows: repeat(5, 1fr);
@@ -12108,6 +12145,22 @@ main > .page-content {
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
+}
+
+@keyframes lo-hint-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 0 14px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.75), 0 0 20px rgba(255, 255, 255, 0.45);
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.lo-cell--hinted {
+  animation: lo-hint-pulse 1s ease-in-out infinite;
+  z-index: 2;
 }
 
 .lo-cell--on {
@@ -12456,48 +12509,7 @@ main > .page-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-}
-
-.game-inspection-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: rgba(220, 180, 80, 0.12);
-  border: 1px solid rgba(220, 180, 80, 0.3);
-  border-radius: 8px;
-  padding: 4px 10px;
-  width: 100%;
-  max-width: 360px;
-  box-sizing: border-box;
-  animation: game-fade-in 0.15s ease;
-}
-
-.game-inspection-text {
-  font-size: 0.72rem;
-  color: #eab308;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.game-inspection-return-btn {
-  background: none;
-  border: none;
-  outline: none;
-  color: #fef08a;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: opacity 0.15s;
-  font-family: inherit;
-}
-
-.game-inspection-return-btn:hover {
-  opacity: 0.8;
-  text-decoration: underline;
+  gap: 4px;
 }
 
 .game-history-stepper {
