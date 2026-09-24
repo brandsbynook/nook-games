@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { isMuted, toggleMute, playTap, triggerHaptic } from '../utils/audio.js'
 import { PageHeader } from '../components/PageHeader.jsx'
+import { TipJarModal } from '../components/TipJarModal.jsx'
+import { restorePurchases } from '../services/revenuecat.js'
 import {
   getStoredSettings,
   saveStoredSettings,
@@ -81,6 +83,10 @@ export function SettingsScreen() {
     }
   })
 
+  // Support / Tip Jar modal and Restore state
+  const [isTipJarOpen, setIsTipJarOpen] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+
   // Apply stored settings on first mount (theme + text scale)
   useEffect(() => {
     saveStoredSettings(settings)
@@ -122,6 +128,24 @@ export function SettingsScreen() {
     } catch {}
     if (next) {
       triggerHaptic(12)
+    }
+  }
+
+  async function handleRestorePurchases() {
+    if (isRestoring) return
+    playTap()
+    setIsRestoring(true)
+    try {
+      const res = await restorePurchases()
+      if (res?.success && (res?.isPatron || res?.customerInfo?.allPurchasedProductIdentifiers?.length > 0)) {
+        alert('Purchases checked and restored.')
+      } else {
+        alert('No previous contribution found.')
+      }
+    } catch {
+      alert('Unable to restore purchases at this time.')
+    } finally {
+      setIsRestoring(false)
     }
   }
 
@@ -198,6 +222,35 @@ export function SettingsScreen() {
           />
         </SettingsGroup>
 
+        {/* SUPPORT NOOK */}
+        <SettingsGroup label="SUPPORT NOOK">
+          <SettingsRow
+            id="st-tipjar-row"
+            label="Support Nook (Tip Jar)"
+            onClick={() => {
+              playTap()
+              setIsTipJarOpen(true)
+            }}
+            trailing={
+              <span className="st-value st-value--chevron">
+                <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+          <SettingsRow
+            id="st-restore-row"
+            label="Restore Purchases"
+            divided={false}
+            onClick={handleRestorePurchases}
+            trailing={
+              <span className="st-value st-value--chevron">
+                {isRestoring ? '...' : ''}
+                <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+        </SettingsGroup>
+
         {/* GENERAL */}
         <SettingsGroup label="GENERAL">
           <button
@@ -210,6 +263,8 @@ export function SettingsScreen() {
           </button>
         </SettingsGroup>
       </div>
+
+      <TipJarModal isOpen={isTipJarOpen} onClose={() => setIsTipJarOpen(false)} />
     </div>
   )
-}
+}
