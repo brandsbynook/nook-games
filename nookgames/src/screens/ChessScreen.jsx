@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -158,7 +157,7 @@ export function ChessScreen({ onBack }) {
         const nextFen = game.fen()
         setFen(nextFen)
         setFenHistory((prev) => {
-          const nextHist = [...prev.slice(0, historyIndex + 1), nextFen]
+          const nextHist = [...prev, nextFen]
           setHistoryIndex(nextHist.length - 1)
           return nextHist
         })
@@ -167,11 +166,11 @@ export function ChessScreen({ onBack }) {
       }
       setIsBotThinking(false)
     }, 400)
-  }, [game, difficulty, historyIndex, updateGameStatus])
+  }, [game, difficulty, updateGameStatus])
 
   // Handle square click
   const handleSquareClick = (square) => {
-    if (isBotThinking || gameStatus.isCheckmate || gameStatus.isDraw) return
+    if (isBotThinking || gameStatus.isCheckmate || gameStatus.isDraw || isInspecting) return
 
     const piece = game.get(square)
     const isCurrentTurnPiece = piece && piece.color === 'w'
@@ -200,7 +199,13 @@ export function ChessScreen({ onBack }) {
       const result = makeMove(game, move)
       if (result.success) {
         playTap()
-        setFen(game.fen())
+        const nextFen = game.fen()
+        setFen(nextFen)
+        setFenHistory((prev) => {
+          const nextHist = [...prev.slice(0, historyIndex + 1), nextFen]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
         setLastMove({ from: selectedSquare, to: square })
         setSelectedSquare(null)
         setValidMoves([])
@@ -223,19 +228,27 @@ export function ChessScreen({ onBack }) {
 
   // Undo button handler: rolls back bot's move and user's move
   const handleUndo = () => {
-    if (isBotThinking || historyCount === 0) return
+    if (isBotThinking || historyCount === 0 || isInspecting) return
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
 
     // If it's user's turn (white) and at least 2 moves have been made, undo both bot and user
-    if (game.turn() === 'w' && historyCount >= 2) {
+    const stepBack = game.turn() === 'w' && historyCount >= 2 ? 2 : 1
+    if (stepBack === 2) {
       game.undo() // undo black (bot)
       game.undo() // undo white (user)
     } else {
       game.undo()
     }
 
-    setFen(game.fen())
+    const nextFen = game.fen()
+    setFen(nextFen)
+    setFenHistory((prev) => {
+      const nextHist = prev.slice(0, -stepBack)
+      const finalHist = nextHist.length > 0 ? nextHist : [nextFen]
+      setHistoryIndex(finalHist.length - 1)
+      return finalHist
+    })
     setSelectedSquare(null)
     setValidMoves([])
     setIsBotThinking(false)
@@ -389,12 +402,15 @@ export function ChessScreen({ onBack }) {
       <div className="chess-footer-controls">
         <GameFooterActions
           onReset={handleReset}
-          resetLabel="Restart"
+          resetLabel="Reset"
+          onUndo={handleUndo}
+          undoLabel="Undo"
+          canUndo={!isBotThinking && historyCount > 0 && !isInspecting}
           onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
           onStepForward={() => setHistoryIndex((prev) => Math.min(fenHistory.length - 1, prev + 1))}
           canStepBack={historyIndex > 0}
           canStepForward={historyIndex < fenHistory.length - 1}
-          stepIndicator={fenHistory.length > 1 ? `Move ${historyIndex}/${fenHistory.length - 1}` : null}
+          stepIndicator={`${historyIndex + 1} / ${fenHistory.length}`}
           isInspecting={isInspecting}
           onExitInspection={() => setHistoryIndex(fenHistory.length - 1)}
         />

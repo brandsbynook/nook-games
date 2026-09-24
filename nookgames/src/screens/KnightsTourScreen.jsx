@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -7,7 +6,6 @@ import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   BOARD_TIERS,
   getKnightMoves,
-  warnsdorffHint,
   checkGameStatus,
 } from '../utils/knightsTourLogic.js'
 import { playTap, playChime } from '../utils/audio.js'
@@ -116,16 +114,16 @@ export function KnightsTourScreen({ onBack }) {
     }
   }
 
-  // Hint button (Warnsdorff's heuristic)
-  const handleHint = () => {
-    if (history.length === 0 || gameStatus !== 'playing' || isInspecting) return
+  // Undo button handler: removes the last move from history
+  const handleUndo = () => {
+    if (history.length === 0 || isInspecting) return
     playTap()
-    const head = history[history.length - 1]
-    const actualVisitedSet = new Set(history.map((p) => `${p.r},${p.c}`))
-    const hint = warnsdorffHint(head, size, actualVisitedSet)
-    if (hint) {
-      setActiveHint(hint)
-    }
+    setHistory((prev) => {
+      const next = prev.slice(0, -1)
+      setHistoryIndex(Math.max(0, next.length - 1))
+      return next
+    })
+    setActiveHint(null)
   }
 
   const isGameOver = !isInspecting && (gameStatus === 'won' || gameStatus === 'trapped')
@@ -241,15 +239,15 @@ export function KnightsTourScreen({ onBack }) {
       <div className="kt-footer-controls">
         <GameFooterActions
           onReset={handleReset}
-          onHint={handleHint}
-          canHint={history.length > 0 && gameStatus === 'playing' && !isInspecting}
+          onUndo={handleUndo}
+          canUndo={history.length > 0 && !isInspecting}
           resetLabel="Reset"
-          hintLabel="Hint"
+          undoLabel="Undo"
           onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
           onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
           canStepBack={historyIndex > 0}
           canStepForward={historyIndex < history.length - 1}
-          stepIndicator={history.length > 1 ? `Step ${historyIndex + 1}/${history.length}` : null}
+          stepIndicator={history.length > 0 ? `${historyIndex + 1} / ${history.length}` : null}
           isInspecting={isInspecting}
           onExitInspection={() => setHistoryIndex(history.length - 1)}
         />
