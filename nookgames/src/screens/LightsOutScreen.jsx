@@ -155,7 +155,6 @@ export function LightsOutScreen({ onBack }) {
   const difficultyTiers = DIFFICULTY_PRESETS.map((p) => ({
     id: p.id,
     label: p.label,
-    subtitle: p.subtitle,
   }))
 
   const presetLabels = {
@@ -226,7 +225,7 @@ export function LightsOutScreen({ onBack }) {
       <div className="lo-footer-controls">
         <GameFooterActions
           onReset={handleRestart}
-          resetLabel="Restart"
+          resetLabel="Reset"
           onUndo={handleUndo}
           canUndo={movesCount > 0 && !isSolved}
           onHint={handleHint}
