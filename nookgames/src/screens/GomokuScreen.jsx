@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -76,6 +75,14 @@ export function GomokuScreen({ onBack }) {
     setSnapshots([{ board: initial, lastMove: null, turn: 'B', winningLine: [] }])
     setHistoryIndex(0)
   }, [])
+
+  const handleDifficultyChange = useCallback(
+    (newTier) => {
+      setDifficulty(newTier)
+      restartGame()
+    },
+    [restartGame]
+  )
 
   // Execute bot turn after a calm delay
   const executeBotTurn = useCallback(
