@@ -5490,7 +5490,8 @@
 .cw-drawer {
   width: 100%;
   max-width: 480px;
-  max-height: 80dvh;
+  max-height: 40vh;
+  max-height: 40dvh;
   background: #121417;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 1px solid rgba(255, 255, 255, 0.08);
@@ -5502,13 +5503,15 @@
   animation: cw-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
   overflow: hidden;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 @media (min-width: 640px) {
   .cw-drawer {
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    max-height: 75vh;
+    max-height: 40vh;
+    padding-bottom: 0;
   }
 }
 
@@ -5602,8 +5605,9 @@
 
 .cw-drawer-clues-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 12px 18px 24px;
+  padding: 12px 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
