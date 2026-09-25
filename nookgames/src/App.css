@@ -5511,7 +5511,7 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     max-height: 40vh;
-    padding-bottom: 0;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 }
 
@@ -12607,31 +12607,31 @@ main > .page-content {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.76);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  animation: atmoFadeIn 0.2s ease-out;
+  padding: 20px 16px;
+  animation: atmoFadeIn 0.22s ease-out;
   box-sizing: border-box;
 }
 
 .tip-modal-card {
   position: relative;
-  background: #141416;
-  border: 1px solid #222225;
+  background: var(--color-surface, #141416);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
   border-radius: 24px;
   max-width: 440px;
   width: 100%;
-  padding: 32px 24px 28px;
+  padding: 28px 22px 24px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   animation: atmoCardIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #e4e4e7;
+  color: var(--color-text, #e4e4e7);
 }
 
 .tip-modal-close-btn {
@@ -12641,25 +12641,26 @@ main > .page-content {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #1c1c20;
-  border: 1px solid #2a2a30;
-  color: #8e8e99;
+  background: var(--color-surface-elevated, #1c1c20);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-muted, #8e8e99);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   transition: all 0.15s ease;
+  z-index: 2;
 }
 
 .tip-modal-close-btn:hover:not(:disabled) {
-  background: #282830;
-  color: #ffffff;
+  background: var(--color-surface-elevated, #282830);
+  color: var(--color-text, #ffffff);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tip-modal-close-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
@@ -12669,31 +12670,34 @@ main > .page-content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0 12px;
 }
 
 .tip-modal-badge-icon {
   font-size: 20px;
-  color: #e5e5e7;
-  margin-bottom: 8px;
+  color: var(--color-text, #e5e5e7);
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.9;
 }
 
 .tip-modal-title {
   font-family: var(--font-display, inherit);
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #ffffff;
-  margin: 0 0 4px 0;
+  letter-spacing: 0.015em;
+  color: var(--color-text, #ffffff);
+  margin: 0 0 6px 0;
 }
 
 .tip-modal-subtitle {
   font-size: 13px;
-  color: #8e8e99;
+  color: var(--color-text-secondary, #8e8e99);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .tip-modal-error {
@@ -12701,102 +12705,142 @@ main > .page-content {
   border: 1px solid rgba(239, 68, 68, 0.25);
   color: #fca5a5;
   font-size: 12.5px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 9px 14px;
+  border-radius: 12px;
   margin-bottom: 16px;
   text-align: center;
   line-height: 1.4;
+  animation: atmoFadeIn 0.2s ease-out;
 }
 
-.tip-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.tip-tier-card {
+/* ── Tactile Tier Items (Clean List Cards) ───────────────── */
+.tip-modal-tiers-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tip-tier-item {
+  display: flex;
   align-items: center;
-  text-align: center;
-  background: #141416;
-  border: 1.5px solid #1f1f23;
+  justify-content: space-between;
+  text-align: left;
+  background: var(--color-surface-elevated, #161619);
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.07));
   border-radius: 16px;
-  padding: 16px 8px 14px;
+  padding: 13px 15px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #71717a;
+  color: var(--color-text, #e4e4e7);
   font-family: inherit;
   box-sizing: border-box;
+  width: 100%;
 }
 
-.tip-tier-card:hover:not(:disabled) {
-  background: #19191d;
-  border-color: #383842;
-  transform: translateY(-2px);
+.tip-tier-item:hover:not(:disabled) {
+  background: var(--color-surface-elevated, #1c1c20);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
-.tip-tier-card.is-selected {
-  background: #1e1e22;
-  border-color: #52525b;
-  color: #e5e5e7;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+.tip-tier-item.is-selected {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-text, rgba(255, 255, 255, 0.45));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
 }
 
-.tip-tier-card:disabled {
-  opacity: 0.6;
+.tip-tier-item:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+.tip-tier-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 .tip-tier-icon {
-  font-size: 20px;
-  margin-bottom: 6px;
+  font-size: 18px;
   line-height: 1;
-  color: #e5e5e7;
+  color: var(--color-text, #e5e5e7);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.tip-tier-texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tip-tier-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tip-tier-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #a1a1aa;
-  margin-bottom: 2px;
+  color: var(--color-text, #ffffff);
   letter-spacing: 0.01em;
-  transition: color 0.15s ease;
 }
 
-.tip-tier-card.is-selected .tip-tier-title {
-  color: #ffffff;
+.tip-tier-desc {
+  font-size: 11.5px;
+  color: var(--color-text-secondary, #8e8e99);
+  line-height: 1.35;
+  margin-top: 2px;
 }
 
-.tip-tier-price {
-  font-size: 14.5px;
+.tip-tier-right {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.tip-tier-price-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  font-size: 13.5px;
   font-weight: 600;
   font-family: var(--font-display, inherit);
-  color: #e5e5e7;
-  margin-bottom: 6px;
-  transition: color 0.15s ease;
+  color: var(--color-text, #ffffff);
+  letter-spacing: 0.02em;
 }
 
-.tip-tier-card.is-selected .tip-tier-price {
-  color: #ffffff;
+.tip-tier-item.is-selected .tip-tier-price-pill {
+  background: var(--color-text, #ffffff);
+  color: var(--color-bg, #0e0d0c);
+  border-color: transparent;
+  font-weight: 700;
 }
 
-.tip-tier-sub {
-  font-size: 10.5px;
-  color: #71717a;
-  line-height: 1.3;
-}
-
+/* ── Primary Action Button & Spinner ──────────────────────── */
 .tip-modal-action-btn {
   width: 100%;
-  height: 50px;
-  background: #ffffff;
-  color: #0e0e11;
+  height: 48px;
+  background: var(--color-text, #ffffff);
+  color: var(--color-bg, #0e0d0c);
   border: none;
   border-radius: 9999px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -12804,52 +12848,78 @@ main > .page-content {
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s ease, transform 0.15s ease;
+  margin-top: 4px;
 }
 
 .tip-modal-action-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.92;
   transform: translateY(-1px);
 }
 
 .tip-modal-action-btn:active:not(:disabled) {
   transform: translateY(0);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .tip-modal-action-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
+}
+
+.tip-spinner-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tip-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: tipSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes tipSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .tip-modal-footnote {
   text-align: center;
-  font-size: 12px;
-  color: #71717a;
-  margin: 12px 0 0 0;
+  font-size: 11.5px;
+  color: var(--color-text-muted, #71717a);
+  margin: 14px 0 0 0;
   letter-spacing: 0.02em;
 }
 
+/* ── Success Screen inside Modal ──────────────────────────── */
 .tip-modal-success {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 12px 8px 6px;
+  padding: 16px 8px 8px;
+  animation: atmoFadeIn 0.25s ease-out;
 }
 
 .tip-modal-success-icon {
-  font-size: 28px;
-  color: #e5e5e7;
+  font-size: 32px;
+  color: var(--color-text, #e5e5e7);
   margin-bottom: 12px;
 }
 
 .tip-modal-success-desc {
-  font-size: 14.5px;
-  color: #a1a1aa;
+  font-size: 14px;
+  color: var(--color-text-secondary, #a1a1aa);
   line-height: 1.55;
   margin: 0 0 24px 0;
-  max-width: 320px;
+  max-width: 330px;
 }
+
 
 
 

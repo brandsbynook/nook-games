@@ -1,113 +1,40 @@
 import { useState, useEffect } from 'react'
-import { Capacitor } from '@capacitor/core'
-import { Purchases } from '@revenuecat/purchases-capacitor'
+import { TIP_TIERS, fetchTipOfferings, purchaseTip } from '../services/revenuecat.js'
 import { playTap, playChime } from '../utils/audio.js'
 
-export const TIP_TIERS = [
-  {
-    id: 'spark',
-    title: 'Pawn',
-    subtitle: 'A quiet gesture of appreciation',
-    price: '$4.99',
-    icon: '♟',
-    productIds: ['nook_games_tip_spark', 'nook_tip_leaf', 'tip_spark'],
-  },
-  {
-    id: 'focus',
-    title: 'Knight',
-    subtitle: 'Fair value for the full game suite',
-    price: '$6.99',
-    icon: '♞',
-    productIds: ['nook_games_tip_focus', 'nook_tip_hearth', 'tip_focus'],
-  },
-  {
-    id: 'atelier',
-    title: 'Keeper',
-    subtitle: 'Sustains independent, tracker-free craft',
-    price: '$9.99',
-    icon: '◬',
-    productIds: ['nook_games_tip_atelier', 'nook_tip_sanctuary', 'tip_atelier'],
-  },
-]
+export { TIP_TIERS }
 
-export function TipJarModal({ isOpen, onClose }) {
+export function TipJarModal({ isOpen, onClose, onSuccessToast }) {
   const [selectedTierId, setSelectedTierId] = useState('focus')
-  const [liveStoreItems, setLiveStoreItems] = useState({})
+  const [tierDataMap, setTierDataMap] = useState({})
   const [isPurchasing, setIsPurchasing] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  // Reset state when modal opens or closes
+  // Fetch live offerings and localized prices when modal opens
   useEffect(() => {
     if (!isOpen) {
       setSelectedTierId('focus')
-      setIsSuccess(false)
       setIsPurchasing(false)
       setErrorMessage(null)
+      setIsSuccess(false)
       return
     }
 
     let isMounted = true
 
-    async function fetchStorePrices() {
-      if (!Capacitor.isNativePlatform()) return
-
+    async function loadOfferings() {
       try {
-        const itemMap = {}
-
-        // 1. Check Offerings first
-        try {
-          const offerings = await Purchases.getOfferings()
-          const currentPackages = offerings?.current?.availablePackages || []
-
-          for (const tier of TIP_TIERS) {
-            const matchedPkg = currentPackages.find((pkg) => {
-              const prodId = pkg?.product?.identifier || pkg?.identifier
-              return tier.productIds.includes(prodId)
-            })
-            if (matchedPkg) {
-              itemMap[tier.id] = {
-                priceString: matchedPkg.product?.priceString || matchedPkg.product?.price_string || tier.price,
-                package: matchedPkg,
-                product: matchedPkg.product,
-              }
-            }
-          }
-        } catch {
-          // Offerings fallback
-        }
-
-        // 2. Query products directly for any tiers not matched yet
-        const missingTiers = TIP_TIERS.filter((tier) => !itemMap[tier.id])
-        if (missingTiers.length > 0) {
-          const allProductIds = missingTiers.flatMap((t) => t.productIds)
-          try {
-            const res = await Purchases.getProducts({ productIdentifiers: allProductIds })
-            const products = res?.products || []
-
-            for (const tier of missingTiers) {
-              const matchedProd = products.find((prod) => tier.productIds.includes(prod.identifier))
-              if (matchedProd) {
-                itemMap[tier.id] = {
-                  priceString: matchedProd.priceString || matchedProd.price_string || tier.price,
-                  product: matchedProd,
-                }
-              }
-            }
-          } catch {
-            // Products fallback
-          }
-        }
-
-        if (isMounted) {
-          setLiveStoreItems(itemMap)
+        const liveMap = await fetchTipOfferings()
+        if (isMounted && liveMap) {
+          setTierDataMap(liveMap)
         }
       } catch (err) {
-        console.warn('RevenueCat price fetch skipped or failed:', err)
+        console.warn('[TipJarModal] Price fetch error:', err)
       }
     }
 
-    fetchStorePrices()
+    loadOfferings()
 
     return () => {
       isMounted = false
@@ -129,7 +56,15 @@ export function TipJarModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   const selectedTier = TIP_TIERS.find((t) => t.id === selectedTierId) || TIP_TIERS[1]
-  const currentPrice = liveStoreItems[selectedTier.id]?.priceString || selectedTier.price
+  const currentItem = tierDataMap[selectedTier.id]
+  const currentPrice = currentItem?.priceString || selectedTier.defaultPrice
+
+  async function handleSelectTier(tierId) {
+    if (isPurchasing) return
+    playTap()
+    setSelectedTierId(tierId)
+    setErrorMessage(null)
+  }
 
   async function handlePurchase() {
     if (isPurchasing) return
@@ -137,57 +72,34 @@ export function TipJarModal({ isOpen, onClose }) {
     setIsPurchasing(true)
     setErrorMessage(null)
 
-    const liveItem = liveStoreItems[selectedTier.id]
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        if (liveItem?.package) {
-          await Purchases.purchasePackage({ aPackage: liveItem.package })
-        } else if (liveItem?.product) {
-          await Purchases.purchaseStoreProduct({ product: liveItem.product })
-        } else {
-          // Attempt direct product query and purchase
-          const prodId = selectedTier.productIds[0]
-          const { products } = await Purchases.getProducts({ productIdentifiers: [prodId] })
-          if (products && products.length > 0) {
-            await Purchases.purchaseStoreProduct({ product: products[0] })
-          } else {
-            throw new Error('Product not found in store.')
-          }
-        }
-
-        playChime()
-        setIsSuccess(true)
-      } catch (err) {
-        // Handle user cancellation gracefully
-        const isUserCancelled =
-          err?.userCancelled === true ||
-          err?.code === '1' ||
-          err?.code === 1 ||
-          err?.message?.toLowerCase().includes('cancel')
-
-        if (!isUserCancelled) {
-          console.error('Tip purchase error:', err)
-          setErrorMessage(err?.message || 'Unable to complete contribution. Please try again.')
-        }
-      } finally {
-        setIsPurchasing(false)
-      }
-    } else {
-      // Graceful simulated delay for Web test environment
-      setTimeout(() => {
-        setIsPurchasing(false)
-        playChime()
-        setIsSuccess(true)
-      }, 600)
+    const itemToPurchase = tierDataMap[selectedTier.id] || {
+      productId: selectedTier.productId,
+      tier: selectedTier,
     }
-  }
 
-  function handleSelectTier(tierId) {
-    if (isPurchasing) return
-    playTap()
-    setSelectedTierId(tierId)
-    setErrorMessage(null)
+    try {
+      const result = await purchaseTip(itemToPurchase)
+
+      if (result.success) {
+        playChime()
+        setIsSuccess(true)
+        if (typeof onSuccessToast === 'function') {
+          onSuccessToast('Thank you for supporting the parlor.')
+        }
+      } else if (result.userCancelled) {
+        // Dismiss silently without any error alerts as requested
+      } else if (result.error) {
+        const message =
+          result.error?.message ||
+          'Unable to complete transaction. Please check your connection and try again.'
+        setErrorMessage(message)
+      }
+    } catch (err) {
+      console.error('[TipJarModal] Purchase uncaught error:', err)
+      setErrorMessage('Unable to connect to Google Play. Please try again.')
+    } finally {
+      setIsPurchasing(false)
+    }
   }
 
   return (
@@ -204,7 +116,7 @@ export function TipJarModal({ isOpen, onClose }) {
         className="tip-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top-Right Close Button */}
+        {/* Top-Right Dismiss Button */}
         <button
           type="button"
           className="tip-modal-close-btn"
@@ -213,22 +125,22 @@ export function TipJarModal({ isOpen, onClose }) {
             onClose?.()
           }}
           disabled={isPurchasing}
-          aria-label="Close tip jar"
+          aria-label="Close modal"
         >
           ✕
         </button>
 
         {isSuccess ? (
-          /* ── Clean Success State ──────────────────────────────── */
+          /* ── Quiet Success State ──────────────────────────────── */
           <div className="tip-modal-success">
             <div className="tip-modal-success-icon" aria-hidden="true">
               ✦
             </div>
             <h2 id="tip-modal-title" className="tip-modal-title">
-              Thank you so much.
+              Thank you for your support.
             </h2>
             <p className="tip-modal-success-desc">
-              Your quiet generosity keeps nook games free of ads, tracking, and noise.
+              Your quiet generosity helps keep nook games completely distraction-free, tracker-free, and ad-free.
             </p>
             <button
               type="button"
@@ -238,35 +150,35 @@ export function TipJarModal({ isOpen, onClose }) {
                 onClose?.()
               }}
             >
-              Done
+              Return to Parlor
             </button>
           </div>
         ) : (
-          /* ── Main Contribution Tier Selection ────────────────── */
+          /* ── Main Contribution Selection ──────────────────────── */
           <div className="tip-modal-content">
-            <div className="tip-modal-header">
+            <header className="tip-modal-header">
               <div className="tip-modal-badge-icon" aria-hidden="true">
                 ✦
               </div>
               <h2 id="tip-modal-title" className="tip-modal-title">
-                Tip Jar
+                Support the Parlor
               </h2>
               <p className="tip-modal-subtitle">
-                Support quiet craftsmanship and ad-free games
+                Distraction-free, ad-free indie games. If you enjoy your time here, consider leaving a small tip.
               </p>
-            </div>
+            </header>
 
             {errorMessage && (
               <div className="tip-modal-error" role="alert">
-                {errorMessage}
+                <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* 3-Column Selectable Grid */}
-            <div className="tip-modal-grid" role="radiogroup" aria-label="Contribution Tiers">
+            {/* 3 Active Consumable Tip Packages */}
+            <div className="tip-modal-tiers-list" role="radiogroup" aria-label="Support Tiers">
               {TIP_TIERS.map((tier) => {
                 const isSelected = selectedTierId === tier.id
-                const displayPrice = liveStoreItems[tier.id]?.priceString || tier.price
+                const livePrice = tierDataMap[tier.id]?.priceString || tier.defaultPrice
 
                 return (
                   <button
@@ -274,35 +186,51 @@ export function TipJarModal({ isOpen, onClose }) {
                     type="button"
                     role="radio"
                     aria-checked={isSelected}
-                    className={`tip-tier-card ${isSelected ? 'is-selected' : ''}`}
+                    className={`tip-tier-item${isSelected ? ' is-selected' : ''}`}
                     onClick={() => handleSelectTier(tier.id)}
                     disabled={isPurchasing}
                   >
-                    <div className="tip-tier-icon" aria-hidden="true">
-                      {tier.icon}
+                    <div className="tip-tier-left">
+                      <span className="tip-tier-icon" aria-hidden="true">
+                        {tier.icon}
+                      </span>
+                      <div className="tip-tier-texts">
+                        <div className="tip-tier-title-row">
+                          <span className="tip-tier-title">{tier.title}</span>
+                        </div>
+                        <span className="tip-tier-desc">{tier.subtitle}</span>
+                      </div>
                     </div>
-                    <span className="tip-tier-title">{tier.title}</span>
-                    <span className="tip-tier-price">{displayPrice}</span>
-                    <span className="tip-tier-sub">{tier.subtitle}</span>
+
+                    <div className="tip-tier-right">
+                      <span className="tip-tier-price-pill">{livePrice}</span>
+                    </div>
                   </button>
                 )
               })}
             </div>
 
-            {/* Primary Action Button */}
+            {/* Primary Action Button with subtle spinner */}
             <button
               type="button"
               className="tip-modal-action-btn"
               onClick={handlePurchase}
               disabled={isPurchasing}
+              id="tip-modal-submit-btn"
             >
-              {isPurchasing ? 'Processing...' : `Leave a ${currentPrice} Tip`}
+              {isPurchasing ? (
+                <span className="tip-spinner-wrap">
+                  <span className="tip-spinner" aria-hidden="true" />
+                  <span>Connecting to Google Play...</span>
+                </span>
+              ) : (
+                `Leave a ${currentPrice} Tip`
+              )}
             </button>
 
-            {/* Reassuring Subtitle */}
-            <p className="tip-modal-footnote">
-              One-time contribution • No subscriptions
-            </p>
+            <footer className="tip-modal-footnote">
+              One-time tip • Repeatable anytime • No subscriptions
+            </footer>
           </div>
         )}
       </div>

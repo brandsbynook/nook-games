@@ -222,11 +222,11 @@ export function SettingsScreen() {
           />
         </SettingsGroup>
 
-        {/* SUPPORT NOOK */}
-        <SettingsGroup label="SUPPORT NOOK">
+        {/* SUPPORT THE PARLOR */}
+        <SettingsGroup label="SUPPORT THE PARLOR">
           <SettingsRow
             id="st-tipjar-row"
-            label="Support Nook (Tip Jar)"
+            label="Support the Parlor (Tip Jar)"
             onClick={() => {
               playTap()
               setIsTipJarOpen(true)
