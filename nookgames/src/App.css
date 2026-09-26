@@ -14258,6 +14258,74 @@ html, body, #root, .app-shell {
   font-weight: 700 !important;
 }
 
+.chess-board-wrap {
+  overflow: visible !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.chess-page .chess-board {
+  width: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  height: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  max-width: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  max-height: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+  border: 1px solid #282830 !important;
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+}
+
+.chess-page .chess-square {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.chess-piece {
+  font-size: clamp(17px, 4.8vw, 24px) !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  margin-top: -1px !important;
+}
+
+.chess-coord {
+  font-size: 8px !important;
+  opacity: 0.4 !important;
+}
+
+.chess-header-resign-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #8e8e96 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.chess-header-resign-btn:hover:not(:disabled) {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+
+
+
+
 
 
 

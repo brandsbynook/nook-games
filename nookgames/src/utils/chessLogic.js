@@ -37,15 +37,18 @@ export const UNICODE_PIECES = {
 };
 
 // Piece-Square positional bonus tables
+// Orientation: Row 0 is Rank 8 (White promotion goal), Row 7 is Rank 1 (White home rank).
+// For White pieces: index is r.
+// For Black pieces: index is 7 - r.
 const PST_PAWN = [
-  [0,  0,  0,  0,  0,  0,  0,  0],
+  [ 0,  0,  0,  0,  0,  0,  0,  0],
   [50, 50, 50, 50, 50, 50, 50, 50],
   [10, 10, 20, 30, 30, 20, 10, 10],
-  [5,  5, 10, 25, 25, 10,  5,  5],
-  [0,  0,  0, 20, 20,  0,  0,  0],
-  [5, -5,-10,  0,  0,-10, -5,  5],
-  [5, 10, 10,-20,-20, 10, 10,  5],
-  [0,  0,  0,  0,  0,  0,  0,  0]
+  [ 5,  5, 10, 25, 25, 10,  5,  5],
+  [ 0,  0,  0, 20, 20,  0,  0,  0],
+  [ 5, -5,-10,  0,  0,-10, -5,  5],
+  [ 5, 10, 10,-20,-20, 10, 10,  5],
+  [ 0,  0,  0,  0,  0,  0,  0,  0]
 ];
 
 const PST_KNIGHT = [
@@ -68,6 +71,39 @@ const PST_BISHOP = [
   [-10, 10, 10, 10, 10, 10, 10,-10],
   [-10,  5,  0,  0,  0,  0,  5,-10],
   [-20,-10,-10,-10,-10,-10,-10,-20]
+];
+
+const PST_ROOK = [
+  [ 0,  0,  0,  0,  0,  0,  0,  0],
+  [ 5, 10, 10, 10, 10, 10, 10,  5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [-5,  0,  0,  0,  0,  0,  0, -5],
+  [ 0,  0,  0,  5,  5,  0,  0,  0]
+];
+
+const PST_QUEEN = [
+  [-20,-10,-10, -5, -5,-10,-10,-20],
+  [-10,  0,  0,  0,  0,  0,  0,-10],
+  [-10,  0,  5,  5,  5,  5,  0,-10],
+  [ -5,  0,  5,  5,  5,  5,  0, -5],
+  [  0,  0,  5,  5,  5,  5,  0, -5],
+  [-10,  5,  5,  5,  5,  5,  0,-10],
+  [-10,  0,  5,  0,  0,  0,  0,-10],
+  [-20,-10,-10, -5, -5,-10,-10,-20]
+];
+
+const PST_KING = [
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-30,-40,-40,-50,-50,-40,-40,-30],
+  [-20,-30,-30,-40,-40,-30,-30,-20],
+  [-10,-20,-20,-20,-20,-20,-20,-10],
+  [ 20, 20,  0,  0,  0,  0, 20, 20],
+  [ 20, 30, 10,  0,  0, 10, 30, 20]
 ];
 
 export function createGame(fen) {
@@ -132,7 +168,7 @@ export function evaluateBoard(game, botColor) {
       const piece = board[r][c];
       if (!piece) continue;
 
-      let val = PIECE_VALUES[piece.type] || 0;
+      const val = PIECE_VALUES[piece.type] || 0;
       let posBonus = 0;
 
       const pRank = piece.color === 'w' ? r : 7 - r;
@@ -140,15 +176,16 @@ export function evaluateBoard(game, botColor) {
       if (piece.type === 'p') posBonus += PST_PAWN[pRank][c];
       else if (piece.type === 'n') posBonus += PST_KNIGHT[pRank][c];
       else if (piece.type === 'b') posBonus += PST_BISHOP[pRank][c];
+      else if (piece.type === 'r') posBonus += PST_ROOK[pRank][c];
+      else if (piece.type === 'q') posBonus += PST_QUEEN[pRank][c];
+      else if (piece.type === 'k') posBonus += PST_KING[pRank][c];
 
-      const square = String.fromCharCode(97 + c) + (8 - r);
-      if (CENTER_SQUARES.has(square)) posBonus += 25;
-      else if (EXTENDED_CENTER.has(square)) posBonus += 10;
+      const pieceTotal = val + posBonus;
 
       if (piece.color === botColor) {
-        score += (val + posBonus);
+        score += pieceTotal;
       } else {
-        score -= (val + posBonus);
+        score -= pieceTotal;
       }
     }
   }
@@ -159,26 +196,93 @@ function orderMoves(moves) {
   return moves.sort((a, b) => {
     let scoreA = 0;
     let scoreB = 0;
-    if (a.captured) scoreA += (PIECE_VALUES[a.captured] || 100) * 10 - (PIECE_VALUES[a.piece] || 100);
-    if (b.captured) scoreB += (PIECE_VALUES[b.captured] || 100) * 10 - (PIECE_VALUES[b.piece] || 100);
+
+    // MVV-LVA for captures
+    if (a.captured) {
+      scoreA += (PIECE_VALUES[a.captured] || 100) * 10 - (PIECE_VALUES[a.piece] || 100);
+    }
+    if (b.captured) {
+      scoreB += (PIECE_VALUES[b.captured] || 100) * 10 - (PIECE_VALUES[b.piece] || 100);
+    }
+
+    // Promotions
+    if (a.promotion) scoreA += 800;
+    if (b.promotion) scoreB += 800;
+
+    // Center control
     if (CENTER_SQUARES.has(a.to)) scoreA += 30;
     if (CENTER_SQUARES.has(b.to)) scoreB += 30;
+
     return scoreB - scoreA;
   });
 }
 
-function minimax(gameInstance, depth, alpha, beta, isMaximizing, botColor) {
-  if (depth === 0 || gameInstance.isGameOver()) {
+function quiescence(gameInstance, alpha, beta, isMaximizing, botColor, qDepth = 3) {
+  const standPat = evaluateBoard(gameInstance, botColor);
+
+  if (qDepth === 0 || gameInstance.isGameOver()) {
+    return standPat;
+  }
+
+  if (isMaximizing) {
+    if (standPat >= beta) return beta;
+    if (standPat > alpha) alpha = standPat;
+
+    const captureMoves = orderMoves(
+      gameInstance.moves({ verbose: true }).filter((m) => m.captured || m.promotion)
+    );
+
+    for (const move of captureMoves) {
+      gameInstance.move(move);
+      const score = quiescence(gameInstance, alpha, beta, false, botColor, qDepth - 1);
+      gameInstance.undo();
+
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    }
+    return alpha;
+  } else {
+    if (standPat <= alpha) return alpha;
+    if (standPat < beta) beta = standPat;
+
+    const captureMoves = orderMoves(
+      gameInstance.moves({ verbose: true }).filter((m) => m.captured || m.promotion)
+    );
+
+    for (const move of captureMoves) {
+      gameInstance.move(move);
+      const score = quiescence(gameInstance, alpha, beta, true, botColor, qDepth - 1);
+      gameInstance.undo();
+
+      if (score <= alpha) return alpha;
+      if (score < beta) beta = score;
+    }
+    return beta;
+  }
+}
+
+function minimax(gameInstance, depth, alpha, beta, isMaximizing, botColor, useQuiescence = true) {
+  if (gameInstance.isGameOver()) {
+    return evaluateBoard(gameInstance, botColor);
+  }
+
+  if (depth === 0) {
+    if (useQuiescence) {
+      return quiescence(gameInstance, alpha, beta, isMaximizing, botColor, 3);
+    }
     return evaluateBoard(gameInstance, botColor);
   }
 
   const moves = orderMoves(gameInstance.moves({ verbose: true }));
+  if (moves.length === 0) {
+    return evaluateBoard(gameInstance, botColor);
+  }
 
   if (isMaximizing) {
     let maxEval = -Infinity;
     for (const move of moves) {
       gameInstance.move(move);
-      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, false, botColor);
+      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, false, botColor, useQuiescence);
       gameInstance.undo();
       maxEval = Math.max(maxEval, evalScore);
       alpha = Math.max(alpha, evalScore);
@@ -189,7 +293,7 @@ function minimax(gameInstance, depth, alpha, beta, isMaximizing, botColor) {
     let minEval = Infinity;
     for (const move of moves) {
       gameInstance.move(move);
-      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, true, botColor);
+      const evalScore = minimax(gameInstance, depth - 1, alpha, beta, true, botColor, useQuiescence);
       gameInstance.undo();
       minEval = Math.min(minEval, evalScore);
       beta = Math.min(beta, evalScore);
@@ -199,7 +303,8 @@ function minimax(gameInstance, depth, alpha, beta, isMaximizing, botColor) {
   }
 }
 
-function getBestMoveAtDepth(gameInstance, depth, botColor, jitter = 0) {
+function getBestMoveAtDepth(gameInstance, depth, botColor, options = {}) {
+  const { useQuiescence = true, jitter = 0 } = options;
   const moves = orderMoves(gameInstance.moves({ verbose: true }));
   if (moves.length === 0) return null;
 
@@ -210,7 +315,7 @@ function getBestMoveAtDepth(gameInstance, depth, botColor, jitter = 0) {
 
   for (const move of moves) {
     gameInstance.move(move);
-    let score = minimax(gameInstance, depth - 1, alpha, beta, false, botColor);
+    let score = minimax(gameInstance, depth - 1, alpha, beta, false, botColor, useQuiescence);
     gameInstance.undo();
 
     if (jitter > 0) {
@@ -224,21 +329,7 @@ function getBestMoveAtDepth(gameInstance, depth, botColor, jitter = 0) {
     alpha = Math.max(alpha, bestScore);
   }
 
-  return bestMove ? { from: bestMove.from, to: bestMove.to, promotion: 'q' } : null;
-}
-
-function getCasualMove(gameInstance) {
-  const moves = gameInstance.moves({ verbose: true });
-  if (moves.length === 0) return null;
-
-  if (Math.random() < 0.5) {
-    return getBestMoveAtDepth(gameInstance, 1, gameInstance.turn(), 15);
-  }
-
-  const captures = moves.filter((m) => m.captured);
-  const pool = captures.length > 0 && Math.random() < 0.5 ? captures : moves;
-  const chosen = pool[Math.floor(Math.random() * pool.length)];
-  return { from: chosen.from, to: chosen.to, promotion: 'q' };
+  return bestMove ? { from: bestMove.from, to: bestMove.to, promotion: bestMove.promotion || 'q' } : null;
 }
 
 export function getBotMove(gameInstance, difficulty = 'standard') {
@@ -248,10 +339,11 @@ export function getBotMove(gameInstance, difficulty = 'standard') {
   const botColor = gameInstance.turn();
 
   if (diff === 'casual') {
-    return getCasualMove(gameInstance);
+    return getBestMoveAtDepth(gameInstance, 2, botColor, { useQuiescence: false, jitter: 15 });
   } else if (diff === 'master') {
-    return getBestMoveAtDepth(gameInstance, 4, botColor, 0);
+    return getBestMoveAtDepth(gameInstance, 4, botColor, { useQuiescence: true, jitter: 0 });
   } else {
-    return getBestMoveAtDepth(gameInstance, 3, botColor, 8);
+    // standard difficulty (~1300 ELO)
+    return getBestMoveAtDepth(gameInstance, 3, botColor, { useQuiescence: true, jitter: 2 });
   }
 }

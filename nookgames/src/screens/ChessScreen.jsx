@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
 import { GameFooterActions } from '../components/GameFooterActions.jsx'
@@ -20,6 +21,8 @@ export function ChessScreen({ onBack }) {
   }
   const game = gameRef.current
 
+  const [playerColor, setPlayerColor] = useState('w')
+  const [isFlipped, setIsFlipped] = useState(false)
   const [fen, setFen] = useState(() => game.fen())
   const [fenHistory, setFenHistory] = useState(() => [game.fen()])
   const [historyIndex, setHistoryIndex] = useState(0)
@@ -67,9 +70,9 @@ export function ChessScreen({ onBack }) {
     let winner = null
 
     if (isCheckmate) {
-      // If white to move in checkmate, black (bot) won. If black to move, white (user) won.
+      // If white to move in checkmate, black won. If black to move, white won.
       winner = game.turn() === 'w' ? 'b' : 'w'
-      if (winner === 'w') {
+      if (winner === playerColor) {
         setTimeout(() => playChime(), 200)
       }
     }
@@ -81,7 +84,7 @@ export function ChessScreen({ onBack }) {
       winner,
     })
     setHistoryCount(game.history().length)
-  }, [game])
+  }, [game, playerColor])
 
   // Back button handler
   const handleBack = () => {
@@ -94,12 +97,42 @@ export function ChessScreen({ onBack }) {
     }
   }
 
+  // Trigger bot's turn
+  const triggerBotMove = useCallback(() => {
+    setIsBotThinking(true)
+    botTimerRef.current = setTimeout(() => {
+      if (game.isGameOver()) {
+        setIsBotThinking(false)
+        updateGameStatus()
+        return
+      }
+
+      const move = getBotMove(game, difficulty)
+      if (move) {
+        makeMove(game, move)
+        playTap()
+        const nextFen = game.fen()
+        setFen(nextFen)
+        setFenHistory((prev) => {
+          const nextHist = [...prev, nextFen]
+          setHistoryIndex(nextHist.length - 1)
+          return nextHist
+        })
+        setLastMove({ from: move.from, to: move.to })
+        updateGameStatus()
+      }
+      setIsBotThinking(false)
+    }, 400)
+  }, [game, difficulty, updateGameStatus])
+
   // Restart / Reset game
   const handleReset = () => {
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
     const newFen = gameRef.current.fen()
+    setPlayerColor('w')
+    setIsFlipped(false)
     setFen(newFen)
     setFenHistory([newFen])
     setHistoryIndex(0)
@@ -124,6 +157,8 @@ export function ChessScreen({ onBack }) {
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
     const newFen = gameRef.current.fen()
+    setPlayerColor('w')
+    setIsFlipped(false)
     setFen(newFen)
     setFenHistory([newFen])
     setHistoryIndex(0)
@@ -140,40 +175,42 @@ export function ChessScreen({ onBack }) {
     setHistoryCount(0)
   }
 
-  // Trigger bot's turn
-  const triggerBotMove = useCallback(() => {
-    setIsBotThinking(true)
-    botTimerRef.current = setTimeout(() => {
-      if (game.isGameOver()) {
-        setIsBotThinking(false)
-        updateGameStatus()
-        return
-      }
+  // Rotate board handler
+  const handleRotate = () => {
+    playTap()
+    const nextFlipped = !isFlipped
+    setIsFlipped(nextFlipped)
 
-      const move = getBotMove(game, difficulty)
-      if (move) {
-        const result = makeMove(game, move)
-        playTap()
-        const nextFen = game.fen()
-        setFen(nextFen)
-        setFenHistory((prev) => {
-          const nextHist = [...prev, nextFen]
-          setHistoryIndex(nextHist.length - 1)
-          return nextHist
-        })
-        setLastMove({ from: move.from, to: move.to })
-        updateGameStatus()
+    // If game hasn't started yet, rotating also selects Black as the player's side
+    if (historyCount === 0 && !isBotThinking) {
+      const nextColor = nextFlipped ? 'b' : 'w'
+      setPlayerColor(nextColor)
+      setSelectedSquare(null)
+      setValidMoves([])
+      if (nextColor === 'b') {
+        triggerBotMove()
       }
-      setIsBotThinking(false)
-    }, 400)
-  }, [game, difficulty, updateGameStatus])
+    }
+  }
+
+  // Resign handler
+  const handleResign = () => {
+    if (historyCount === 0 || gameStatus.isCheckmate || gameStatus.isDraw || isBotThinking) return
+    playTap()
+    setGameStatus({
+      inCheck: false,
+      isCheckmate: true,
+      isDraw: false,
+      winner: playerColor === 'w' ? 'b' : 'w',
+    })
+  }
 
   // Handle square click
   const handleSquareClick = (square) => {
     if (isBotThinking || gameStatus.isCheckmate || gameStatus.isDraw || isInspecting) return
 
     const piece = game.get(square)
-    const isCurrentTurnPiece = piece && piece.color === 'w'
+    const isCurrentTurnPiece = piece && piece.color === playerColor && game.turn() === playerColor
 
     // If clicking on one of player's pieces
     if (isCurrentTurnPiece) {
@@ -232,11 +269,11 @@ export function ChessScreen({ onBack }) {
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
 
-    // If it's user's turn (white) and at least 2 moves have been made, undo both bot and user
-    const stepBack = game.turn() === 'w' && historyCount >= 2 ? 2 : 1
+    // If it's user's turn and at least 2 moves have been made, undo both bot and user
+    const stepBack = game.turn() === playerColor && historyCount >= 2 ? 2 : 1
     if (stepBack === 2) {
-      game.undo() // undo black (bot)
-      game.undo() // undo white (user)
+      game.undo()
+      game.undo()
     } else {
       game.undo()
     }
@@ -265,24 +302,41 @@ export function ChessScreen({ onBack }) {
     updateGameStatus()
   }
 
-  // Board layout 8x8: rank 8 down to 1 (r: 0..7), file a through h (c: 0..7)
-  const rows = [0, 1, 2, 3, 4, 5, 6, 7]
-  const cols = [0, 1, 2, 3, 4, 5, 6, 7]
+  // Board layout 8x8 with rotation support
+  const rows = isFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7]
+  const cols = isFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7]
 
   // Determine turn text
   let statusNotice = ''
   if (gameStatus.isCheckmate) {
-    statusNotice = gameStatus.winner === 'w' ? 'Checkmate — Victory' : 'Checkmate — Defeat'
+    statusNotice = gameStatus.winner === playerColor ? 'Checkmate — Victory' : 'Checkmate — Defeat'
   } else if (gameStatus.isDraw) {
     statusNotice = 'Stalemate — Draw'
   } else if (gameStatus.inCheck) {
-    statusNotice = game.turn() === 'w' ? 'Check — Your King is under attack' : 'Check!'
+    statusNotice = game.turn() === playerColor ? 'Check — Your King is under attack' : 'Check!'
   }
 
   return (
     <div className="chess-page game-screen-container">
       {/* ── Top Bar ─────────────────────────────────────────── */}
-      <GameHeader title="Chess" onBack={handleBack} />
+      <GameHeader
+        title="Chess"
+        onBack={handleBack}
+        action={
+          historyCount > 0 && !gameStatus.isCheckmate && !gameStatus.isDraw && !isInspecting ? (
+            <button
+              type="button"
+              className="chess-header-resign-btn"
+              onClick={handleResign}
+              disabled={isBotThinking}
+              title="Resign Match"
+              aria-label="Resign Match"
+            >
+              <Icon name="flag" size={16} />
+            </button>
+          ) : null
+        }
+      />
 
       {/* ── Difficulty Selector ─────────────────────────────── */}
       <DifficultyTabs
@@ -313,20 +367,6 @@ export function ChessScreen({ onBack }) {
               : 'Your Move'}
           </span>
         </div>
-
-        {statusNotice && (
-          <div
-            className={`chess-notice ${
-              gameStatus.isCheckmate
-                ? gameStatus.winner === 'w'
-                  ? 'chess-notice--victory'
-                  : 'chess-notice--defeat'
-                : 'chess-notice--check'
-            }`}
-          >
-            {statusNotice}
-          </div>
-        )}
       </div>
 
       {/* ── 8x8 Chess Board ──────────────────────────────────── */}
@@ -346,7 +386,7 @@ export function ChessScreen({ onBack }) {
               const piece = displayGame.get(square)
               const isSelected = selectedSquare === square && !isInspecting
               const isTarget = validMoves.includes(square) && !isInspecting
-              const isCapture = isTarget && piece && piece.color !== 'w'
+              const isCapture = isTarget && piece && piece.color !== playerColor
               const isLastMoveSquare =
                 lastMove && (lastMove.from === square || lastMove.to === square)
               const isCheckedKing =
@@ -372,8 +412,8 @@ export function ChessScreen({ onBack }) {
                   }`}
                 >
                   {/* Subtle coordinate labels */}
-                  {c === 0 && <span className="chess-coord chess-coord--rank">{rank}</span>}
-                  {r === 7 && <span className="chess-coord chess-coord--file">{file}</span>}
+                  {c === (isFlipped ? 7 : 0) && <span className="chess-coord chess-coord--rank">{rank}</span>}
+                  {r === (isFlipped ? 0 : 7) && <span className="chess-coord chess-coord--file">{file}</span>}
 
                   {/* Piece glyph */}
                   {piece && (
@@ -398,11 +438,11 @@ export function ChessScreen({ onBack }) {
         </div>
       </div>
 
-      {/* Controls: Reset & Stepper Actions */}
+      {/* Controls: Rotate, Stepper & Undo */}
       <div className="chess-footer-controls">
         <GameFooterActions
-          onReset={handleReset}
-          resetLabel="Reset"
+          onReset={handleRotate}
+          resetLabel="Rotate"
           onUndo={handleUndo}
           undoLabel="Undo"
           canUndo={!isBotThinking && historyCount > 0 && !isInspecting}
@@ -410,7 +450,7 @@ export function ChessScreen({ onBack }) {
           onStepForward={() => setHistoryIndex((prev) => Math.min(fenHistory.length - 1, prev + 1))}
           canStepBack={historyIndex > 0}
           canStepForward={historyIndex < fenHistory.length - 1}
-          stepIndicator={`${historyIndex + 1} / ${fenHistory.length}`}
+          stepIndicator={fenHistory.length > 1 ? `${historyIndex + 1} / ${fenHistory.length}` : null}
           isInspecting={isInspecting}
           onExitInspection={() => setHistoryIndex(fenHistory.length - 1)}
         />
@@ -421,21 +461,24 @@ export function ChessScreen({ onBack }) {
         isOpen={gameStatus.isCheckmate || gameStatus.isDraw}
         title={
           gameStatus.isCheckmate
-            ? gameStatus.winner === 'w'
+            ? gameStatus.winner === playerColor
               ? 'Checkmate - Victory'
               : 'Checkmate - Defeat'
             : 'Stalemate - Draw'
         }
         description={
           gameStatus.isCheckmate
-            ? gameStatus.winner === 'w'
+            ? gameStatus.winner === playerColor
               ? 'The system yields in stillness.'
               : 'The opponent found checkmate.'
             : 'No legal moves remain in balance.'
         }
-        icon={gameStatus.winner === 'w' ? '✓' : '❖'}
+        icon={gameStatus.winner === playerColor ? '✓' : '❖'}
         stats={[
-          { label: 'Result', value: gameStatus.winner === 'w' ? 'Victory' : gameStatus.winner === 'b' ? 'Defeat' : 'Draw' },
+          {
+            label: 'Result',
+            value: gameStatus.winner === playerColor ? 'Victory' : gameStatus.winner ? 'Defeat' : 'Draw',
+          },
           { label: 'Tier', value: difficulty },
           { label: 'Plies', value: `${fenHistory.length - 1}` },
         ]}
@@ -450,3 +493,4 @@ export function ChessScreen({ onBack }) {
 }
 
 export default ChessScreen
+
