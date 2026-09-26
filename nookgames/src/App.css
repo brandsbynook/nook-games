@@ -13802,6 +13802,263 @@ main > .page-content {
   padding-right: clamp(16px, 4vw, 24px) !important;
 }
 
+/* ── 1. Fix Crossword Keyboard & Grid Overflow ── */
+.cw-grid {
+  width: min(78vw, 270px, calc(100dvh - 330px)) !important;
+  height: min(78vw, 270px, calc(100dvh - 330px)) !important;
+  max-width: min(78vw, 270px, calc(100dvh - 330px)) !important;
+  max-height: min(78vw, 270px, calc(100dvh - 330px)) !important;
+  margin: 0 auto 6px auto !important;
+}
+.cw-clue-bar {
+  min-height: 40px !important;
+  margin: 4px auto !important;
+  padding: 4px 8px !important;
+}
+.cw-key-btn {
+  padding: 8px 0 !important;
+}
+
+/* ── 2. Fix Nonogram Grid & Controls Overflow ── */
+.ng-board {
+  max-width: min(84vw, 300px, calc(100dvh - 310px)) !important;
+  margin: 0 auto !important;
+}
+.ng-col-clues-header { height: 42px !important; }
+.ng-row-clues-sidebar { min-width: 40px !important; }
+.ng-dock {
+  padding: 6px 12px !important;
+  margin-top: 2px !important;
+}
+
+/* ── 3. Fix Checkers & Chess 8th-Rank Overflow ── */
+.chk-board {
+  width: min(80vw, 300px, calc(100dvh - 290px)) !important;
+  height: min(80vw, 300px, calc(100dvh - 290px)) !important;
+  max-width: min(80vw, 300px, calc(100dvh - 290px)) !important;
+  max-height: min(80vw, 300px, calc(100dvh - 290px)) !important;
+  margin: 0 auto !important;
+}
+.chess-page .chess-board {
+  width: min(82vw, 300px, calc(100dvh - 290px)) !important;
+  height: min(82vw, 300px, calc(100dvh - 290px)) !important;
+  max-width: min(82vw, 300px, calc(100dvh - 290px)) !important;
+  max-height: min(82vw, 300px, calc(100dvh - 290px)) !important;
+  margin: 0 auto !important;
+}
+
+/* ── 4. Fix Briefing Screens Truncation ── */
+.bs-body {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 16px 20px 24px 20px !important;
+}
+.bs-body::-webkit-scrollbar { display: none; }
+.bs-hero-section { margin: 12px 0 !important; }
+.bs-bottom-block { margin-top: auto !important; }
+
+/* ── 5. Contrast & Readability Enhancements ── */
+/* Briefing screen metadata labels */
+.bs-essence-label {
+  color: #8e8e93 !important;
+}
+/* Crossword cell numbers */
+.cw-cell-number {
+  color: #b4b4bc !important;
+  font-weight: 700 !important;
+}
+/* Reversi unplayed grid lines & cell dots */
+.rev-board { border-color: #2a2a2e !important; }
+.rev-cell { border-color: #222226 !important; }
+.rev-dot { background: #88888e !important; opacity: 0.85 !important; }
+/* One Line unvisited track visibility */
+.ol-edge--idle { stroke: #383a42 !important; }
+/* Knight's Tour unvisited board contrast */
+.kt-square--dark { background-color: #1a1a1d !important; }
+.kt-square--light { background-color: #242428 !important; }
+.kt-start-dot { background: #71717a !important; opacity: 0.65 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   FINAL VIEWPORT CALIBRATION OVERRIDES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Unlock internal scroll on Home Screen while keeping dock clear */
+.app-main:has(.home-screen-root) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+}
+.app-main:has(.home-screen-root)::-webkit-scrollbar {
+  display: none !important;
+}
+
+.home-screen-root {
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 16px)) !important;
+}
+
+/* ── Crossword: Final Precision Fit ── */
+.cw-container {
+  padding: 0 12px 6px 12px !important;
+  justify-content: space-between !important;
+}
+.cw-header {
+  margin-bottom: 4px !important;
+}
+.cw-difficulty-selector {
+  margin-bottom: 6px !important;
+}
+.cw-grid {
+  width: min(70vw, 215px, calc(100dvh - 380px)) !important;
+  height: min(70vw, 215px, calc(100dvh - 380px)) !important;
+  max-width: min(70vw, 215px, calc(100dvh - 380px)) !important;
+  max-height: min(70vw, 215px, calc(100dvh - 380px)) !important;
+  margin: 0 auto 2px auto !important;
+}
+.cw-clue-bar {
+  min-height: 34px !important;
+  margin: 2px auto !important;
+  padding: 2px 8px !important;
+}
+.cw-keyboard {
+  margin-top: 2px !important;
+  margin-bottom: 4px !important;
+  gap: 3px !important;
+}
+.cw-key-btn {
+  padding: 6px 0 !important;
+  font-size: 0.76rem !important;
+}
+
+/* 3. Knight's Tour: scale board to clear control cluster */
+.kt-board {
+  width: min(80vw, 300px, calc(100dvh - 280px)) !important;
+  height: min(80vw, 300px, calc(100dvh - 280px)) !important;
+  max-width: min(80vw, 300px, calc(100dvh - 280px)) !important;
+  max-height: min(80vw, 300px, calc(100dvh - 280px)) !important;
+  margin: 0 auto !important;
+}
+.kt-status-bar {
+  min-height: 36px !important;
+  margin-bottom: 2px !important;
+}
+
+/* ── Nonogram: Natural Square Ratio & Viewport Fit ── */
+.ng-page {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: max(8px, env(safe-area-inset-top, 8px)) 12px max(8px, env(safe-area-inset-bottom, 8px)) 12px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.ng-difficulty-bar {
+  margin: 2px auto !important;
+  padding: 2px 4px !important;
+}
+
+.ng-puzzle-nav {
+  margin: 0 0 2px 0 !important;
+}
+
+.ng-board-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto 0 !important;
+  overflow: hidden !important;
+}
+
+/* Let the board calculate a perfect square scale based on usable height */
+.ng-board {
+  width: min(84vw, 300px, calc(100dvh - 310px)) !important;
+  height: min(84vw, 300px, calc(100dvh - 310px)) !important;
+  max-width: min(84vw, 300px, calc(100dvh - 310px)) !important;
+  max-height: min(84vw, 300px, calc(100dvh - 310px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-areas:
+    "spacer colclues"
+    "rowclues grid" !important;
+  grid-template-columns: 40px 1fr !important;
+  grid-template-rows: 40px 1fr !important;
+}
+
+/* Ensure top numbers have legible vertical room and bottom padding */
+.ng-col-clues-header {
+  height: 40px !important;
+  display: grid !important;
+  align-items: flex-end !important;
+  padding-bottom: 2px !important;
+}
+
+.ng-row-clues-sidebar {
+  min-width: 40px !important;
+  width: 40px !important;
+}
+
+/* Clean cell sizing inside grid */
+.ng-cell {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+/* Compact control dock and restart bar */
+.ng-dock {
+  padding: 6px 12px !important;
+  margin-top: 2px !important;
+  margin-bottom: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.ng-controls-row {
+  gap: 8px !important;
+}
+
+.ng-tool-btn {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+}
+
+.ng-page .ng-dock + div,
+.ng-page button:has(svg) {
+  margin-bottom: 2px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 5. Kakuro: scale 8x8 grid to fit keypad and tool dock */
+.kkr-board-grid {
+  width: min(80vw, 290px, calc(100dvh - 290px)) !important;
+  height: min(80vw, 290px, calc(100dvh - 290px)) !important;
+  max-width: min(80vw, 290px, calc(100dvh - 290px)) !important;
+  max-height: min(80vw, 290px, calc(100dvh - 290px)) !important;
+  margin: 0 auto !important;
+}
+.kkr-board-outer {
+  margin-bottom: 6px !important;
+}
+.kkr-key {
+  height: 36px !important;
+  font-size: 0.95rem !important;
+}
+.kkr-action-btn {
+  height: 34px !important;
+}
+
 
 
 
