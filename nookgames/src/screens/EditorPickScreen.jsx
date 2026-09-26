@@ -1,9 +1,30 @@
 import { getDailyEssay } from '../data/essays.js'
+import { collections } from '../data/catalogue.js'
 import { playTap } from '../utils/audio.js'
 import { BackButton } from '../components/BackButton.jsx'
+import { Icon } from '../components/Icons'
+
+function getCompanionGame(gameId) {
+  if (!gameId) return null
+  for (const col of collections) {
+    const found = col.games?.find((g) => g.id === gameId)
+    if (found) {
+      return {
+        ...found,
+        suiteTitle: col.title,
+        iconName: found.icon || found.id || col.icon || 'book',
+      }
+    }
+  }
+  return null
+}
 
 export function EditorPickScreen() {
   const essay = getDailyEssay()
+  const companionGame = getCompanionGame(essay.companionGameId)
+  const companionName = essay.companionName || companionGame?.title || 'Game'
+  const companionSub = companionGame?.suiteTitle || companionGame?.category || essay.theme || 'Sanctuary'
+  const companionIcon = companionGame?.iconName || essay.companionGameId || 'book'
 
   function handleCompanion(e) {
     e.preventDefault()
@@ -51,16 +72,30 @@ export function EditorPickScreen() {
         {essay.companionGameId && (
           <div className="ep-companion">
             <span className="ep-companion-label">Play the companion game</span>
-            <a
-              id="ep-companion-link"
-              className="ep-companion-link"
-              href={`#/briefing/${essay.companionGameId}`}
+            <div
+              id="ep-companion-card"
+              className="ep-companion-card"
+              role="button"
+              tabIndex={0}
               onClick={handleCompanion}
-              aria-label={`Play ${essay.companionName}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleCompanion(e)
+                }
+              }}
+              aria-label={`Play ${companionName}`}
             >
-              <span className="ep-companion-name">{essay.companionName}</span>
-              <span className="ep-companion-arrow" aria-hidden="true">→</span>
-            </a>
+              <div className="ep-companion-left">
+                <div className="ep-companion-icon-frame" aria-hidden="true">
+                  <Icon name={companionIcon} size={18} strokeWidth={1.5} className="ep-companion-icon" />
+                </div>
+                <div className="ep-companion-info">
+                  <span className="ep-companion-name">{companionName}</span>
+                  <span className="ep-companion-sub">{companionSub}</span>
+                </div>
+              </div>
+              <span className="ep-companion-chevron" aria-hidden="true">›</span>
+            </div>
           </div>
         )}
 
@@ -72,3 +107,4 @@ export function EditorPickScreen() {
 }
 
 export default EditorPickScreen
+
