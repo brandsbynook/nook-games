@@ -116,10 +116,10 @@ export function ProgressScreen() {
         <>
           {/* ── Aggregate metrics ──────────────────────────── */}
           <div className="prg-metrics">
-            <MetricCard label="Games Played" value={gamesPlayed} />
+            <MetricCard label="Played" value={gamesPlayed} />
             <MetricCard label="Win Rate" value={winRate(gamesPlayed, gamesWon)} />
             <MetricCard
-              label="Games Explored"
+              label="Explored"
               value={`${exploredCount(byGame)} / 20`}
             />
           </div>

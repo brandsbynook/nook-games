@@ -2244,7 +2244,10 @@
    SETTINGS SCREEN
    ═══════════════════════════════════════════════════════════════════ */
 
-.st-page { padding-bottom: 3rem; }
+.st-page {
+  padding-bottom: clamp(74px, 12dvh, 96px);
+  box-sizing: border-box;
+}
 
 .st-title {
   font-family: var(--font-ui);
@@ -2262,13 +2265,14 @@
   margin-bottom: 1.5rem;
 }
 
+.st-page .st-group-label,
 .st-group-label {
   font-family: monospace, sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #737373;
+  color: #8e8e93;
 }
 
 .st-group-card {
@@ -2301,11 +2305,13 @@
 }
 .st-row--button:hover { background: var(--color-surface-elevated); }
 
-.st-row-label {
-  font-family: var(--font-ui);
-  font-size: var(--font-size-md);
-  color: var(--color-text);
-  font-weight: 400;
+.st-page .st-row-label {
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
+  font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.03em !important;
+  color: var(--text-primary, #f3efe6) !important;
+  line-height: 1.2 !important;
 }
 
 .st-row-trailing {
@@ -2315,16 +2321,16 @@
   flex-shrink: 0;
 }
 
-.st-value {
+.st-page .st-value {
   font-family: var(--font-ui);
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
+  font-size: clamp(12px, 1.4dvh, 13px);
+  color: #a1a1aa;
 }
 .st-value--muted { color: var(--color-text-muted); }
 .st-value--chevron { display: flex; align-items: center; gap: 0.25rem; }
 
-.st-chevron {
-  color: var(--color-text-muted);
+.st-page .st-chevron {
+  color: #71717a;
   font-size: 1.25rem;
   line-height: 1;
 }
@@ -2345,31 +2351,36 @@
   pointer-events: none;
 }
 
-.st-toggle-track {
-  display: flex;
-  align-items: center;
-  width: 2.75rem;
-  height: 1.5rem;
-  border-radius: 1rem;
-  background: #3a3a3a;
-  transition: background 0.2s ease;
-  padding: 0.125rem;
+.st-page .st-toggle-track {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: #232326;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  display: block;
 }
 
-.st-toggle-input:checked + .st-toggle-track { background: #d4d4d4; }
-
-.st-toggle-thumb {
-  width: 1.25rem;
-  height: 1.25rem;
+.st-page .st-toggle-thumb {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #777777;
-  transition: transform 0.2s ease, background 0.2s ease;
-  flex-shrink: 0;
+  background: #71717a;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
 }
 
-.st-toggle-input:checked + .st-toggle-track .st-toggle-thumb {
-  transform: translateX(1.25rem);
-  background: #ffffff;
+.st-page .st-toggle-input:checked + .st-toggle-track {
+  background: #2a2a2e;
+  border-color: rgba(243, 239, 230, 0.25);
+}
+
+.st-page .st-toggle-input:checked + .st-toggle-track .st-toggle-thumb {
+  transform: translateX(20px);
+  background: #f3efe6;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -13163,10 +13174,10 @@ main > .page-content {
   gap: 2px;
 }
 
-.home-screen-root .resume-card-game,
+.home-screen-root .collection-card-title,
 .home-screen-root .home-card-title,
-.home-screen-root .collection-card-title {
-  font-family: var(--font-display) !important;
+.home-screen-root .resume-card-game {
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
   font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
   font-weight: 400 !important;
   letter-spacing: 0.03em !important;
@@ -13233,11 +13244,11 @@ main > .page-content {
 }
 
 .home-screen-root .ep-home-title {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
   font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
   font-weight: 400 !important;
   line-height: 1.25 !important;
-  color: var(--text-primary, #f3efe6) !important; /* Muted warm ivory, eliminates harsh pure white */
+  color: var(--text-primary, #f3efe6) !important;
   white-space: normal !important;
   display: -webkit-box !important;
   -webkit-line-clamp: 2 !important;
@@ -13265,6 +13276,323 @@ main > .page-content {
   opacity: 0.7 !important;
   line-height: 1 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CROSS-APP TYPOGRAPHY, CONTRAST & INFO SCREEN VIEWPORT FIT
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Cohesive Header Typography (Sanctuary Display Serif) */
+.page-header-title,
+.cs-header-title {
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
+  color: var(--text-primary, #f3efe6) !important;
+  letter-spacing: 0.03em !important;
+}
+
+.page-header-title {
+  font-size: 1.25rem !important;
+  font-weight: 400 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROGRESS SCREEN (Sanctuary Design System)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Display Serif Typography for Game List */
+.prg-page .prg-game-name {
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
+  font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.025em !important;
+  color: var(--text-primary, #f3efe6) !important;
+  line-height: 1.2 !important;
+}
+
+/* Untouched games: soft readable muted stone (passes WCAG AA contrast) */
+.prg-page .prg-game-name--untouched {
+  color: #787672 !important;
+  opacity: 0.8 !important;
+}
+
+/* 2. Uppercase Section Labels */
+.prg-page .prg-suite-label {
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #8e8e93 !important;
+  display: block !important;
+  margin-bottom: clamp(6px, 1dvh, 9px) !important;
+  padding-left: 2px !important;
+}
+
+/* ── Progress Metrics Shelf ── */
+.prg-page .prg-metrics {
+  display: flex !important;
+  align-items: stretch !important;
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: clamp(12px, 1.8dvh, 16px) !important;
+  padding: clamp(10px, 1.6dvh, 14px) 0 !important;
+  margin-bottom: clamp(14px, 2.2dvh, 20px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.prg-page .prg-metric-card {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 8px !important;
+  position: relative !important;
+}
+
+/* Hairline vertical dividers between metrics */
+.prg-page .prg-metric-card:not(:last-child)::after {
+  content: '' !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 15% !important;
+  height: 70% !important;
+  width: 1px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Numeric value styling */
+.theme-midnight .prg-page .prg-metric-value,
+.prg-page .prg-metric-value {
+  font-family: var(--font-display, 'Cormorant Garamond', 'Playfair Display', Georgia, serif) !important;
+  font-size: clamp(1.3rem, 2.3dvh, 1.5rem) !important;
+  font-weight: 500 !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  font-feature-settings: "lnum" 1, "tnum" 1 !important;
+  letter-spacing: 0.02em !important;
+  color: var(--text-primary, #f3efe6) !important;
+  line-height: 1.1 !important;
+}
+
+/* Sub-label styling */
+.prg-page .prg-metric-label {
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: #8e8e93 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+/* 4. Bottom clearance for floating dock */
+.prg-page {
+  padding-bottom: clamp(74px, 12dvh, 96px) !important;
+  box-sizing: border-box !important;
+}
+
+.prg-page .prg-game-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: clamp(6px, 1dvh, 8px) 14px !important;
+  min-height: clamp(36px, 4.5dvh, 40px) !important;
+  box-sizing: border-box !important;
+}
+
+.prg-page .prg-game-badge {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 11px !important;
+}
+
+.prg-page .prg-suite {
+  margin-bottom: clamp(10px, 1.6dvh, 16px) !important;
+}
+
+/* 2. Fix Contrast Across Settings and Progress */
+/* Section labels (APPEARANCE, SOUND, GENERAL, etc.) */
+.st-group-label,
+.section-label {
+  color: #8e8e93 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* Metadata values and keys */
+.st-value,
+.prg-game-meta {
+  color: #a1a1aa !important;
+}
+
+/* 3. Info Screen Viewport Fit (Zero Scroll) */
+.app-main:has(.info-screen-root) {
+  overflow: hidden !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-screen-root {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top, 0px) + clamp(8px, 2vh, 16px)) 16px clamp(10px, 2vh, 16px);
+  overflow: hidden;
+}
+
+.info-screen-root .page-header {
+  min-height: 44px !important;
+  height: 44px !important;
+  margin-bottom: clamp(6px, 1.5vh, 12px) !important;
+  flex-shrink: 0;
+}
+
+.theme-midnight .info-screen-root .info-body,
+.info-screen-root .info-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  gap: clamp(16px, 2.6dvh, 24px) !important;
+  padding-top: clamp(24px, 4.5dvh, 40px) !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* ── Info Screen Colophon Layout ── */
+.theme-midnight .info-screen-root .info-card,
+.info-screen-root .info-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+  padding: 0 0 clamp(16px, 2.4dvh, 22px) 0 !important;
+  margin: 0 !important;
+  gap: 14px !important;
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Subtle separator between editorial sections */
+.theme-midnight .info-screen-root .info-card:not(:last-child),
+.info-screen-root .info-card:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Minimalist glyph badge */
+.theme-midnight .info-screen-root .info-card-icon,
+.info-screen-root .info-card-icon {
+  background: transparent !important;
+  border: none !important;
+  color: #9c978d !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin-top: 2px !important;
+  flex-shrink: 0;
+}
+
+/* Editorial section labels */
+.theme-midnight .info-screen-root .info-card-title,
+.info-screen-root .info-card-title {
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #8e8e93 !important;
+  margin-bottom: 4px !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+/* Literary body text */
+.theme-midnight .info-screen-root .info-card-text,
+.info-screen-root .info-card-text {
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif) !important;
+  font-size: clamp(0.95rem, 1.65dvh, 1.05rem) !important;
+  line-height: 1.55 !important;
+  color: #d4cfc5 !important;
+  letter-spacing: 0.015em !important;
+}
+
+.theme-midnight .info-screen-root .info-card-body,
+.info-screen-root .info-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px !important;
+}
+
+/* System specs section */
+.theme-midnight .info-screen-root .info-system-key,
+.info-screen-root .info-system-key {
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  color: #71717a !important;
+  letter-spacing: 0.04em !important;
+}
+
+.theme-midnight .info-screen-root .info-system-val,
+.info-screen-root .info-system-val {
+  font-family: var(--font-ui) !important;
+  font-size: 11.5px !important;
+  color: #a1a1aa !important;
+}
+
+.theme-midnight .info-screen-root .info-system-rows,
+.info-screen-root .info-system-rows {
+  margin-top: 4px !important;
+  gap: 6px !important;
+}
+
+.theme-midnight .info-screen-root .info-header,
+.theme-midnight .info-screen-header h1,
+.theme-midnight .info-screen-header,
+.theme-midnight .prg-page .prg-title,
+.theme-midnight .prg-header h1,
+.theme-midnight .st-page .st-page-title {
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif) !important;
+  font-size: clamp(1.15rem, 2dvh, 1.25rem) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  color: #f3efe6 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding-top: clamp(14px, 2.2dvh, 20px) !important;
+  padding-bottom: clamp(12px, 2dvh, 18px) !important;
+}
+
+.theme-midnight .info-screen-root h1,
+.theme-midnight .info-screen-root h2,
+.theme-midnight .info-screen-root .info-title,
+.theme-midnight .info-screen-root header,
+.theme-midnight .info-screen-root .info-screen-header {
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  font-size: clamp(1.05rem, 1.9dvh, 1.15rem) !important;
+  font-weight: 600 !important;
+  color: #f3efe6 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding-top: clamp(24px, 3.8dvh, 32px) !important;
+  padding-bottom: clamp(12px, 1.8dvh, 16px) !important;
+}
+
+
+
 
 
 

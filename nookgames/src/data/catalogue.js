@@ -330,3 +330,13 @@ export function getGame(id) {
   return null
 }
 
+export function getGameById(id) {
+  for (const collection of collections) {
+    const game = collection.games.find((entry) => entry.id === id)
+    if (game) {
+      return game
+    }
+  }
+  return null
+}
+

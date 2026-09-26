@@ -2,7 +2,7 @@ import { PageHeader } from '../components/PageHeader.jsx'
 
 export function InfoScreen() {
   return (
-    <div className="page info-page">
+    <div className="info-screen-root">
       <PageHeader title="Info" />
 
       <div className="info-body">

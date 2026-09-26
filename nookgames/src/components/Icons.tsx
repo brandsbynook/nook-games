@@ -591,6 +591,16 @@ export function BookIcon(props: IconProps) {
   )
 }
 
+export function CompassIcon(props: IconProps) {
+  return (
+    <SvgBase {...props}>
+      {/* Delicate line-art compass */}
+      <circle cx="12" cy="12" r="9" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </SvgBase>
+  )
+}
+
 export function BookmarkIcon(props: IconProps) {
   return (
     <SvgBase {...props}>
@@ -636,6 +646,7 @@ const componentRegistry: Record<string, React.ComponentType<IconProps>> = {
   ambient: LeafIcon,
   book: BookIcon,
   bookmark: BookmarkIcon,
+  compass: CompassIcon,
 
   // Games
   chess: ChessIcon,
