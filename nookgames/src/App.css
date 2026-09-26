@@ -14059,6 +14059,23 @@ main > .page-content {
   height: 34px !important;
 }
 
+.kkr-status-bar,
+.slk-status-bar,
+.shk-status-bar {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.shk-feedback-text {
+  max-width: 58% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+
 
 
 
