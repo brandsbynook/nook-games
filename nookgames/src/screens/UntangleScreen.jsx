@@ -40,6 +40,7 @@ export function UntangleScreen({ onBack } = {}) {
   const [historyIndex, setHistoryIndex] = useState(0)
   const [activeNodeId, setActiveNodeId] = useState(null)
   const [isSolved, setIsSolved] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
 
   const isInspecting = historyIndex < history.length - 1
@@ -82,6 +83,7 @@ export function UntangleScreen({ onBack } = {}) {
     activeNodeIdRef.current = null
     setActiveNodeId(null)
     setIsSolved(false)
+    setShowModal(false)
     setIsAnimating(false)
   }, [])
 
@@ -119,6 +121,7 @@ export function UntangleScreen({ onBack } = {}) {
     activeNodeIdRef.current = null
     setActiveNodeId(null)
     setIsSolved(false)
+    setShowModal(false)
     setIsAnimating(false)
   }
 
@@ -136,9 +139,10 @@ export function UntangleScreen({ onBack } = {}) {
   useEffect(() => {
     if (currentIsSolved && !isSolved && !isInspecting) {
       setIsSolved(true)
+      playChime()
       const timer = setTimeout(() => {
-        playChime()
-      }, 250)
+        setShowModal(true)
+      }, 700)
       return () => clearTimeout(timer)
     }
   }, [currentIsSolved, isSolved, isInspecting])
@@ -562,7 +566,7 @@ export function UntangleScreen({ onBack } = {}) {
 
       {/* ── Universal Completion Modal ── */}
       <GameCompletionModal
-        isOpen={isSolved}
+        isOpen={showModal}
         title="Planar Harmony"
         description="Every tangled knot has found its geometry of release."
         icon="✓"
