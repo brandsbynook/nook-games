@@ -11242,9 +11242,25 @@ main > .page-content {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   UNIFORM SURFACE BACKGROUND (#0e0e11) ACROSS ALL 20 GAME SCREENS
-   (Full 100dvh framing, no overflow)
+   SYSTEM-WIDE PURE BLACK BASE CANVAS & SURFACES
    ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --color-bg: #000000 !important;
+  --bg-sanctuary: #000000 !important;
+  --surface-ground: #000000 !important;
+  --color-surface: #0a0a0c !important;
+  --color-surface-elevated: #141418 !important;
+  --color-border: rgba(255, 255, 255, 0.12) !important;
+  --border-subtle: rgba(255, 255, 255, 0.12) !important;
+  --color-text-muted: #8e8e96 !important;
+}
+
+html, body, #root, .app-shell {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+/* All 20 game screens & subscreen wrappers locked to pure black */
 .ap-page,
 .g2048-page,
 .toh-page,
@@ -11268,21 +11284,114 @@ main > .page-content {
 .chk-page,
 .lo-page,
 .ladder-page,
-.ap-page,
+.bs-page,
+.ep-page,
+.st-page,
+.prg-page,
+.info-page,
 .game-screen-container,
 .game-page {
-  background-color: #0e0e11 !important;
-  background: #0e0e11 !important;
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  overflow: hidden !important;
-  padding-left: env(safe-area-inset-left, 0px) !important;
-  padding-right: env(safe-area-inset-right, 0px) !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+/* ── Global Tactile Surfaces & Board Definitions ── */
+/* Shelves, cards, and container docks */
+.game-diff-bar,
+.ng-difficulty-bar,
+.sdk-presets-bar,
+.mm-difficulty-bar,
+.ag-difficulty-bar,
+.chess-difficulty-bar,
+.st-group-card,
+.prg-suite-card,
+.bs-stat-card,
+.info-card,
+.home-collection-list,
+.home-card-resume,
+.ep-home-card {
+  background: #0c0d10 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Playing boards: clean architectural definition against pure black canvas */
+.rev-board,
+.g2048-board,
+.chess-board,
+.kt-board,
+.chk-board,
+.shk-board-grid,
+.kkr-board-grid,
+.slk-board-wrapper,
+.gmk-board,
+.ng-board,
+.cw-grid,
+.fp-grid,
+.lo-board {
+  border-color: #2c2d36 !important;
+}
+
+/* Section labels & meta indicators across the whole app */
+.section-label,
+.st-group-label,
+.prg-suite-label,
+.ag-group-label,
+.bs-essence-label,
+.bs-stat-label,
+.ep-theme-badge,
+.ep-companion-label {
+  color: #9c9ca4 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* Unrevealed slots, unplayed cells & dark tactile pieces */
+.ag-word-slot {
+  background: #0d0d10 !important;
+  border: 1px solid #363742 !important;
+  color: #a1a1aa !important;
+}
+.ag-letter-dash {
+  color: #82828c !important;
+  opacity: 0.85 !important;
+}
+.mm-row, .mm-row--past {
+  background: #0d0d10 !important;
+  border: 1px solid #2a2b33 !important;
+}
+.mm-pip--empty {
+  background: #24252d !important;
+  border: 1px solid #3f414e !important;
+}
+.mm-pip--misplaced {
+  border: 1.5px solid #a1a1aa !important;
+}
+.chk-square--dark {
+  background-color: #141518 !important;
+}
+.chk-square--light {
+  background-color: #070708 !important;
+}
+.chk-piece--black {
+  background: radial-gradient(circle at 35% 35%, #3e3f46 0%, #202024 60%, #121214 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.16), 0 3px 8px rgba(0, 0, 0, 0.8) !important;
+}
+.rev-cell {
+  background: #08080a !important;
+  border-color: #1f2026 !important;
+}
+.rev-dot {
+  background: #d4d4d8 !important;
+  opacity: 0.95 !important;
+}
+.rev-stone--dark {
+  border: 1.5px solid #545663 !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+.g2048-slot--empty {
+  background: #14151a !important;
+  border: 1px solid #24252e !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
