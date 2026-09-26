@@ -2,8 +2,8 @@ export const collections = [
   {
     id: 'strategy',
     title: 'Strategy',
-    description: 'Plan ahead. Think deep.',
-    tagline: 'Plan ahead. Think deep.',
+    description: 'Plan ahead. Hold your ground.',
+    tagline: 'Plan ahead. Hold your ground.',
     icon: 'strategy',
     games: [
       {
@@ -80,8 +80,8 @@ export const collections = [
   {
     id: 'logic',
     title: 'Logic',
-    description: 'Test your reasoning and deduction.',
-    tagline: 'Test your reasoning and deduction.',
+    description: 'Read the grid. Find the fit.',
+    tagline: 'Read the grid. Find the fit.',
     icon: 'logic',
     games: [
       {
@@ -154,8 +154,8 @@ export const collections = [
   {
     id: 'sequence',
     title: 'Sequence',
-    description: 'Step-by-step kinetic order and flow.',
-    tagline: 'Step-by-step kinetic order and flow.',
+    description: 'Move with care. Find the flow.',
+    tagline: 'Move with care. Find the flow.',
     icon: 'sequence',
     games: [
       {
@@ -228,8 +228,8 @@ export const collections = [
   {
     id: 'cipher',
     title: 'Cipher',
-    description: 'Unravel patterns through quiet reasoning.',
-    tagline: 'Unravel patterns through quiet reasoning.',
+    description: 'Crack the code. Find the word.',
+    tagline: 'Crack the code. Find the word.',
     icon: 'cipher',
     games: [
       {

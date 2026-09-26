@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'Nook Games',
         short_name: 'Nook Games',
-        description: 'Quiet play for focused minds. 20 classic logic puzzles offline.',
+        description: 'Play, without the pull. 20 classic logic puzzles offline.',
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',
