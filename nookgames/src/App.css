@@ -91,6 +91,84 @@
   min-width: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   HOME SCREEN ROOT & CONTENT FRAME (.home-screen-root)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.home-screen-root {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.home-content-frame {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 0;
+}
+
+.home-screen-root .home-brand-header {
+  position: relative;
+  text-align: center;
+  padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+  padding-bottom: 0;
+  margin-bottom: 1rem;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.home-screen-root .home-brand-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.home-screen-root .home-brand-tagline {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.home-section-scoped {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.875rem;
+  margin-top: 0;
+  min-height: 0;
+}
+
+.home-section-scoped:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+
+.home-collection-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
 /* ── Sanctuary Home Brand Header ────────────────────────────── */
 .home-brand-header {
   position: relative;
@@ -186,19 +264,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   BOTTOM NAVIGATION
+   BOTTOM NAVIGATION (Floating Island Dock)
    ═══════════════════════════════════════════════════════════════════ */
 
 .bottom-nav {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  align-items: center;
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  border-top: 1px solid var(--color-border);
-  background: #000000;
-  padding-bottom: env(safe-area-inset-bottom);
+  position: sticky !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(16px, 2.8dvh, 26px)) !important;
+  margin: 0 clamp(16px, 4vw, 24px) clamp(14px, 2.2dvh, 22px) !important;
+  border-radius: 22px !important;
+  background: #141417 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+  padding-bottom: 0;
+  height: clamp(52px, 6.5dvh, 58px) !important;
+  min-height: clamp(52px, 6.5dvh, 58px) !important;
+  z-index: 1000;
+  box-sizing: border-box;
 }
 
 .bottom-nav-item {
@@ -206,17 +291,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
   gap: 0.2rem;
-  min-height: var(--nav-height);
-  color: var(--color-text-muted);
+  color: #71717a;
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
   font-family: var(--font-ui);
-  transition: color 0.15s ease;
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .bottom-nav-item.is-active {
-  color: var(--color-text);
+  color: #ffffff;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -12918,6 +13004,269 @@ main > .page-content {
   margin: 0 0 24px 0;
   max-width: 330px;
 }
+
+/* ── Scoped Home Screen Viewport Fit ── */
+.app-main:has(.home-screen-root) {
+  overflow: hidden !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-screen-root {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: calc(env(safe-area-inset-top, 0px) + clamp(18px, 3vh, 28px)) 16px clamp(6px, 1.2vh, 10px);
+  overflow: hidden;
+}
+
+.home-screen-root .home-brand-header {
+  padding-top: clamp(14px, 3.2dvh, 28px) !important;
+  padding-bottom: clamp(16px, 3.5dvh, 32px) !important;
+  flex-shrink: 0;
+}
+
+.home-screen-root .home-brand-title {
+  font-size: clamp(22px, 3vh, 26px) !important;
+  margin-bottom: 2px;
+}
+
+.home-screen-root .home-brand-tagline {
+  font-size: clamp(12px, 1.6vh, 13.5px) !important;
+}
+
+.home-content-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: clamp(8px, 1.6dvh, 16px);
+}
+
+.home-section-scoped {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 0 !important;
+  min-height: 0;
+  flex: none;
+}
+
+.home-section-scoped .section-label {
+  font-size: 10px !important;
+  margin-bottom: 2px !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOME SCREEN REFINEMENTS (Monolithic Shelf, Resume, Editor's Pick, Chevrons)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.home-collection-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: clamp(12px, 1.8dvh, 16px) !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  list-style: none !important;
+}
+
+.home-collection-list > li {
+  display: block !important;
+  width: 100% !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.home-collection-list > li:last-child {
+  border-bottom: none !important;
+}
+
+.home-collection-list .collection-card {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: 24px 1fr 16px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: clamp(9px, 1.35dvh, 13px) 16px !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease !important;
+}
+
+.home-collection-list .collection-card:hover,
+.home-collection-list .collection-card:active {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.home-collection-list .collection-card-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--color-text, #f3efe6) !important;
+  opacity: 0.85 !important;
+}
+
+.home-card-resume {
+  display: grid !important;
+  grid-template-columns: 24px 1fr 16px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: clamp(9px, 1.35dvh, 13px) 16px !important;
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: clamp(12px, 1.8dvh, 16px) !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.home-card-resume:hover,
+.home-card-resume:active {
+  background: #1c1c20 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.home-resume-thumb,
+.home-screen-root .collection-card-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--text-primary, #f3efe6) !important;
+  opacity: 0.85 !important;
+  flex-shrink: 0 !important;
+}
+
+.home-card-body,
+.collection-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-screen-root .resume-card-game,
+.home-screen-root .home-card-title,
+.home-screen-root .collection-card-title {
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.03em !important;
+  color: var(--text-primary, #f3efe6) !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-screen-root .resume-card-suite,
+.home-screen-root .home-card-sub,
+.home-screen-root .collection-card-sub {
+  font-family: var(--font-ui) !important;
+  font-size: clamp(10.5px, 1.3dvh, 11.5px) !important;
+  color: var(--text-muted, #938e83) !important;
+  letter-spacing: 0.015em !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Feature Card: Editor's Pick */
+.home-screen-root .ep-home-card {
+  display: grid !important;
+  grid-template-columns: auto 1fr 16px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: clamp(10px, 1.5dvh, 14px) 16px !important;
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: clamp(12px, 1.8dvh, 16px) !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.home-screen-root .ep-home-card:hover,
+.home-screen-root .ep-home-card:active {
+  background: #1c1c20 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.home-screen-root .ep-home-thumb {
+  width: clamp(72px, 18vw, 88px) !important;
+  height: clamp(48px, 6.2dvh, 56px) !important;
+  border-radius: 10px !important;
+  background: #1c1c20 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+}
+
+.home-screen-root .ep-home-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-screen-root .ep-home-title {
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.05rem, 1.8dvh, 1.18rem) !important;
+  font-weight: 400 !important;
+  line-height: 1.25 !important;
+  color: var(--text-primary, #f3efe6) !important; /* Muted warm ivory, eliminates harsh pure white */
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.home-screen-root .ep-home-sub {
+  font-family: var(--font-ui) !important;
+  font-size: clamp(10.5px, 1.3dvh, 11.5px) !important;
+  color: var(--text-muted, #938e83) !important;
+  margin-top: 1px !important;
+  white-space: normal !important;
+}
+
+/* Standardize Chevron Column Across All Cards */
+.home-card-chevron-wrap,
+.home-collection-list .collection-card-chevron {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: 16px !important;
+  font-size: 1.15rem !important;
+  color: #71717a !important;
+  opacity: 0.7 !important;
+  line-height: 1 !important;
+}
+
+
 
 
 
