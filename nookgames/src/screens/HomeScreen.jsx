@@ -5,7 +5,6 @@ import { CollectionCard } from '../components/CollectionCard.jsx'
 import { SectionLabel } from '../components/SectionLabel.jsx'
 import { Header } from '../components/Header.jsx'
 import { BookIcon } from '../components/Icons'
-import { TipJarModal } from '../components/TipJarModal.jsx'
 import { playTap } from '../utils/audio.js'
 import { getLastActiveGame } from '../utils/storage.js'
 
@@ -13,7 +12,6 @@ export function HomeScreen() {
   const essay = getDailyEssay()
   // Read once on mount — game screens update storage so next Home visit reflects it
   const [lastGame] = useState(() => getLastActiveGame())
-  const [isTipJarOpen, setIsTipJarOpen] = useState(false)
 
   function handleEditorsPick(e) {
     e.preventDefault()
@@ -93,34 +91,8 @@ export function HomeScreen() {
           <span className="ep-home-chevron" aria-hidden="true">›</span>
         </a>
       </section>
-
-      {/* Support the Parlor */}
-      <section className="home-section" aria-labelledby="support-label">
-        <SectionLabel>
-          <span id="support-label">Independent Craft</span>
-        </SectionLabel>
-        <button
-          id="home-support-btn"
-          type="button"
-          className="ep-home-card home-support-card"
-          onClick={() => {
-            playTap()
-            setIsTipJarOpen(true)
-          }}
-          aria-label="Support the Parlor"
-        >
-          <div className="ep-home-thumb home-support-thumb" aria-hidden="true">
-            ✦
-          </div>
-          <div className="ep-home-text">
-            <span className="ep-home-title">Support the Parlor</span>
-            <span className="ep-home-sub">Quiet, tracker-free indie development</span>
-          </div>
-          <span className="ep-home-chevron" aria-hidden="true">›</span>
-        </button>
-      </section>
-
-      <TipJarModal isOpen={isTipJarOpen} onClose={() => setIsTipJarOpen(false)} />
     </div>
   )
 }
+
+export default HomeScreen

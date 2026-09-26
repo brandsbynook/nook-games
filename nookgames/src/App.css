@@ -12608,9 +12608,9 @@ main > .page-content {
   background: var(--color-surface, #141416);
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
   border-radius: 24px;
-  max-width: 440px;
-  width: 100%;
-  padding: 28px 22px 24px;
+  width: calc(100% - 32px);
+  max-width: 380px;
+  padding: 26px 18px 22px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
   display: flex;
   flex-direction: column;
@@ -12655,7 +12655,7 @@ main > .page-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 8px;
 }
 
 .tip-modal-badge-icon {
@@ -12669,8 +12669,8 @@ main > .page-content {
 }
 
 .tip-modal-title {
-  font-family: var(--font-display, inherit);
-  font-size: 23px;
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 500;
   letter-spacing: 0.015em;
   color: var(--color-text, #ffffff);
@@ -12678,7 +12678,7 @@ main > .page-content {
 }
 
 .tip-modal-subtitle {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--color-text-secondary, #8e8e99);
   margin: 0;
   line-height: 1.45;
@@ -12698,41 +12698,45 @@ main > .page-content {
   animation: atmoFadeIn 0.2s ease-out;
 }
 
-/* ── Tactile Tier Items (Clean List Cards) ───────────────── */
+/* ── Tactile Tier Items (Horizontal 3-Column Grid) ───────── */
 .tip-modal-tiers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .tip-tier-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  text-align: left;
+  text-align: center;
   background: var(--color-surface-elevated, #161619);
-  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.07));
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.08));
   border-radius: 16px;
-  padding: 13px 15px;
+  padding: 14px 6px 12px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--color-text, #e4e4e7);
   font-family: inherit;
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  gap: 8px;
 }
 
 .tip-tier-item:hover:not(:disabled) {
   background: var(--color-surface-elevated, #1c1c20);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
 }
 
 .tip-tier-item.is-selected {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--color-text, rgba(255, 255, 255, 0.45));
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-text, #ffffff);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .tip-tier-item:disabled {
@@ -12740,73 +12744,83 @@ main > .page-content {
   cursor: not-allowed;
 }
 
-.tip-tier-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.tip-tier-icon {
-  font-size: 18px;
-  line-height: 1;
-  color: var(--color-text, #e5e5e7);
-  width: 28px;
-  height: 28px;
+.tip-tier-icon-wrap {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
   flex-shrink: 0;
+  color: var(--color-text, #e5e5e7);
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
-.tip-tier-texts {
+.tip-tier-icon-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+.tip-tier-item.is-selected .tip-tier-icon-wrap {
+  opacity: 1;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.tip-tier-body {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-}
-
-.tip-tier-title-row {
-  display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
 }
 
 .tip-tier-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-text, #ffffff);
   letter-spacing: 0.01em;
-}
-
-.tip-tier-desc {
-  font-size: 11.5px;
-  color: var(--color-text-secondary, #8e8e99);
-  line-height: 1.35;
-  margin-top: 2px;
-}
-
-.tip-tier-right {
+  line-height: 1.25;
+  text-align: center;
+  min-height: 30px;
   display: flex;
   align-items: center;
-  margin-left: 12px;
-  flex-shrink: 0;
+  justify-content: center;
+  word-break: break-word;
+}
+
+.tip-tier-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .tip-tier-price-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  padding: 5px 6px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: var(--font-display, inherit);
   color: var(--color-text, #ffffff);
   letter-spacing: 0.02em;
+  width: 100%;
+  max-width: 84px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
 }
 
 .tip-tier-item.is-selected .tip-tier-price-pill {
