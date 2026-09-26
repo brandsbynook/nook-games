@@ -14184,6 +14184,81 @@ html, body, #root, .app-shell {
   text-overflow: ellipsis !important;
 }
 
+/* ── Step 3 & 4: Restored Board Scale & Keyboard Ergonomics ── */
+
+/* 1. Chess, Knight's Tour & Checkers: Full-size comfortable board */
+.chess-page .chess-board,
+.chk-board,
+.kt-board {
+  width: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  height: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  max-width: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  max-height: min(88vw, 340px, calc(100dvh - 240px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+}
+
+/* 2. Nonogram: Proportional grid and legible clue headers */
+.ng-board {
+  width: min(88vw, 330px, calc(100dvh - 280px)) !important;
+  height: min(88vw, 330px, calc(100dvh - 280px)) !important;
+  max-width: min(88vw, 330px, calc(100dvh - 280px)) !important;
+  max-height: min(88vw, 330px, calc(100dvh - 280px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+}
+
+/* 3. Crossword: Balanced grid and 44px ergonomic touch keyboard */
+.cw-grid {
+  width: min(78vw, 240px, calc(100dvh - 350px)) !important;
+  height: min(78vw, 240px, calc(100dvh - 350px)) !important;
+  max-width: min(78vw, 240px, calc(100dvh - 350px)) !important;
+  max-height: min(78vw, 240px, calc(100dvh - 350px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto 6px auto !important;
+}
+
+.cw-keyboard {
+  width: 100% !important;
+  max-width: 380px !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  gap: 4px !important;
+}
+
+.cw-key-btn {
+  height: 44px !important;
+  padding: 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+}
+
+.cw-key-btn--special {
+  font-size: 0.78rem !important;
+}
+
+/* 4. Word Ladder: 44px ergonomic keyboard touch keys */
+.wl-keyboard {
+  gap: 5px !important;
+  padding: 4px 6px 12px 6px !important;
+}
+
+.wl-kb-key {
+  height: 44px !important;
+  max-width: 36px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 7px !important;
+}
+
+.wl-kb-key--special {
+  max-width: 64px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+}
+
+
 
 
 
