@@ -14,41 +14,52 @@ function getGoal(size) {
   return arr
 }
 
-/** Count inversions among non-zero tiles */
-function countInversions(tiles) {
-  let inversions = 0
-  const flat = tiles.filter((t) => t !== 0)
-  for (let i = 0; i < flat.length; i++) {
-    for (let j = i + 1; j < flat.length; j++) {
-      if (flat[i] > flat[j]) inversions++
-    }
-  }
-  return inversions
+/** Check if current state matches goal */
+function checkIsSolved(tiles, size) {
+  const goal = getGoal(size)
+  return tiles.every((t, i) => t === goal[i])
 }
 
-/** Returns true if the puzzle state is solvable for given grid size */
-function isSolvable(tiles, size) {
-  const inv = countInversions(tiles)
-  if (size % 2 === 1) {
-    // Odd dimensions (3×3, 5×5): solvable iff number of inversions is even
-    return inv % 2 === 0
-  }
-  // Even dimensions (4×4): solvable iff inversion parity matches blank row from bottom
-  const blankIdx = tiles.indexOf(0)
-  const bRow = size - Math.floor(blankIdx / size)
-  return (inv % 2 === 0 && bRow % 2 === 1) || (inv % 2 === 1 && bRow % 2 === 0)
-}
-
-/** Fisher-Yates shuffle guaranteed to produce a solvable state */
+/** Deterministic random walk generator guaranteed to produce a solvable state without freezing */
 function generateSolvable(size) {
   const goal = getGoal(size)
   const tiles = [...goal]
-  do {
-    for (let i = tiles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[tiles[i], tiles[j]] = [tiles[j], tiles[i]]
-    }
-  } while (!isSolvable(tiles, size) || tiles.join(',') === goal.join(','))
+  let blank = tiles.length - 1
+  let lastMove = -1
+
+  // Number of valid slides to thoroughly randomize the board
+  const stepCount = size === 3 ? 60 : size === 5 ? 140 : 100
+
+  for (let step = 0; step < stepCount; step++) {
+    const row = Math.floor(blank / size)
+    const col = blank % size
+    const neighbors = []
+
+    if (row > 0) neighbors.push(blank - size)
+    if (row < size - 1) neighbors.push(blank + size)
+    if (col > 0) neighbors.push(blank - 1)
+    if (col < size - 1) neighbors.push(blank + 1)
+
+    // Avoid immediate oscillation back to previous square
+    const validMoves = neighbors.filter((pos) => pos !== lastMove)
+    const target =
+      validMoves.length > 0
+        ? validMoves[Math.floor(Math.random() * validMoves.length)]
+        : neighbors[Math.floor(Math.random() * neighbors.length)]
+
+    tiles[blank] = tiles[target]
+    tiles[target] = 0
+    lastMove = blank
+    blank = target
+  }
+
+  // Edge case: if randomly returned to exact solved state, make one more adjacent swap
+  if (checkIsSolved(tiles, size)) {
+    const swapTarget = blank === 0 ? 1 : 0
+    tiles[blank] = tiles[swapTarget]
+    tiles[swapTarget] = 0
+  }
+
   return tiles
 }
 
@@ -67,12 +78,6 @@ function isAdjacentToBlank(idx, blankIdx, size) {
     (Math.abs(row - bRow) === 1 && col === bCol) ||
     (Math.abs(col - bCol) === 1 && row === bRow)
   )
-}
-
-/** Check if current state matches goal */
-function checkIsSolved(tiles, size) {
-  const goal = getGoal(size)
-  return tiles.every((t, i) => t === goal[i])
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -220,10 +225,10 @@ export function FifteenPuzzleScreen() {
         ]}
         onNext={handleShuffle}
         nextLabel="New Shuffle"
-        onReplay={handleShuffle}
-        replayLabel="Replay"
         reviewLabel="Review Grid"
       />
     </div>
   )
 }
+
+export default FifteenPuzzleScreen
