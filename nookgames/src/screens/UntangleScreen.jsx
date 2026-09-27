@@ -53,18 +53,18 @@ export function UntangleScreen({ onBack } = {}) {
   const nodesRef = useRef(nodes)
   const dragStartPos = useRef(null)
   const animFrameRef = useRef(null)
+  const modalTimerRef = useRef(null)
 
   // Keep nodesRef in sync with latest nodes state
   useEffect(() => {
     nodesRef.current = nodes
   }, [nodes])
 
-  // Stop animation on unmount
+  // Stop animation and clear pending timers on unmount
   useEffect(() => {
     return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current)
-      }
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (modalTimerRef.current) clearTimeout(modalTimerRef.current)
     }
   }, [])
 
@@ -73,6 +73,10 @@ export function UntangleScreen({ onBack } = {}) {
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current)
       animFrameRef.current = null
+    }
+    if (modalTimerRef.current) {
+      clearTimeout(modalTimerRef.current)
+      modalTimerRef.current = null
     }
     const preset = DIFFICULTY_PRESETS.find((p) => p.id === diffKey) || DIFFICULTY_PRESETS[0]
     const newGraph = generatePlanarGraph(preset)
@@ -114,6 +118,10 @@ export function UntangleScreen({ onBack } = {}) {
       cancelAnimationFrame(animFrameRef.current)
       animFrameRef.current = null
     }
+    if (modalTimerRef.current) {
+      clearTimeout(modalTimerRef.current)
+      modalTimerRef.current = null
+    }
     const resetNodes = graphData.initialPositions.map((p) => ({ ...p }))
     setNodes(resetNodes)
     setHistory([resetNodes])
@@ -133,19 +141,19 @@ export function UntangleScreen({ onBack } = {}) {
 
   // Calculate intersections for displayed node layout
   const intersectionResult = checkIntersections(displayedNodes, graphData.edges)
-  const { count: crossingCount, intersectingEdges, isSolved: currentIsSolved } = intersectionResult
+  const { count: crossingCount, intersectingEdges } = intersectionResult
 
-  // Check for newly solved state
+  // Check for newly solved state with an 800ms breathing pause before showing modal
   useEffect(() => {
-    if (currentIsSolved && !isSolved && !isInspecting) {
+    if (crossingCount === 0 && !isSolved && !isInspecting && activeNodeId === null && !isAnimating) {
       setIsSolved(true)
       playChime()
-      const timer = setTimeout(() => {
+      if (modalTimerRef.current) clearTimeout(modalTimerRef.current)
+      modalTimerRef.current = setTimeout(() => {
         setShowModal(true)
-      }, 700)
-      return () => clearTimeout(timer)
+      }, 800)
     }
-  }, [currentIsSolved, isSolved, isInspecting])
+  }, [crossingCount, isSolved, isInspecting, activeNodeId, isAnimating])
 
   // Coordinate projection from client pointer event into SVG coordinate space
   const getSvgCoordinates = useCallback((e) => {
@@ -552,8 +560,9 @@ export function UntangleScreen({ onBack } = {}) {
       {/* ── Footer Actions & Stepper ──────────────────────────── */}
       <div className="unt-footer-controls">
         <GameFooterActions
-          onReset={handleRestart}
-          resetLabel="Restart"
+          onReset={isSolved ? handleNewGame : handleRestart}
+          resetLabel={isSolved ? 'Next Graph' : 'Restart'}
+          resetIcon={isSolved ? 'sparkles' : 'restart'}
           onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
           onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
           canStepBack={historyIndex > 0}
@@ -566,7 +575,9 @@ export function UntangleScreen({ onBack } = {}) {
 
       {/* ── Universal Completion Modal ── */}
       <GameCompletionModal
+        key={`untangle-complete-${graphData?.edges?.length}-${history.length}`}
         isOpen={showModal}
+        onClose={() => setShowModal(false)}
         title="Planar Harmony"
         description="Every tangled knot has found its geometry of release."
         icon="✓"
@@ -576,7 +587,7 @@ export function UntangleScreen({ onBack } = {}) {
           { label: 'Moves', value: `${history.length - 1}` },
         ]}
         onNext={handleNewGame}
-        nextLabel="New Graph"
+        nextLabel="Next Graph"
         onReplay={handleRestart}
         replayLabel="Replay"
         reviewLabel="Review Graph"
