@@ -151,7 +151,7 @@ export function UntangleScreen({ onBack } = {}) {
       if (modalTimerRef.current) clearTimeout(modalTimerRef.current)
       modalTimerRef.current = setTimeout(() => {
         setShowModal(true)
-      }, 800)
+      }, 120)
     }
   }, [crossingCount, isSolved, isInspecting, activeNodeId, isAnimating])
 

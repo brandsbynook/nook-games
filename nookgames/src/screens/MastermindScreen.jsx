@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react'
 import { Icon } from '../components/Icons'
 import { GameHeader } from '../components/GameHeader.jsx'
 import { DifficultyTabs } from '../components/DifficultyTabs.jsx'
-import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   getSymbol,
@@ -357,25 +356,61 @@ export function MastermindScreen({ onBack } = {}) {
             })}
           </div>
 
-          <div className="mm-actions-row">
+          <div className="mm-dock-controls-bar">
+            <button
+              id="mm-restart-btn"
+              type="button"
+              className="mm-bar-btn mm-bar-btn--restart"
+              onClick={() => startNewGame(difficulty)}
+              aria-label="Restart puzzle"
+              title="Restart"
+            >
+              <Icon name="restart" size={15} />
+              <span>Restart</span>
+            </button>
+
+            {history.length > 1 && (
+              <div className="mm-bar-stepper">
+                <button
+                  type="button"
+                  className="mm-bar-stepper-btn"
+                  onClick={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={historyIndex <= 0}
+                  aria-label="Previous step"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="mm-bar-stepper-btn"
+                  onClick={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
+                  disabled={historyIndex >= history.length - 1}
+                  aria-label="Next step"
+                >
+                  ›
+                </button>
+              </div>
+            )}
+
             <button
               id="mm-undo-btn"
               type="button"
-              className="mm-undo-btn"
+              className="mm-bar-btn mm-bar-btn--clear"
               onClick={handleBackspace}
               disabled={currentGuess.length === 0 || isGameOver || isInspecting}
               aria-label="Remove last symbol"
-              title="Backspace"
+              title="Clear"
             >
-              <Icon name="undo" size={17} />
+              <Icon name="undo" size={15} />
               <span>Clear</span>
             </button>
 
             <button
               id="mm-submit-btn"
               type="button"
-              className={`mm-submit-btn${currentGuess.length === difficultyConfig.slots ? ' mm-submit-btn--ready' : ''
-                }`}
+              className={`mm-bar-btn mm-bar-btn--submit${
+                currentGuess.length === difficultyConfig.slots ? ' mm-bar-btn--ready' : ''
+              }`}
               onClick={handleSubmit}
               disabled={currentGuess.length !== difficultyConfig.slots || isGameOver || isInspecting}
               aria-label={`Submit ${difficultyConfig.slots}-symbol guess`}
@@ -383,18 +418,6 @@ export function MastermindScreen({ onBack } = {}) {
               Submit Guess
             </button>
           </div>
-
-          <GameFooterActions
-            onReset={() => startNewGame(difficulty)}
-            resetLabel="Restart"
-            onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
-            onStepForward={() => setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1))}
-            canStepBack={historyIndex > 0}
-            canStepForward={historyIndex < history.length - 1}
-            stepIndicator={history.length > 1 ? `Attempt ${historyIndex + 1}/${history.length}` : null}
-            isInspecting={isInspecting}
-            onExitInspection={() => setHistoryIndex(history.length - 1)}
-          />
         </div>
       </footer>
 

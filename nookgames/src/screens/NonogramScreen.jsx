@@ -27,6 +27,10 @@ export function NonogramScreen({ onBack } = {}) {
   const [puzzle, setPuzzle] = useState(() => loadPuzzle('beginner', initialIndex.current))
   // Current board state (size x size)
   const [grid, setGrid] = useState(() => createEmptyGrid(puzzle.size))
+  const gridRef = useRef(grid)
+  useEffect(() => {
+    gridRef.current = grid
+  }, [grid])
   // History for inspection
   const [history, setHistory] = useState(() => [createEmptyGrid(puzzle.size)])
   const [historyIndex, setHistoryIndex] = useState(0)
@@ -131,20 +135,18 @@ export function NonogramScreen({ onBack } = {}) {
     if (isSolved || isInspecting) return
     e.preventDefault()
 
-    // Determine target state based on tool mode and initial cell state
-    const currentVal = grid[r][c]
+    const currentVal = gridRef.current[r][c]
     let targetVal = CELL_STATES.EMPTY
 
     if (toolMode === 'fill') {
       targetVal = currentVal === CELL_STATES.FILLED ? CELL_STATES.EMPTY : CELL_STATES.FILLED
     } else {
-      // cross mode
       targetVal = currentVal === CELL_STATES.CROSSED ? CELL_STATES.EMPTY : CELL_STATES.CROSSED
     }
 
-    // Update single cell
-    const newGrid = grid.map((row) => [...row])
+    const newGrid = gridRef.current.map((row) => [...row])
     newGrid[r][c] = targetVal
+    gridRef.current = newGrid
     setGrid(newGrid)
     setHistory((prev) => {
       const nextHist = [...prev.slice(0, historyIndex + 1), newGrid]
@@ -154,12 +156,10 @@ export function NonogramScreen({ onBack } = {}) {
     setCheckFeedback(null)
     playTap()
 
-    // Start drag
     isDraggingRef.current = true
     dragTargetStateRef.current = targetVal
     touchedCellsRef.current = new Set([`${r},${c}`])
 
-    // Check if solved immediately
     if (isPuzzleSolved(newGrid, puzzle.solution)) {
       setIsSolved(true)
       isDraggingRef.current = false
@@ -175,21 +175,21 @@ export function NonogramScreen({ onBack } = {}) {
     touchedCellsRef.current.add(key)
     const targetVal = dragTargetStateRef.current
 
-    setGrid((prev) => {
-      const next = prev.map((row) => [...row])
-      next[r][c] = targetVal
-      setHistory((hPrev) => {
-        const nextHist = [...hPrev.slice(0, historyIndex + 1), next]
-        setHistoryIndex(nextHist.length - 1)
-        return nextHist
-      })
-      if (isPuzzleSolved(next, puzzle.solution)) {
-        setIsSolved(true)
-        isDraggingRef.current = false
-        playChime()
-      }
-      return next
+    const next = gridRef.current.map((row) => [...row])
+    next[r][c] = targetVal
+    gridRef.current = next
+    setGrid(next)
+    setHistory((hPrev) => {
+      const nextHist = [...hPrev.slice(0, historyIndex + 1), next]
+      setHistoryIndex(nextHist.length - 1)
+      return nextHist
     })
+
+    if (isPuzzleSolved(next, puzzle.solution)) {
+      setIsSolved(true)
+      isDraggingRef.current = false
+      playChime()
+    }
   }
 
   const handlePointerUp = () => {

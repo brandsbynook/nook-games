@@ -547,6 +547,14 @@ export function RefreshIcon(props: IconProps) {
   )
 }
 
+export function ShuffleIcon(props: IconProps) {
+  return (
+    <SvgBase {...props}>
+      <path d="M16 3h5v5M4 20l5.5-5.5M21 3l-7.5 7.5M21 16v5h-5M15 15l6 6M4 4l5.5 5.5" />
+    </SvgBase>
+  )
+}
+
 export function HintIcon(props: IconProps) {
   return (
     <SvgBase {...props}>
@@ -656,6 +664,7 @@ const componentRegistry: Record<string, React.ComponentType<IconProps>> = {
   flag: FlagIcon,
   refresh: RefreshIcon,
   rotate: RefreshIcon,
+  shuffle: ShuffleIcon,
   hint: HintIcon,
   lightbulb: HintIcon,
   eye: EyeIcon,

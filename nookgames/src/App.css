@@ -14513,4 +14513,190 @@ body:has(.game-review-pill) .wl-keypad,
   color: #f3efe6 !important;
 }
 
+/* ── Crossword Board Enlargement ── */
+.cw-grid {
+  width: min(86vw, 310px, calc(100dvh - 280px)) !important;
+  height: min(86vw, 310px, calc(100dvh - 280px)) !important;
+  max-width: min(86vw, 310px, calc(100dvh - 280px)) !important;
+  max-height: min(86vw, 310px, calc(100dvh - 280px)) !important;
+  margin: 4px auto 6px auto !important;
+}
+
+/* ── Mastermind & Anagrams Bottom Dock Alignment ── */
+.mm-page, .ag-page {
+  justify-content: space-between !important;
+  height: 100dvh !important;
+}
+.mm-dock, .ag-dock-container {
+  margin-top: auto !important;
+  margin-bottom: max(6px, env(safe-area-inset-bottom, 6px)) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.mm-board-scroll {
+  max-height: 56dvh !important;
+  flex: 1 1 auto !important;
+}
+.ag-discovery-board {
+  max-height: 52dvh !important;
+  flex: 1 1 auto !important;
+}
+
+/* ── Mastermind Streamlined Controls & Readability ── */
+.mm-row-num {
+  color: #94949e !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  opacity: 0.95 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.mm-dock-controls-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+  box-sizing: border-box !important;
+}
+
+.mm-bar-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: 12.5px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s ease, background 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.mm-bar-btn:disabled {
+  opacity: 0.3 !important;
+  cursor: default !important;
+}
+
+.mm-bar-btn--restart {
+  flex: 0 0 auto !important;
+  padding: 0 10px !important;
+  color: #a1a1aa !important;
+}
+
+.mm-bar-stepper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  height: 38px !important;
+}
+
+.mm-bar-stepper-btn {
+  width: 28px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  color: #a1a1aa !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+}
+
+.mm-bar-stepper-btn:disabled {
+  opacity: 0.25 !important;
+  cursor: default !important;
+}
+
+.mm-bar-btn--clear {
+  flex: 0 0 auto !important;
+  padding: 0 11px !important;
+  color: #e4e4e7 !important;
+}
+
+.mm-bar-btn--submit {
+  flex: 1 1 auto !important;
+  padding: 0 14px !important;
+  color: #71717a !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  font-weight: 500 !important;
+}
+
+.mm-bar-btn--ready {
+  color: #0c0d10 !important;
+  background: #e4e4e7 !important;
+  border-color: #e4e4e7 !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ── Word Ladder Dock Controls Bar ── */
+.wl-dock-controls-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  margin: 0 auto 10px auto !important;
+  box-sizing: border-box !important;
+}
+
+.wl-dock-controls-bar .wl-bar-btn {
+  flex: 1 1 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #d4d4d8 !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+.wl-dock-controls-bar .wl-bar-btn:disabled {
+  opacity: 0.3 !important;
+  cursor: default !important;
+}
+
+.wl-dock-controls-bar .wl-bar-stepper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  height: 38px !important;
+}
+
+.wl-dock-controls-bar .wl-bar-stepper-btn {
+  width: 26px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 15px !important;
+  color: #a1a1aa !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+}
+
+.wl-dock-controls-bar .wl-bar-stepper-btn:disabled {
+  opacity: 0.25 !important;
+  cursor: default !important;
+}
+
+
+
+
 

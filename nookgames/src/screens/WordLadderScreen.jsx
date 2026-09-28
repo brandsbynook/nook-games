@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Icon } from '../components/Icons'
 import { BackButton } from '../components/BackButton.jsx'
-import { GameFooterActions } from '../components/GameFooterActions.jsx'
 import { GameCompletionModal } from '../components/GameCompletionModal.jsx'
 import {
   WORD_LADDER_PUZZLES,
@@ -16,6 +15,30 @@ const QWERTY_ROWS = [
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
   ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE'],
 ]
+
+function findLadderPath(fromWord, targetWord) {
+  const queue = [[fromWord]]
+  const visited = new Set([fromWord])
+
+  while (queue.length > 0) {
+    const path = queue.shift()
+    const current = path[path.length - 1]
+    if (current === targetWord) return path
+
+    for (let i = 0; i < current.length; i++) {
+      for (let c = 65; c <= 90; c++) {
+        const char = String.fromCharCode(c)
+        if (char === current[i]) continue
+        const candidate = current.slice(0, i) + char + current.slice(i + 1)
+        if ((isValidWord(candidate) || candidate === targetWord) && !visited.has(candidate)) {
+          visited.add(candidate)
+          queue.push([...path, candidate])
+        }
+      }
+    }
+  }
+  return null
+}
 
 export function WordLadderScreen() {
   const [puzzleIndex, setPuzzleIndex] = useState(() => Math.floor(Math.random() * WORD_LADDER_PUZZLES.length))
@@ -79,6 +102,61 @@ export function WordLadderScreen() {
     setErrorMessage('')
     setIsShaking(false)
     setIsSolved(false)
+  }
+
+  const pickRandomPuzzle = useCallback(() => {
+    playTap()
+    setPuzzleIndex((prev) => {
+      if (WORD_LADDER_PUZZLES.length <= 1) return 0
+      let next = prev
+      while (next === prev) {
+        next = Math.floor(Math.random() * WORD_LADDER_PUZZLES.length)
+      }
+      return next
+    })
+  }, [])
+
+  const handleHint = () => {
+    if (isSolved || isInspecting) return
+    const current = ladder[ladder.length - 1]
+    let path = findLadderPath(current, puzzle.target)
+    if (!path || path.length < 2) {
+      path = findLadderPath(puzzle.start, puzzle.target)
+    }
+    if (path && path.length >= 2) {
+      playTap()
+      const nextWord = path[1]
+      const nextLadder = [...ladder, nextWord]
+      setLadder(nextLadder)
+      setHistoryIndex(nextLadder.length - 1)
+      setCurrentInput('')
+      setErrorMessage('')
+      if (nextWord === puzzle.target) {
+        setIsSolved(true)
+        playChime()
+      }
+    } else {
+      triggerError('No valid path from here — undo a step')
+    }
+  }
+
+  const handleReveal = () => {
+    if (isSolved || isInspecting) return
+    playTap()
+    const current = ladder[ladder.length - 1]
+    let path = findLadderPath(current, puzzle.target)
+    if (!path || path.length < 2) {
+      path = findLadderPath(puzzle.start, puzzle.target)
+    }
+    if (path) {
+      const completeLadder = [...ladder, ...path.slice(1)]
+      setLadder(completeLadder)
+      setHistoryIndex(completeLadder.length - 1)
+      setCurrentInput('')
+      setErrorMessage('')
+      setIsSolved(true)
+      playChime()
+    }
   }
 
   // Handle undo last step
@@ -213,34 +291,6 @@ export function WordLadderScreen() {
           <div className="wl-header-center">
             <h1 className="wl-title">Word Ladder</h1>
           </div>
-
-          <div className="wl-header-actions">
-            <button
-              id="wl-restart-btn"
-              className="wl-action-btn"
-              onClick={handleRestart}
-              aria-label="Restart puzzle"
-              title="Restart"
-            >
-              <Icon name="restart" size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Difficulty / Presets Row */}
-        <div className="wl-presets-bar">
-          {WORD_LADDER_PUZZLES.map((p, idx) => (
-            <button
-              key={p.id}
-              className={`wl-preset-btn${idx === puzzleIndex ? ' wl-preset-btn--active' : ''}`}
-              onClick={() => {
-                playTap()
-                setPuzzleIndex(idx)
-              }}
-            >
-              {p.start} → {p.target}
-            </button>
-          ))}
         </div>
 
         {/* Target Word Goal Banner */}
@@ -329,19 +379,80 @@ export function WordLadderScreen() {
 
       {/* ── Bottom Section (Fixed Keypad & Actions) ─────────────── */}
       <div className="wl-bottom-section">
-        <GameFooterActions
-          onReset={handleRestart}
-          resetLabel="Reset"
-          onUndo={handleUndo}
-          canUndo={ladder.length > 1 && !isSolved && !isInspecting}
-          onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
-          onStepForward={() => setHistoryIndex((prev) => Math.min(ladder.length - 1, prev + 1))}
-          canStepBack={historyIndex > 0}
-          canStepForward={historyIndex < ladder.length - 1}
-          stepIndicator={ladder.length > 1 ? `Step ${historyIndex + 1}/${ladder.length}` : null}
-          isInspecting={isInspecting}
-          onExitInspection={() => setHistoryIndex(ladder.length - 1)}
-        />
+        <div className="wl-dock-controls-bar">
+          <button
+            id="wl-restart-btn"
+            type="button"
+            className="wl-bar-btn"
+            onClick={handleRestart}
+            aria-label="Restart ladder"
+            title="Restart"
+          >
+            <Icon name="restart" size={15} />
+            <span>Restart</span>
+          </button>
+
+          {ladder.length > 1 && (
+            <div className="wl-bar-stepper">
+              <button
+                type="button"
+                className="wl-bar-stepper-btn"
+                onClick={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
+                disabled={historyIndex <= 0}
+                aria-label="Previous step"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="wl-bar-stepper-btn"
+                onClick={() => setHistoryIndex((prev) => Math.min(ladder.length - 1, prev + 1))}
+                disabled={historyIndex >= ladder.length - 1}
+                aria-label="Next step"
+              >
+                ›
+              </button>
+            </div>
+          )}
+
+          <button
+            id="wl-undo-btn"
+            type="button"
+            className="wl-bar-btn"
+            onClick={handleUndo}
+            disabled={ladder.length <= 1 || isSolved || isInspecting}
+            aria-label="Undo step"
+            title="Undo"
+          >
+            <Icon name="undo" size={15} />
+            <span>Undo</span>
+          </button>
+
+          <button
+            id="wl-hint-btn"
+            type="button"
+            className="wl-bar-btn"
+            onClick={handleHint}
+            disabled={isSolved || isInspecting}
+            aria-label="Get hint"
+            title="Hint"
+          >
+            <Icon name="hint" size={15} />
+            <span>Hint</span>
+          </button>
+
+          <button
+            id="wl-shuffle-btn"
+            type="button"
+            className="wl-bar-btn"
+            onClick={pickRandomPuzzle}
+            aria-label="Next random puzzle"
+            title="Shuffle"
+          >
+            <Icon name="shuffle" size={15} />
+            <span>Shuffle</span>
+          </button>
+        </div>
 
         {/* On-Screen Keyboard */}
         <div className="wl-keyboard" role="group" aria-label="Keyboard">
@@ -372,7 +483,7 @@ export function WordLadderScreen() {
         title="Ladder Complete"
         description={`Meaning connected from "${puzzle.start}" to "${puzzle.target}" in ${ladder.length - 1} steps.`}
         stats={[{ label: 'Total Steps', value: ladder.length - 1 }]}
-        onNext={() => setPuzzleIndex((prev) => (prev + 1) % WORD_LADDER_PUZZLES.length)}
+        onNext={pickRandomPuzzle}
         nextLabel="Next Ladder"
         onReplay={handleRestart}
         replayLabel="Replay"
