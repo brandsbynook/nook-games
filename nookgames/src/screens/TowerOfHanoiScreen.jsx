@@ -54,7 +54,7 @@ export function TowerOfHanoiScreen({ onBack }) {
     if (typeof onBack === 'function') {
       onBack();
     } else {
-      window.location.hash = '';
+      window.location.hash = '#/briefing/tower-of-hanoi';
     }
   }, [onBack]);
 
