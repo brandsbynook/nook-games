@@ -54,9 +54,20 @@ export function saveStoredSettings(settings) {
  * @param {'small'|'medium'|'large'} textSize
  */
 export function applyThemeAndScale(theme = 'dark', textSize = 'medium') {
-  const root = document.documentElement;
-  root.setAttribute('data-theme', theme);
-  root.setAttribute('data-text-size', textSize);
+  const root = document.documentElement
+  root.setAttribute('data-theme', theme)
+  root.setAttribute('data-text-size', textSize)
+  
+  if (textSize === 'large') {
+    root.style.setProperty('--font-scale', '1.12')
+    root.style.fontSize = '18px'
+  } else if (textSize === 'small') {
+    root.style.setProperty('--font-scale', '0.92')
+    root.style.fontSize = '14px'
+  } else {
+    root.style.setProperty('--font-scale', '1.0')
+    root.style.fontSize = '16px'
+  }
 }
 
 // ─── Progress ─────────────────────────────────────────────────────────────────

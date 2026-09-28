@@ -14725,6 +14725,31 @@ body:has(.game-review-pill) .wl-keypad,
   box-sizing: border-box !important;
 }
 
+/* ── Text Size Scaling: Large ── */
+html[data-text-size="large"] {
+  font-size: 18px !important;
+}
+
+html[data-text-size="large"] .st-row-label,
+html[data-text-size="large"] .collection-card-title,
+html[data-text-size="large"] .home-card-title,
+html[data-text-size="large"] .prg-game-name {
+  font-size: 1.25rem !important;
+}
+
+html[data-text-size="large"] .st-value,
+html[data-text-size="large"] .collection-card-sub,
+html[data-text-size="large"] .prg-game-meta {
+  font-size: 13.5px !important;
+}
+
+html[data-text-size="large"] .section-label,
+html[data-text-size="large"] .st-group-label,
+html[data-text-size="large"] .prg-suite-label {
+  font-size: 12px !important;
+}
+
+
 
 
 

@@ -1,3 +1,5 @@
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
+
 /**
  * audio.js — Nook procedural Web Audio synthesizer
  * No external audio files. Uses Web Audio API only.
@@ -20,10 +22,19 @@ function getContext() {
  * Lightweight haptic vibration helper.
  * Checks localStorage key 'nook-haptics' (default: true).
  */
-export function triggerHaptic(duration = 8) {
+export async function triggerHaptic(duration = 8) {
   try {
-    if (localStorage.getItem('nook-haptics') !== 'false' && navigator.vibrate) {
-      navigator.vibrate(duration)
+    if (localStorage.getItem('nook-haptics') === 'false') return
+
+    // Try native Capacitor Haptics first
+    try {
+      await Haptics.impact({ style: ImpactStyle.Light })
+      return
+    } catch {
+      // Fallback to web navigator.vibrate if not running in native shell
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(duration)
+      }
     }
   } catch {}
 }
