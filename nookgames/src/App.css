@@ -2091,9 +2091,9 @@
   line-height: 1.35;
   letter-spacing: 0.025em;
   color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .ep-home-sub {
@@ -13388,11 +13388,11 @@ body:has(.game-review-pill) .wl-keypad,
   font-weight: 400 !important;
   line-height: 1.25 !important;
   color: var(--text-primary, #f3efe6) !important;
-  white-space: normal !important;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important;
-  -webkit-box-orient: vertical !important;
+  white-space: nowrap !important;
   overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  max-width: 100% !important;
 }
 
 .home-screen-root .ep-home-sub {
@@ -13400,7 +13400,10 @@ body:has(.game-review-pill) .wl-keypad,
   font-size: clamp(10.5px, 1.3dvh, 11.5px) !important;
   color: var(--text-muted, #938e83) !important;
   margin-top: 1px !important;
-  white-space: normal !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
 }
 
 /* Standardize Chevron Column Across All Cards */

@@ -37,6 +37,7 @@ import {
 } from './utils/storage.js'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { AtmosphereModal } from './components/AtmosphereModal.jsx'
+import { initRevenueCat } from './services/revenuecat.js'
 import './App.css'
 
 // ═══════════════════════════════════════════════════════════════════
@@ -409,6 +410,10 @@ function AppContent() {
   // ── Mindful break state ──────────────────────────────────────────
   const [showBreak, setShowBreak] = useState(false)
   const elapsedRef = useRef(0) // minutes elapsed, tracked in memory only
+
+  useEffect(() => {
+    initRevenueCat()
+  }, [])
 
   useEffect(() => {
     // Tick every 60 seconds

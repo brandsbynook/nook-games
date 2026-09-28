@@ -418,13 +418,22 @@ export function loadPuzzle(tier = 'beginner', puzzleIndex = 0, { transform = fal
  * @returns {boolean} true if all filled cells match solution exactly
  */
 export function isPuzzleSolved(currentGrid, solutionGrid) {
+  if (!currentGrid || !solutionGrid || solutionGrid.length === 0 || solutionGrid[0].length === 0) {
+    return false
+  }
+
   const rows = solutionGrid.length
   const cols = solutionGrid[0].length
+  let hasAtLeastOneFilled = false
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const isTargetFilled = solutionGrid[r][c] === 1
       const isUserFilled = currentGrid[r][c] === CELL_STATES.FILLED
+
+      if (isUserFilled) {
+        hasAtLeastOneFilled = true
+      }
 
       if (isTargetFilled !== isUserFilled) {
         return false
@@ -432,7 +441,7 @@ export function isPuzzleSolved(currentGrid, solutionGrid) {
     }
   }
 
-  return true
+  return hasAtLeastOneFilled
 }
 
 /**

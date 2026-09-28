@@ -238,6 +238,10 @@ export function AnagramsScreen({ onBack } = {}) {
   )
 
   const isAllSolved = puzzle.targetWords.every((w) => foundWords.includes(w))
+  const targetsFoundCount = displayedFoundWords.filter((w) =>
+    puzzle.targetWords.includes(w)
+  ).length
+  const bonusCount = displayedFoundWords.length - targetsFoundCount
 
   return (
     <div className="ag-page game-screen-container">
@@ -248,7 +252,8 @@ export function AnagramsScreen({ onBack } = {}) {
       />
 
       <div className="ag-status-sub">
-        {displayedFoundWords.length} of {puzzle.totalWords ?? puzzle.targetWords.length} words found
+        {targetsFoundCount} of {puzzle.targetWords.length} words found
+        {bonusCount > 0 ? ` (+${bonusCount} bonus)` : ''}
       </div>
 
       {/* ── Segmented Difficulty Selector ───────────────────── */}

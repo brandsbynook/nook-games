@@ -94,15 +94,29 @@ export function HomeScreen() {
             href="#/editors-pick"
             onClick={handleEditorsPick}
             aria-label={`Read: ${essay.title}`}
+            style={{ display: 'flex', alignItems: 'center' }}
           >
-            <div className="ep-home-thumb" aria-hidden="true">
+            <div className="ep-home-thumb" aria-hidden="true" style={{ flexShrink: 0 }}>
               <BookIcon size={22} strokeWidth={1.5} />
             </div>
-            <div className="ep-home-text">
-              <span className="ep-home-title">{essay.title}</span>
-              <span className="ep-home-sub">{essay.theme} · {essay.readTime}</span>
+            <div className="ep-home-text" style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
+              <span
+                className="ep-home-title"
+                style={{
+                  display: 'block',
+                  whiteSpace: 'nowrap !important',
+                  overflow: 'hidden !important',
+                  textOverflow: 'ellipsis !important',
+                  maxWidth: '100%',
+                }}
+              >
+                {essay.title}
+              </span>
+              <span className="ep-home-sub" style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {essay.theme} · {essay.readTime}
+              </span>
             </div>
-            <span className="home-card-chevron-wrap" aria-hidden="true">›</span>
+            <span className="home-card-chevron-wrap" aria-hidden="true" style={{ flexShrink: 0 }}>›</span>
           </a>
         </section>
       </div>

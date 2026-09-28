@@ -1,4 +1,4 @@
-import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor'
+import { Purchases } from '@revenuecat/purchases-capacitor'
 import { Capacitor } from '@capacitor/core'
 
 export const REVENUECAT_ANDROID_PUBLIC_KEY = 'goog_KcaJJIFZQOdfcmMHnqhjkdwbZQr'
@@ -43,10 +43,7 @@ let isInitialized = false
  */
 export async function initRevenueCat() {
   if (isInitialized) return true
-
-  if (!Capacitor.isNativePlatform()) {
-    return false
-  }
+  if (!Capacitor.isNativePlatform()) return false
 
   const apiKey =
     import.meta.env.VITE_REVENUECAT_PUBLIC_KEY ||
@@ -54,19 +51,11 @@ export async function initRevenueCat() {
     REVENUECAT_ANDROID_PUBLIC_KEY
 
   try {
-    if (import.meta.env.DEV) {
-      try {
-        await Purchases.setLogLevel({ level: LOG_LEVEL?.DEBUG || 'DEBUG' })
-      } catch (logErr) {
-        console.warn('[RevenueCat] Could not set debug log level:', logErr)
-      }
-    }
-
     await Purchases.configure({ apiKey })
     isInitialized = true
     return true
   } catch (error) {
-    console.error('[RevenueCat] Initialization failed:', error)
+    console.warn('[RevenueCat] Initialization failed:', error)
     return false
   }
 }
@@ -181,11 +170,17 @@ export async function purchaseTip(item) {
     if (item?.package) {
       purchaseResult = await Purchases.purchasePackage({ aPackage: item.package })
     } else if (item?.product) {
-      purchaseResult = await Purchases.purchaseStoreProduct({ product: item.product })
+      purchaseResult = await Purchases.purchaseStoreProduct({
+        product: item.product,
+        storeProduct: item.product,
+      })
     } else if (item?.productId) {
       const { products } = await Purchases.getProducts({ productIdentifiers: [item.productId] })
       if (products && products.length > 0) {
-        purchaseResult = await Purchases.purchaseStoreProduct({ product: products[0] })
+        purchaseResult = await Purchases.purchaseStoreProduct({
+          product: products[0],
+          storeProduct: products[0],
+        })
       } else {
         throw new Error('Tip tier product not available in store.')
       }

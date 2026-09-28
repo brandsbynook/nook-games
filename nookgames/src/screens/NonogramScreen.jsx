@@ -46,11 +46,23 @@ export function NonogramScreen({ onBack } = {}) {
   const isDraggingRef = useRef(false)
   const dragTargetStateRef = useRef(null)
   const touchedCellsRef = useRef(new Set())
+  const victoryTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (victoryTimeoutRef.current) clearTimeout(victoryTimeoutRef.current)
+    }
+  }, [])
 
   // Load new puzzle or switch tier
   const initPuzzle = useCallback((newTier, newIndex) => {
+    if (victoryTimeoutRef.current) {
+      clearTimeout(victoryTimeoutRef.current)
+      victoryTimeoutRef.current = null
+    }
     const loaded = loadPuzzle(newTier, newIndex)
     const empty = createEmptyGrid(loaded.size)
+    gridRef.current = empty
     setPuzzle(loaded)
     setGrid(empty)
     setHistory([empty])
@@ -81,13 +93,18 @@ export function NonogramScreen({ onBack } = {}) {
 
   const handleNextPuzzle = () => {
     playTap()
-    const nextIdx = (puzzleIndex + 1) % puzzle.totalInTier
+    const count = PUZZLES[tier]?.length || 1
+    const nextIdx = (puzzleIndex + 1) % count
     setPuzzleIndex(nextIdx)
     initPuzzle(tier, nextIdx)
   }
 
   // Reset board
   const handleReset = () => {
+    if (victoryTimeoutRef.current) {
+      clearTimeout(victoryTimeoutRef.current)
+      victoryTimeoutRef.current = null
+    }
     playTap()
     const empty = createEmptyGrid(puzzle.size)
     setGrid(empty)
@@ -132,7 +149,7 @@ export function NonogramScreen({ onBack } = {}) {
 
   // Cell interaction handlers
   const handleCellPointerDown = (r, c, e) => {
-    if (isSolved || isInspecting) return
+    if (isSolved || isInspecting || victoryTimeoutRef.current) return
     e.preventDefault()
 
     const currentVal = gridRef.current[r][c]
@@ -160,15 +177,20 @@ export function NonogramScreen({ onBack } = {}) {
     dragTargetStateRef.current = targetVal
     touchedCellsRef.current = new Set([`${r},${c}`])
 
-    if (isPuzzleSolved(newGrid, puzzle.solution)) {
-      setIsSolved(true)
+    if (!isSolved && !victoryTimeoutRef.current && isPuzzleSolved(newGrid, puzzle.solution)) {
       isDraggingRef.current = false
-      playChime()
+      dragTargetStateRef.current = null
+      touchedCellsRef.current.clear()
+      victoryTimeoutRef.current = setTimeout(() => {
+        setIsSolved(true)
+        playChime()
+        victoryTimeoutRef.current = null
+      }, 150)
     }
   }
 
   const handleCellPointerEnter = (r, c) => {
-    if (!isDraggingRef.current || isSolved || isInspecting) return
+    if (!isDraggingRef.current || isSolved || isInspecting || victoryTimeoutRef.current) return
     const key = `${r},${c}`
     if (touchedCellsRef.current.has(key)) return
 
@@ -185,10 +207,15 @@ export function NonogramScreen({ onBack } = {}) {
       return nextHist
     })
 
-    if (isPuzzleSolved(next, puzzle.solution)) {
-      setIsSolved(true)
+    if (!isSolved && !victoryTimeoutRef.current && isPuzzleSolved(next, puzzle.solution)) {
       isDraggingRef.current = false
-      playChime()
+      dragTargetStateRef.current = null
+      touchedCellsRef.current.clear()
+      victoryTimeoutRef.current = setTimeout(() => {
+        setIsSolved(true)
+        playChime()
+        victoryTimeoutRef.current = null
+      }, 150)
     }
   }
 
