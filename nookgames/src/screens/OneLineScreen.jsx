@@ -21,9 +21,11 @@ export function OneLineScreen({ onBack }) {
   const [history, setHistory] = useState([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [hasWon, setHasWon] = useState(false);
+  const [showWinModal, setShowWinModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   const svgRef = useRef(null);
+  const winTimeoutRef = useRef(null);
   const puzzle = useMemo(() => getPuzzle(difficulty, puzzleIndex), [difficulty, puzzleIndex]);
   const puzzleCount = useMemo(() => getPuzzleCount(difficulty), [difficulty]);
 
@@ -49,12 +51,20 @@ export function OneLineScreen({ onBack }) {
   }, [currentPath]);
 
   useEffect(() => {
+    if (winTimeoutRef.current) clearTimeout(winTimeoutRef.current);
     setCurrentPath([]);
     setHistory([[]]);
     setHistoryIndex(0);
     setHasWon(false);
+    setShowWinModal(false);
     setIsDragging(false);
   }, [difficulty, puzzleIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (winTimeoutRef.current) clearTimeout(winTimeoutRef.current);
+    };
+  }, []);
 
   const handleDifficultyChange = (newDiff) => {
     if (newDiff === difficulty) return;
@@ -70,15 +80,26 @@ export function OneLineScreen({ onBack }) {
 
   const handleNextLevel = () => {
     playTap();
-    setPuzzleIndex((prev) => (prev + 1) % puzzleCount);
+    setShowWinModal(false);
+    if (puzzleCount <= 1 || puzzleIndex >= puzzleCount - 1) {
+      // Auto-advance tier if at the end of current tier
+      const tiers = ['gentle', 'standard', 'deep'];
+      const nextTierIdx = (tiers.indexOf(difficulty) + 1) % tiers.length;
+      setDifficulty(tiers[nextTierIdx]);
+      setPuzzleIndex(0);
+    } else {
+      setPuzzleIndex((prev) => (prev + 1) % puzzleCount);
+    }
   };
 
   const handleReset = () => {
+    if (winTimeoutRef.current) clearTimeout(winTimeoutRef.current);
     playTap();
     setCurrentPath([]);
     setHistory([[]]);
     setHistoryIndex(0);
     setHasWon(false);
+    setShowWinModal(false);
     setIsDragging(false);
   };
 
@@ -156,6 +177,10 @@ export function OneLineScreen({ onBack }) {
           setIsDragging(false);
           playChime();
           recordGameSession('one-line', true);
+          if (winTimeoutRef.current) clearTimeout(winTimeoutRef.current);
+          winTimeoutRef.current = setTimeout(() => {
+            setShowWinModal(true);
+          }, 400);
         }
         return true;
       }
@@ -391,7 +416,7 @@ export function OneLineScreen({ onBack }) {
 
       {/* ── Universal Completion Modal ── */}
       <GameCompletionModal
-        isOpen={hasWon}
+        isOpen={showWinModal}
         title="One Line Complete"
         description={`Every edge of ${puzzle.title} traversed in a single continuous stroke.`}
         icon="✓"
@@ -401,7 +426,7 @@ export function OneLineScreen({ onBack }) {
           { label: 'Edges', value: `${puzzle.edges.length}` },
         ]}
         onNext={handleNextLevel}
-        nextLabel="Next Level"
+        nextLabel={puzzleIndex >= puzzleCount - 1 ? 'Next Tier' : 'Next Level'}
         onReplay={handleReset}
         replayLabel="Replay"
         reviewLabel="Review Stroke"

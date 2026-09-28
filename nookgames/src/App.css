@@ -7059,14 +7059,15 @@
 }
 
 .chess-piece--w {
-  color: #ffffff;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
-  font-weight: 600;
+  color: #f5f6f8 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.25)) !important;
 }
 
 .chess-piece--b {
-  color: #a8a8a8;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.45));
+  color: #6c7280 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95) !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8)) !important;
 }
 
 .chess-piece--selected {
@@ -12622,25 +12623,54 @@ html, body, #root, .app-shell {
 
 /* ── Floating Review Pill ── */
 .game-review-pill {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(18, 20, 24, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 9999px;
-  padding: 5px 8px 5px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(126, 161, 114, 0.25);
-  z-index: 50;
-  max-width: calc(100vw - 32px);
-  width: max-content;
+  position: fixed !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(16, 18, 22, 0.96) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: 9999px !important;
+  padding: 6px 10px 6px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  z-index: 900 !important;
+  max-width: calc(100vw - 32px) !important;
+  width: max-content !important;
+  pointer-events: auto !important;
   animation: game-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body:has(.game-review-pill) .game-footer-actions,
+body:has(.game-review-pill) .game-footer-actions-wrapper,
+body:has(.game-review-pill) .kkr-controls,
+body:has(.game-review-pill) .ng-dock,
+body:has(.game-review-pill) .shk-toolbar,
+body:has(.game-review-pill) .slk-controls,
+body:has(.game-review-pill) .chk-footer-controls,
+body:has(.game-review-pill) .fp-controls,
+body:has(.game-review-pill) .toh-footer,
+body:has(.game-review-pill) .cw-keyboard,
+body:has(.game-review-pill) .cw-clue-bar,
+body:has(.game-review-pill) .sdk-keypad,
+body:has(.game-review-pill) .sdk-controls,
+body:has(.game-review-pill) .mm-picker,
+body:has(.game-review-pill) .wl-keypad,
+.game-screen-container:has(.game-review-pill) .game-footer-actions,
+.game-screen-container:has(.game-review-pill) .game-footer-actions-wrapper,
+.game-screen-container:has(.game-review-pill) .kkr-controls,
+.game-screen-container:has(.game-review-pill) .ng-dock,
+.game-screen-container:has(.game-review-pill) .shk-toolbar,
+.game-screen-container:has(.game-review-pill) .slk-controls,
+.game-screen-container:has(.game-review-pill) .chk-footer-controls,
+.game-screen-container:has(.game-review-pill) .fp-controls,
+.game-screen-container:has(.game-review-pill) .sdk-keypad,
+.game-screen-container:has(.game-review-pill) .sdk-controls {
+  display: none !important;
 }
 
 .game-review-btn {
@@ -13419,8 +13449,8 @@ html, body, #root, .app-shell {
 
 /* Untouched games: soft readable muted stone (passes WCAG AA contrast) */
 .prg-page .prg-game-name--untouched {
-  color: #787672 !important;
-  opacity: 0.8 !important;
+  color: #94949e !important;
+  opacity: 0.9 !important;
 }
 
 /* 2. Uppercase Section Labels */
@@ -14025,11 +14055,12 @@ html, body, #root, .app-shell {
   margin-bottom: 6px !important;
 }
 .cw-grid {
-  width: min(70vw, 215px, calc(100dvh - 380px)) !important;
-  height: min(70vw, 215px, calc(100dvh - 380px)) !important;
-  max-width: min(70vw, 215px, calc(100dvh - 380px)) !important;
-  max-height: min(70vw, 215px, calc(100dvh - 380px)) !important;
-  margin: 0 auto 2px auto !important;
+  width: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  height: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  max-width: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  max-height: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto 8px auto !important;
 }
 .cw-clue-bar {
   min-height: 34px !important;
@@ -14210,12 +14241,12 @@ html, body, #root, .app-shell {
 
 /* 3. Crossword: Balanced grid and 44px ergonomic touch keyboard */
 .cw-grid {
-  width: min(78vw, 240px, calc(100dvh - 350px)) !important;
-  height: min(78vw, 240px, calc(100dvh - 350px)) !important;
-  max-width: min(78vw, 240px, calc(100dvh - 350px)) !important;
-  max-height: min(78vw, 240px, calc(100dvh - 350px)) !important;
+  width: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  height: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  max-width: min(84vw, 290px, calc(100dvh - 310px)) !important;
+  max-height: min(84vw, 290px, calc(100dvh - 310px)) !important;
   aspect-ratio: 1 / 1 !important;
-  margin: 0 auto 6px auto !important;
+  margin: 0 auto 8px auto !important;
 }
 
 .cw-keyboard {
@@ -14224,6 +14255,7 @@ html, body, #root, .app-shell {
   margin-top: 4px !important;
   margin-bottom: 6px !important;
   gap: 4px !important;
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
 }
 
 .cw-key-btn {
@@ -14241,7 +14273,8 @@ html, body, #root, .app-shell {
 /* 4. Word Ladder: 44px ergonomic keyboard touch keys */
 .wl-keyboard {
   gap: 5px !important;
-  padding: 4px 6px 12px 6px !important;
+  padding: 4px 6px max(14px, env(safe-area-inset-bottom, 14px)) 6px !important;
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
 }
 
 .wl-kb-key {
@@ -14322,24 +14355,162 @@ html, body, #root, .app-shell {
   background: rgba(239, 68, 68, 0.08) !important;
 }
 
+.chess-header-resign-btn:disabled {
+  opacity: 0.22 !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
 
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT, SCALING, CONTRAST & ENGINE CALIBRATION
+   ═══════════════════════════════════════════════════════════════════ */
 
+/* ── 2. Mastermind & Anagrams Bottom Spacing ── */
+.mm-dock, .ag-dock-container {
+  margin-top: 0 !important;
+  margin-bottom: max(8px, env(safe-area-inset-bottom, 8px)) !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+}
 
+.ag-discovery-board {
+  flex: 1 1 auto !important;
+  max-height: 44dvh !important;
+}
 
+/* ── 3. Gomoku SVG Vector Sharpness ── */
+.gmk-grid-svg {
+  shape-rendering: crispEdges !important;
+  vector-effect: non-scaling-stroke !important;
+}
 
+.gmk-line {
+  stroke: rgba(255, 255, 255, 0.22) !important;
+  stroke-width: 1px !important;
+}
 
+.gmk-star-point {
+  fill: rgba(255, 255, 255, 0.5) !important;
+  shape-rendering: geometricPrecision !important;
+}
 
+/* ── 4. Mastermind Empty Socket & Inactive Row Contrast ── */
+.mm-slot:not(.mm-slot--filled) {
+  border: 1.5px solid #454754 !important;
+  background: #141519 !important;
+}
 
+.mm-row:not(.mm-row--active) {
+  border-color: #262730 !important;
+}
 
+/* ── 5. Word Ladder & Nonogram Element Contrast Boost ── */
+.wl-letter-box--input {
+  border: 1.5px solid #484b56 !important;
+  background: #15161a !important;
+}
 
+.ng-clue--satisfied .ng-clue-num {
+  color: #6a6c78 !important;
+  opacity: 0.65 !important;
+}
 
+.ng-clue-num {
+  color: #c4c7d4 !important;
+}
 
+/* ── 6. Info Screen Optical Alignment ── */
+.info-card {
+  padding-right: 1.5rem !important;
+  padding-left: 1rem !important;
+}
 
+.info-card-body {
+  padding-right: 0.5rem !important;
+}
 
+/* ── 7. Progress Screen Horizontal Alignment & Gutter Calibration ── */
+.app-main:has(.prg-page) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
 
+.prg-page {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: clamp(74px, 12dvh, 96px) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
 
+.prg-page .prg-metrics {
+  margin: 0 16px clamp(14px, 2.2dvh, 20px) 16px !important;
+  padding: clamp(10px, 1.6dvh, 14px) 0 !important;
+  width: calc(100% - 32px) !important;
+  box-sizing: border-box !important;
+}
 
+.prg-page .prg-suites {
+  padding: 0 16px !important;
+  gap: clamp(12px, 1.8dvh, 18px) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
 
+.prg-page .prg-suite-card {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
 
+.prg-page .prg-game-row,
+.prg-game-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+  padding-left: 20px !important;
+  padding-right: 18px !important;
+  box-sizing: border-box !important;
+}
+
+.prg-page .prg-suite-label {
+  padding-left: 20px !important;
+  margin-bottom: 8px !important;
+}
+
+.prg-page .prg-game-info {
+  gap: 3px !important;
+}
+
+.prg-page .prg-game-name--untouched {
+  color: #94949e !important;
+  opacity: 0.9 !important;
+}
+
+.prg-page .prg-game-meta {
+  color: #71717a !important;
+}
+
+.prg-game-stats-cluster {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.prg-game-record {
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 11.5px !important;
+  color: #8e8e96 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.prg-page .prg-game-name,
+.prg-game-name {
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif) !important;
+  font-size: 1.12rem !important;
+  letter-spacing: 0.02em !important;
+  color: #f3efe6 !important;
+}
 
 

@@ -14,8 +14,11 @@ export function GameFooterActions({
   canStepForward = false,
   stepIndicator = null,
   isInspecting = false,
+  hideOnReview = true,
+  isReviewing = false,
   onExitInspection = null,
   resetLabel = 'Reset',
+  resetIcon = null,
   undoLabel = 'Undo',
   hintLabel = 'Hint',
   newGameLabel = 'New Game',
@@ -23,12 +26,18 @@ export function GameFooterActions({
   className = '',
 }) {
   const hasStepper = typeof onStepBack === 'function' || typeof onStepForward === 'function';
+  const isReviewActive = (hideOnReview && isReviewing) || (hideOnReview && typeof document !== 'undefined' && Boolean(document.querySelector('.game-review-pill')));
+  const shouldHideActions = isInspecting || isReviewActive;
+
+  if (shouldHideActions && !hasStepper) {
+    return null;
+  }
 
   return (
     <div className={`game-footer-actions-wrapper ${isInspecting ? 'game-footer-actions-wrapper--inspecting' : ''}`}>
 
       <div className={`game-footer-actions ${className}`.trim()} role="toolbar" aria-label="Game controls">
-        {onReset && (
+        {!shouldHideActions && onReset && (
           <button
             type="button"
             className="game-action-btn"
@@ -38,7 +47,7 @@ export function GameFooterActions({
             }}
             aria-label={resetLabel}
           >
-            <Icon name="restart" size={16} />
+            <Icon name={resetIcon || (resetLabel.toLowerCase() === 'rotate' ? 'refresh' : 'restart')} size={16} />
             <span>{resetLabel}</span>
           </button>
         )}
@@ -81,7 +90,7 @@ export function GameFooterActions({
           </div>
         )}
 
-        {onUndo && (
+        {!shouldHideActions && onUndo && (
           <button
             type="button"
             className="game-action-btn"
@@ -97,7 +106,7 @@ export function GameFooterActions({
           </button>
         )}
 
-        {onHint && (
+        {!shouldHideActions && onHint && (
           <button
             type="button"
             className="game-action-btn"
@@ -113,7 +122,7 @@ export function GameFooterActions({
           </button>
         )}
 
-        {onNewGame && (
+        {!shouldHideActions && onNewGame && (
           <button
             type="button"
             className="game-action-btn"
@@ -128,7 +137,7 @@ export function GameFooterActions({
           </button>
         )}
 
-        {children}
+        {!shouldHideActions && children}
       </div>
     </div>
   )

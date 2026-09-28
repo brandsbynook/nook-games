@@ -26,31 +26,45 @@ function MetricCard({ label, value, sub }) {
   )
 }
 
+const ADVERSARIAL_GAME_IDS = new Set(['chess', 'checkers', 'gomoku', 'reversi'])
+
 function GameRow({ game, stats, isLast }) {
-  const played = stats?.played ?? 0
-  const won = stats?.won ?? 0
-  const touched = played > 0
-  const everWon = won > 0
+  const totalPlays = stats?.played ?? 0
+  const wins = stats?.won ?? 0
+  const losses = Math.max(0, totalPlays - wins)
+  const clears = wins
+  const hasPlayed = totalPlays > 0
+  const hasWon = wins > 0
+  const isAdversarial = ADVERSARIAL_GAME_IDS.has(game.id)
+  const gameName = game.name || game.title
 
   return (
     <div className={`prg-game-row${isLast ? '' : ' prg-game-row--divided'}`}>
       <div className="prg-game-info">
-        <span className={`prg-game-name${touched ? '' : ' prg-game-name--untouched'}`}>
-          {game.title}
+        <span className={`prg-game-name${hasPlayed ? '' : ' prg-game-name--untouched'}`}>
+          {gameName}
         </span>
-        {touched && (
-          <span className="prg-game-meta">
-            {played} {played === 1 ? 'play' : 'plays'}
-            {won > 0 ? ` · ${won} ${won === 1 ? 'win' : 'wins'}` : ''}
+        <span className="prg-game-meta">
+          {totalPlays > 0 ? `${totalPlays} ${totalPlays === 1 ? 'session' : 'sessions'}` : 'Unplayed'}
+        </span>
+      </div>
+      <div className="prg-game-stats-cluster">
+        {isAdversarial ? (
+          <span className="prg-game-record">
+            {totalPlays > 0 ? `${wins}W · ${losses}L` : '—'}
+          </span>
+        ) : (
+          <span className="prg-game-record">
+            {clears > 0 ? `${clears} cleared` : '—'}
           </span>
         )}
+        <div
+          className={`prg-game-badge ${hasPlayed ? (hasWon ? 'prg-game-badge--won' : 'prg-game-badge--played') : 'prg-game-badge--none'}`}
+          aria-label={hasWon ? 'Won' : hasPlayed ? 'Played' : 'Not yet played'}
+        >
+          {hasWon ? '✓' : hasPlayed ? '·' : ''}
+        </div>
       </div>
-      <span
-        className={`prg-game-badge${everWon ? ' prg-game-badge--won' : touched ? ' prg-game-badge--played' : ' prg-game-badge--none'}`}
-        aria-label={everWon ? 'Won' : touched ? 'Played' : 'Not yet played'}
-      >
-        {everWon ? '✓' : touched ? '·' : ''}
-      </span>
     </div>
   )
 }

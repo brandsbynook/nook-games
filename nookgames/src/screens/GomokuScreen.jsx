@@ -343,6 +343,7 @@ export function GomokuScreen({ onBack }) {
           <svg
             className="gmk-grid-svg"
             viewBox="0 0 110 110"
+            preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
           >
             {/* Grid lines: 11 horizontal and 11 vertical */}

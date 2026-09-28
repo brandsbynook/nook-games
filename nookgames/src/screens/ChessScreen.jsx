@@ -21,8 +21,9 @@ export function ChessScreen({ onBack }) {
   }
   const game = gameRef.current
 
-  const [playerColor, setPlayerColor] = useState('w')
-  const [isFlipped, setIsFlipped] = useState(false)
+  const playerColor = 'w'
+  const [isResigned, setIsResigned] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [fen, setFen] = useState(() => game.fen())
   const [fenHistory, setFenHistory] = useState(() => [game.fen()])
   const [historyIndex, setHistoryIndex] = useState(0)
@@ -84,6 +85,10 @@ export function ChessScreen({ onBack }) {
       winner,
     })
     setHistoryCount(game.history().length)
+
+    if (isCheckmate || isDraw) {
+      setIsModalOpen(true)
+    }
   }, [game, playerColor])
 
   // Back button handler
@@ -131,8 +136,8 @@ export function ChessScreen({ onBack }) {
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
     const newFen = gameRef.current.fen()
-    setPlayerColor('w')
-    setIsFlipped(false)
+    setIsModalOpen(false)
+    setIsResigned(false)
     setFen(newFen)
     setFenHistory([newFen])
     setHistoryIndex(0)
@@ -157,8 +162,8 @@ export function ChessScreen({ onBack }) {
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
     gameRef.current = createGame()
     const newFen = gameRef.current.fen()
-    setPlayerColor('w')
-    setIsFlipped(false)
+    setIsModalOpen(false)
+    setIsResigned(false)
     setFen(newFen)
     setFenHistory([newFen])
     setHistoryIndex(0)
@@ -175,39 +180,23 @@ export function ChessScreen({ onBack }) {
     setHistoryCount(0)
   }
 
-  // Rotate board handler
-  const handleRotate = () => {
-    playTap()
-    const nextFlipped = !isFlipped
-    setIsFlipped(nextFlipped)
-
-    // If game hasn't started yet, rotating also selects Black as the player's side
-    if (historyCount === 0 && !isBotThinking) {
-      const nextColor = nextFlipped ? 'b' : 'w'
-      setPlayerColor(nextColor)
-      setSelectedSquare(null)
-      setValidMoves([])
-      if (nextColor === 'b') {
-        triggerBotMove()
-      }
-    }
-  }
-
   // Resign handler
   const handleResign = () => {
-    if (historyCount === 0 || gameStatus.isCheckmate || gameStatus.isDraw || isBotThinking) return
+    if (historyCount === 0 || gameStatus.isCheckmate || gameStatus.isDraw || isBotThinking || isResigned) return
     playTap()
+    setIsResigned(true)
     setGameStatus({
       inCheck: false,
-      isCheckmate: true,
+      isCheckmate: false,
       isDraw: false,
-      winner: playerColor === 'w' ? 'b' : 'w',
+      winner: 'b',
     })
+    setIsModalOpen(true)
   }
 
   // Handle square click
   const handleSquareClick = (square) => {
-    if (isBotThinking || gameStatus.isCheckmate || gameStatus.isDraw || isInspecting) return
+    if (isBotThinking || gameStatus.isCheckmate || gameStatus.isDraw || isResigned || isInspecting) return
 
     const piece = game.get(square)
     const isCurrentTurnPiece = piece && piece.color === playerColor && game.turn() === playerColor
@@ -265,7 +254,7 @@ export function ChessScreen({ onBack }) {
 
   // Undo button handler: rolls back bot's move and user's move
   const handleUndo = () => {
-    if (isBotThinking || historyCount === 0 || isInspecting) return
+    if (isBotThinking || historyCount === 0 || isInspecting || isResigned) return
     playTap()
     if (botTimerRef.current) clearTimeout(botTimerRef.current)
 
@@ -302,19 +291,12 @@ export function ChessScreen({ onBack }) {
     updateGameStatus()
   }
 
-  // Board layout 8x8 with rotation support
-  const rows = isFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7]
-  const cols = isFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7]
+  // Board layout 8x8 standard perspective
+  const rows = [0, 1, 2, 3, 4, 5, 6, 7]
+  const cols = [0, 1, 2, 3, 4, 5, 6, 7]
 
-  // Determine turn text
-  let statusNotice = ''
-  if (gameStatus.isCheckmate) {
-    statusNotice = gameStatus.winner === playerColor ? 'Checkmate — Victory' : 'Checkmate — Defeat'
-  } else if (gameStatus.isDraw) {
-    statusNotice = 'Stalemate — Draw'
-  } else if (gameStatus.inCheck) {
-    statusNotice = game.turn() === playerColor ? 'Check — Your King is under attack' : 'Check!'
-  }
+  const isGameOver = gameStatus.isCheckmate || gameStatus.isDraw || isResigned
+  const canResign = historyCount > 0 && !isGameOver && !isBotThinking && !isInspecting
 
   return (
     <div className="chess-page game-screen-container">
@@ -323,18 +305,16 @@ export function ChessScreen({ onBack }) {
         title="Chess"
         onBack={handleBack}
         action={
-          historyCount > 0 && !gameStatus.isCheckmate && !gameStatus.isDraw && !isInspecting ? (
-            <button
-              type="button"
-              className="chess-header-resign-btn"
-              onClick={handleResign}
-              disabled={isBotThinking}
-              title="Resign Match"
-              aria-label="Resign Match"
-            >
-              <Icon name="flag" size={16} />
-            </button>
-          ) : null
+          <button
+            type="button"
+            className="chess-header-resign-btn"
+            onClick={handleResign}
+            disabled={!canResign}
+            title="Resign Match"
+            aria-label="Resign Match"
+          >
+            <Icon name="flag" size={16} />
+          </button>
         }
       />
 
@@ -358,7 +338,9 @@ export function ChessScreen({ onBack }) {
         >
           <span className="chess-turn-dot" />
           <span className="chess-turn-text">
-            {gameStatus.isCheckmate
+            {isResigned
+              ? 'Resigned'
+              : gameStatus.isCheckmate
               ? 'Game Over'
               : gameStatus.isDraw
               ? 'Draw'
@@ -382,7 +364,6 @@ export function ChessScreen({ onBack }) {
               const rank = 8 - r
               const square = `${file}${rank}`
               const isLight = (r + c) % 2 === 0
-              const isDark = !isLight
               const piece = displayGame.get(square)
               const isSelected = selectedSquare === square && !isInspecting
               const isTarget = validMoves.includes(square) && !isInspecting
@@ -412,8 +393,8 @@ export function ChessScreen({ onBack }) {
                   }`}
                 >
                   {/* Subtle coordinate labels */}
-                  {c === (isFlipped ? 7 : 0) && <span className="chess-coord chess-coord--rank">{rank}</span>}
-                  {r === (isFlipped ? 0 : 7) && <span className="chess-coord chess-coord--file">{file}</span>}
+                  {c === 0 && <span className="chess-coord chess-coord--rank">{rank}</span>}
+                  {r === 7 && <span className="chess-coord chess-coord--file">{file}</span>}
 
                   {/* Piece glyph */}
                   {piece && (
@@ -438,14 +419,14 @@ export function ChessScreen({ onBack }) {
         </div>
       </div>
 
-      {/* Controls: Rotate, Stepper & Undo */}
+      {/* Controls: Reset, Stepper & Undo */}
       <div className="chess-footer-controls">
         <GameFooterActions
-          onReset={handleRotate}
-          resetLabel="Rotate"
+          onReset={handleReset}
+          resetLabel="Reset"
           onUndo={handleUndo}
           undoLabel="Undo"
-          canUndo={!isBotThinking && historyCount > 0 && !isInspecting}
+          canUndo={!isBotThinking && historyCount > 0 && !isInspecting && !isResigned}
           onStepBack={() => setHistoryIndex((prev) => Math.max(0, prev - 1))}
           onStepForward={() => setHistoryIndex((prev) => Math.min(fenHistory.length - 1, prev + 1))}
           canStepBack={historyIndex > 0}
@@ -458,26 +439,38 @@ export function ChessScreen({ onBack }) {
 
       {/* Universal Completion Modal */}
       <GameCompletionModal
-        isOpen={gameStatus.isCheckmate || gameStatus.isDraw}
+        key={`chess-complete-${historyCount}-${isResigned ? 'resigned' : 'played'}`}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title={
-          gameStatus.isCheckmate
+          isResigned
+            ? 'Match Resigned'
+            : gameStatus.isCheckmate
             ? gameStatus.winner === playerColor
               ? 'Checkmate - Victory'
               : 'Checkmate - Defeat'
             : 'Stalemate - Draw'
         }
         description={
-          gameStatus.isCheckmate
+          isResigned
+            ? 'You yielded the ground in stillness.'
+            : gameStatus.isCheckmate
             ? gameStatus.winner === playerColor
               ? 'The system yields in stillness.'
               : 'The opponent found checkmate.'
             : 'No legal moves remain in balance.'
         }
-        icon={gameStatus.winner === playerColor ? '✓' : '❖'}
+        icon={gameStatus.winner === playerColor && !isResigned ? '✓' : '❖'}
         stats={[
           {
             label: 'Result',
-            value: gameStatus.winner === playerColor ? 'Victory' : gameStatus.winner ? 'Defeat' : 'Draw',
+            value: isResigned
+              ? 'Resigned'
+              : gameStatus.winner === playerColor
+              ? 'Victory'
+              : gameStatus.winner
+              ? 'Defeat'
+              : 'Draw',
           },
           { label: 'Tier', value: difficulty },
           { label: 'Plies', value: `${fenHistory.length - 1}` },
@@ -493,4 +486,3 @@ export function ChessScreen({ onBack }) {
 }
 
 export default ChessScreen
-

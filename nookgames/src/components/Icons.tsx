@@ -530,6 +530,23 @@ export function UndoIcon(props: IconProps) {
   )
 }
 
+export function FlagIcon(props: IconProps) {
+  return (
+    <SvgBase {...props}>
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
+    </SvgBase>
+  )
+}
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <SvgBase {...props}>
+      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+    </SvgBase>
+  )
+}
+
 export function HintIcon(props: IconProps) {
   return (
     <SvgBase {...props}>
@@ -636,6 +653,9 @@ const componentRegistry: Record<string, React.ComponentType<IconProps>> = {
   pencil: PencilIcon,
   restart: RestartIcon,
   undo: UndoIcon,
+  flag: FlagIcon,
+  refresh: RefreshIcon,
+  rotate: RefreshIcon,
   hint: HintIcon,
   lightbulb: HintIcon,
   eye: EyeIcon,

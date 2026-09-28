@@ -82,7 +82,7 @@ function SymbolIcon({ id, size = 18, strokeWidth = 1.8 }) {
 const MASTERMIND_CONFIGS = {
   gentle: { slots: 4, paletteSize: 6, maxAttempts: 10, allowDuplicates: false },
   standard: { slots: 4, paletteSize: 6, maxAttempts: 8, allowDuplicates: true },
-  deep: { slots: 5, paletteSize: 8, maxAttempts: 10, allowDuplicates: true },
+  deep: { slots: 5, paletteSize: 8, maxAttempts: 8, allowDuplicates: true },
 }
 
 export function MastermindScreen({ onBack } = {}) {
