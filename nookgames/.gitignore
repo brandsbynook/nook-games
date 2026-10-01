@@ -28,3 +28,10 @@ scratch/
 *.zip
 OS Docs/
 
+# Android signing & build secrets
+*.keystore
+*.jks
+*.pepk
+*.p12
+key.properties
+local.properties
