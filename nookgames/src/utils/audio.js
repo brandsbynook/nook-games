@@ -122,6 +122,10 @@ export function playChime() {
       osc.start(startTime)
       osc.stop(startTime + 1.25)
     })
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nook:puzzle-completed', { detail: { from: 'chime' } }));
+    }
   } catch {
     // Silently fail — audio is non-critical
   }

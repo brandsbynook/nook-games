@@ -25,16 +25,16 @@ export const ESSAYS = [
     companionName: '15 Puzzle',
   },
   {
-    id: 'go-simplicity',
-    title: 'The 4,000-Year Simplicity of Go',
-    theme: 'Board Lore',
+    id: 'gomoku-five-stones',
+    title: 'The Art of Five Stones in a Row',
+    theme: 'Ancient Strategy',
     readTime: '1 min',
     paragraphs: [
-      'Go is widely regarded as the oldest continuously played board game in human history, originating in China over four millennia ago.',
-      'With only black and white stones placed on an intersecting grid, its rules can be explained in two minutes. Yet its legal board configurations exceed the number of atoms in the observable universe—an enduring expression of emergent complexity derived from total minimalism.',
+      'Originating in ancient China as Wuziqi and refined over centuries into Gomoku, the game of five stones reduces strategic conflict to pure spatial harmony.',
+      'With neither captures nor piece values to distract the eye, victory hinges entirely on constructing open four-in-a-row alignments and double-threat forks before the opponent senses the geometric trap.',
     ],
-    companionGameId: 'go',
-    companionName: 'Go',
+    companionGameId: 'gomoku',
+    companionName: 'Gomoku',
   },
   {
     id: 'chess-olympics',

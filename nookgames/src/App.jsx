@@ -31,12 +31,11 @@ import { ProgressScreen } from './screens/ProgressScreen.jsx'
 import { SettingsScreen } from './screens/SettingsScreen.jsx'
 import {
   getStoredSettings,
-  shouldShowFeedbackPrompt,
-  markFeedbackResolved,
-  markFeedbackDismissed,
+  shouldShowReviewPrompt,
 } from './utils/storage.js'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { AtmosphereModal } from './components/AtmosphereModal.jsx'
+import { ReviewModal } from './components/ReviewModal.jsx'
 import { initRevenueCat } from './services/revenuecat.js'
 import './App.css'
 
@@ -82,48 +81,7 @@ function MindfulBreakOverlay({ intervalMinutes, onResume }) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// DUAL-ROUTE FEEDBACK PROMPT
-// ═══════════════════════════════════════════════════════════════════
 
-function FeedbackPrompt({ onClose }) {
-  function handleFeedback() {
-    markFeedbackResolved()
-    setTimeout(() => onClose(), 100)
-  }
-
-  function handleDismiss() {
-    markFeedbackDismissed()
-    onClose()
-  }
-
-  return (
-    <div className="fbk-banner" role="dialog" aria-label="Feedback prompt">
-      <p className="fbk-question">How is your experience with Nook so far?</p>
-      <div className="fbk-actions">
-        <a
-          id="fbk-positive-btn"
-          className="fbk-btn fbk-btn--positive"
-          href="mailto:brandsbynook@gmail.com?subject=Nook%20Games%20Feedback"
-          onClick={handleFeedback}
-        >
-          Quiet &amp; Enjoyable
-        </a>
-        <a
-          id="fbk-negative-btn"
-          className="fbk-btn fbk-btn--negative"
-          href="mailto:brandsbynook@gmail.com?subject=Nook%20Games%20Feedback"
-          onClick={handleFeedback}
-        >
-          Needs Work
-        </a>
-        <button id="fbk-dismiss-btn" className="fbk-btn fbk-btn--dismiss" onClick={handleDismiss}>
-          Dismiss
-        </button>
-      </div>
-    </div>
-  )
-}
 
 function parseRoute() {
   const rawHash = window.location.hash.replace(/^#\/?/, '').split('?')[0] || ''
@@ -433,9 +391,6 @@ function AppContent() {
     elapsedRef.current = 0
   }
 
-  // ── Feedback prompt state ────────────────────────────────────────
-  const [showFeedback, setShowFeedback] = useState(() => shouldShowFeedbackPrompt())
-
   const navigate = (path) => {
     window.location.hash = path.startsWith('/') ? path : `/${path}`
   }
@@ -660,10 +615,6 @@ function AppContent() {
     <>
       <AppShell navActive={navActive}>
         <Screen route={route} />
-        {/* Feedback prompt — shown inside the scroll area above bottom nav */}
-        {showFeedback && (
-          <FeedbackPrompt onClose={() => setShowFeedback(false)} />
-        )}
       </AppShell>
 
       {/* Mindful break overlay — rendered above everything */}
@@ -678,10 +629,29 @@ function AppContent() {
 }
 
 export default function App() {
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
+
+  useEffect(() => {
+    function handlePuzzleCompleted() {
+      if (shouldShowReviewPrompt()) {
+        const timer = setTimeout(() => {
+          setIsReviewOpen(true)
+        }, 1200)
+        return () => clearTimeout(timer)
+      }
+    }
+
+    window.addEventListener('nook:puzzle-completed', handlePuzzleCompleted)
+    return () => {
+      window.removeEventListener('nook:puzzle-completed', handlePuzzleCompleted)
+    }
+  }, [])
+
   return (
     <ThemeProvider>
       <AppContent />
       <AtmosphereModal />
+      <ReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} />
     </ThemeProvider>
   )
 }

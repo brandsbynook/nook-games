@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { isMuted, toggleMute, playTap, triggerHaptic } from '../utils/audio.js'
 import { PageHeader } from '../components/PageHeader.jsx'
 import { TipJarModal } from '../components/TipJarModal.jsx'
+import { ReviewModal } from '../components/ReviewModal.jsx'
 import { restorePurchases } from '../services/revenuecat.js'
 import {
   getStoredSettings,
@@ -85,6 +86,7 @@ export function SettingsScreen() {
 
   // Support / Tip Jar modal and Restore state
   const [isTipJarOpen, setIsTipJarOpen] = useState(false)
+  const [isReviewOpen, setIsReviewOpen] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
 
   // Apply stored settings on first mount (theme + text scale)
@@ -225,6 +227,19 @@ export function SettingsScreen() {
         {/* SUPPORT THE PARLOR */}
         <SettingsGroup label="SUPPORT THE PARLOR">
           <SettingsRow
+            id="st-rate-row"
+            label="Rate nook games"
+            onClick={() => {
+              playTap()
+              setIsReviewOpen(true)
+            }}
+            trailing={
+              <span className="st-value st-value--chevron">
+                <span className="st-chevron">›</span>
+              </span>
+            }
+          />
+          <SettingsRow
             id="st-tipjar-row"
             label="Support the Parlor (Tip Jar)"
             onClick={() => {
@@ -265,6 +280,7 @@ export function SettingsScreen() {
       </div>
 
       <TipJarModal isOpen={isTipJarOpen} onClose={() => setIsTipJarOpen(false)} />
+      <ReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} />
     </div>
   )
 }

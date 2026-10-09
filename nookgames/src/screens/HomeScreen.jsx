@@ -26,7 +26,8 @@ export function HomeScreen() {
   function handleEditorsPick(e) {
     e.preventDefault()
     playTap()
-    window.location.hash = '/editors-pick'
+    const targetGameId = essay?.companionGameId || 'chess'
+    window.location.hash = `/briefing/${targetGameId}`
   }
 
   function handleResume(e) {
@@ -91,7 +92,7 @@ export function HomeScreen() {
           <a
             id="editors-pick-card"
             className="ep-home-card"
-            href="#/editors-pick"
+            href={`#/briefing/${essay.companionGameId || 'chess'}`}
             onClick={handleEditorsPick}
             aria-label={`Read: ${essay.title}`}
             style={{ display: 'flex', alignItems: 'center' }}

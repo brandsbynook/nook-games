@@ -109,6 +109,10 @@ export function recordGameSession(gameId, won = false) {
     progress.byGame[gameId].lastPlayed = Date.now();
 
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+
+    if (won && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nook:puzzle-completed', { detail: { gameId } }));
+    }
   } catch {}
 }
 
@@ -144,7 +148,50 @@ export function getLastActiveGame() {
   }
 }
 
-// ─── Feedback Gating ──────────────────────────────────────────────────────────
+// ─── Review Prompt Gating ─────────────────────────────────────────────────────
+
+const REVIEW_PROMPT_KEY = 'nook-review-prompt-status';
+
+/**
+ * Returns true when the in-app review prompt should be shown automatically.
+ * Criteria: user has completed a puzzle and has not yet acted on or dismissed the prompt.
+ *
+ * @returns {boolean}
+ */
+export function shouldShowReviewPrompt() {
+  try {
+    const status = localStorage.getItem(REVIEW_PROMPT_KEY);
+    return !status;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mark the review prompt as resolved (user tapped Enjoying it or Needs improvement).
+ * Hides the prompt permanently.
+ *
+ * @param {string} action
+ */
+export function markReviewPromptResolved(action = 'resolved') {
+  try {
+    localStorage.setItem(REVIEW_PROMPT_KEY, action);
+    localStorage.setItem(FEEDBACK_KEY, 'resolved');
+  } catch {}
+}
+
+/**
+ * Mark the review prompt as dismissed (user closed or tapped Maybe later).
+ * Hides the prompt from automatically appearing again.
+ */
+export function markReviewPromptDismissed() {
+  try {
+    localStorage.setItem(REVIEW_PROMPT_KEY, 'dismissed');
+    localStorage.setItem(FEEDBACK_KEY, 'dismissed');
+  } catch {}
+}
+
+// ─── Feedback Gating (Legacy compatibility) ───────────────────────────────────
 
 /**
  * Returns true when the in-app feedback prompt should be shown.
@@ -170,6 +217,7 @@ export function shouldShowFeedbackPrompt() {
 export function markFeedbackResolved() {
   try {
     localStorage.setItem(FEEDBACK_KEY, 'resolved');
+    localStorage.setItem(REVIEW_PROMPT_KEY, 'resolved');
   } catch {}
 }
 
@@ -180,6 +228,7 @@ export function markFeedbackResolved() {
 export function markFeedbackDismissed() {
   try {
     localStorage.setItem(FEEDBACK_KEY, 'dismissed');
+    localStorage.setItem(REVIEW_PROMPT_KEY, 'dismissed');
   } catch {}
 }
 

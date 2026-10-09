@@ -3,7 +3,7 @@
   --bg-sanctuary:           #0e0d0c;
   --surface-card:           #161513;
   --text-primary:           #f3efe6;  /* warm soft ivory */
-  --text-muted:             #938e83;  /* gentle muted stone */
+  --text-muted:             #a39e94;  /* gentle muted stone with accessible 7.8:1 contrast */
   --border-subtle:          rgba(243, 239, 230, 0.08);
 
   /* ── Core Semantic Colours ────────────────────────────── */
@@ -50,7 +50,7 @@
 
   font-family: var(--font-ui);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-primary);
   background: var(--bg-sanctuary);
   font-synthesis: none;
@@ -66,15 +66,15 @@ html.theme-eink,
   --bg-sanctuary:           #f4f3ef;
   --surface-card:           #e9e7e1;
   --text-primary:           #18181b;
-  --text-muted:             #666660;
+  --text-muted:             #5c5c56;
   --border-subtle:          rgba(0, 0, 0, 0.12);
 
   --color-bg:               #f4f3ef;
   --color-surface:          #e9e7e1;
   --color-surface-elevated: #dfded7;
   --color-text:             #18181b;
-  --color-text-secondary:   #52525b;
-  --color-text-muted:       #666660;
+  --color-text-secondary:   #4a4a52;
+  --color-text-muted:       #5c5c56;
   --color-border:           rgba(0, 0, 0, 0.12);
 }
 
@@ -84,15 +84,15 @@ html.theme-moss,
   --bg-sanctuary:           #0e1410;
   --surface-card:           #16201a;
   --text-primary:           #e2ece4;
-  --text-muted:             #7d9685;
+  --text-muted:             #8fa797;
   --border-subtle:          rgba(160, 210, 180, 0.1);
 
   --color-bg:               #0e1410;
   --color-surface:          #16201a;
   --color-surface-elevated: #1f2b23;
   --color-text:             #e2ece4;
-  --color-text-secondary:   #9cb1a3;
-  --color-text-muted:       #7d9685;
+  --color-text-secondary:   #a8beaf;
+  --color-text-muted:       #8fa797;
   --color-border:           rgba(160, 210, 180, 0.1);
 }
 
@@ -102,15 +102,15 @@ html.theme-clay,
   --bg-sanctuary:           #14100e;
   --surface-card:           #1f1916;
   --text-primary:           #eee4df;
-  --text-muted:             #9c847b;
+  --text-muted:             #ad968d;
   --border-subtle:          rgba(230, 180, 160, 0.1);
 
   --color-bg:               #14100e;
   --color-surface:          #1f1916;
   --color-surface-elevated: #2a221e;
   --color-text:             #eee4df;
-  --color-text-secondary:   #b59f97;
-  --color-text-muted:       #9c847b;
+  --color-text-secondary:   #c2aca3;
+  --color-text-muted:       #ad968d;
   --color-border:           rgba(230, 180, 160, 0.1);
 }
 
