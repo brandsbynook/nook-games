@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { InAppReview } from '@capacitor-community/in-app-review'
 import { playTap } from '../utils/audio.js'
 import { markReviewPromptResolved, markReviewPromptDismissed } from '../utils/storage.js'
 
@@ -19,14 +21,24 @@ export function ReviewModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  function handleEnjoying() {
+  async function handleEnjoying() {
     playTap()
     markReviewPromptResolved('enjoying')
-    const playStoreUrl = 'https://play.google.com/store/apps/details?id=app.nook.games'
-    try {
-      window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
-    } catch {
-      window.location.href = playStoreUrl
+    const webFallbackUrl = 'https://play.google.com/store/apps/details?id=app.nook.games&showAllReviews=true'
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await InAppReview.requestReview()
+      } catch (err) {
+        console.warn('InAppReview failed, falling back to store URL', err)
+        try {
+          window.open(webFallbackUrl, '_blank', 'noopener,noreferrer')
+        } catch {
+          window.location.href = webFallbackUrl
+        }
+      }
+    } else {
+      window.open(webFallbackUrl, '_blank', 'noopener,noreferrer')
     }
     onClose?.()
   }
@@ -34,7 +46,7 @@ export function ReviewModal({ isOpen, onClose }) {
   function handleNeedsImprovement() {
     playTap()
     markReviewPromptResolved('needs_improvement')
-    const mailtoUrl = 'mailto:your.nook.support@gmail.com?subject=nook%20games%20Feedback'
+    const mailtoUrl = 'mailto:brandsbynook@gmail.com?subject=nook%20games%20Feedback'
     window.location.href = mailtoUrl
     onClose?.()
   }

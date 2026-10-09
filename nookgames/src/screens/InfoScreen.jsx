@@ -79,7 +79,7 @@ export function InfoScreen() {
             <div className="info-system-rows">
               <div className="info-system-row">
                 <span className="info-system-key">Version</span>
-                <span className="info-system-val">1.0.0</span>
+                <span className="info-system-val">1.0.4</span>
               </div>
               <div className="info-system-row">
                 <span className="info-system-key">Stack</span>
